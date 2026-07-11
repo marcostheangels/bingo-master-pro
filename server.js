@@ -10,11 +10,12 @@ const engine = require('./engine');
 const db = require('./db');
 const nodemailer = require('nodemailer');
 const DONO_CPF = '05893761600';
-const ADMIN_EMAIL = 'marcostheangels@gmail.com';
-
-// Tenta usar SendGrid (variável de ambiente SENDGRID_API_KEY).
-// Se não existir, cai no fallback Gmail SMTP.
-const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'marcostheangels@gmail.com';
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
+const SMTP_USER = process.env.SMTP_USER || ADMIN_EMAIL;
+const SMTP_PASS = process.env.SMTP_PASS;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 
 let mailTransporter = null;
 if (SENDGRID_API_KEY) {
@@ -22,24 +23,26 @@ if (SENDGRID_API_KEY) {
         host: 'smtp.sendgrid.net',
         port: 587,
         secure: false,
-        auth: {
-            user: 'apikey',
-            pass: SENDGRID_API_KEY
-        }
+        auth: { user: 'apikey', pass: SENDGRID_API_KEY }
     });
     console.log('[EMAIL] Usando SendGrid');
-} else {
+} else if (SMTP_PASS) {
     mailTransporter = nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: ADMIN_EMAIL,
-            pass: 'gnbdjxgqjttrkgiy'
-        }
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: { user: SMTP_USER, pass: SMTP_PASS }
     });
-    console.log('[EMAIL] Usando Gmail SMTP (pode falhar se Render bloquear)');
+    console.log('[EMAIL] Usando SMTP:', SMTP_HOST);
+} else {
+    console.log('[EMAIL] AVISO: Sem configuração de email (defina SENDGRID_API_KEY ou SMTP_PASS)');
 }
 
 function enviarEmailNotificacao(assunto, texto) {
+    if (!mailTransporter) {
+        console.log('[EMAIL] Sem configuração de email, pulando envio:', assunto);
+        return;
+    }
     console.log('[EMAIL] Tentando enviar:', assunto);
     mailTransporter.sendMail({
         from: ADMIN_EMAIL,
