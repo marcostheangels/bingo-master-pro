@@ -12,23 +12,13 @@ const nodemailer = require('nodemailer');
 const DONO_CPF = '05893761600';
 const ADMIN_EMAIL = 'marcostheangels@gmail.com';
 
-let mailTransporter = null;
-try {
-    mailTransporter = nodemailer.createTransport({
-        host: 'smtp.gmail.com',
-        port: 465,
-        secure: true,
-        auth: {
-            user: ADMIN_EMAIL,
-            pass: 'gnbdjxgqjttrkgiy'
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000
-    });
-} catch (e) {
-    console.error('[EMAIL] Erro ao criar transporter:', e.message);
-}
+const mailTransporter = nodemailer.createTransport({
+    service: 'gmail',
+    auth: {
+        user: ADMIN_EMAIL,
+        pass: 'gnbdjxgqjttrkgiy'
+    }
+});
 
 function enviarEmailNotificacao(assunto, texto) {
     console.log('[EMAIL] Tentando enviar:', assunto);
@@ -38,16 +28,7 @@ function enviarEmailNotificacao(assunto, texto) {
         subject: assunto,
         text: texto
     }).then(() => console.log('[EMAIL] Notificação enviada:', assunto))
-    .catch(err => {
-        console.error('[EMAIL] Erro detalhado:', err.message, err.code);
-        // Fallback: tenta sem auth se falhar por credencial
-        if (err.code === 'EAUTH' || err.responseCode === 535) {
-            console.log('[EMAIL] Credencial inválida ou expirada. Gere uma nova senha de app em: https://myaccount.google.com/apppasswords');
-        }
-        if (err.code === 'ETIMEDOUT' || err.code === 'ECONNECTION') {
-            console.log('[EMAIL] Problema de conexão com smtp.gmail.com. Render pode estar bloqueando a porta 587.');
-        }
-    });
+    .catch(err => console.error('[EMAIL] Erro ao enviar:', err.message));
 }
 
 const PORT = process.env.PORT || 3000;
@@ -1745,16 +1726,7 @@ async function iniciarServidor() {
         console.log(`Servidor rodando em http://localhost:${PORT}`);
         console.log(`WebSocket em ws://localhost:${PORT}`);
         console.log('Bingo Master Pro rodando - Asaas integrado');
-        // Testa config de email ao iniciar
-        setTimeout(() => {
-            mailTransporter.verify().then(() => {
-                console.log('[EMAIL] Configuração SMTP verificada com sucesso!');
-            }).catch(err => {
-                console.error('[EMAIL] ERRO na configuração SMTP:', err.message);
-                console.error('[EMAIL] Código:', err.code);
-                if (err.response) console.error('[EMAIL] Resposta:', err.response);
-            });
-        }, 5000);
+    });
     });
 }
 
