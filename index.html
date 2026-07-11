@@ -167,16 +167,6 @@
                         <button id="atTab1" class="admin-tab active" onclick="switchAdminTab(1)">Usuários Logados</button>
                         <button id="atTab2" class="admin-tab" onclick="switchAdminTab(2)">Transações Financeiras</button>
                         <button id="atTab3" class="admin-tab" onclick="switchAdminTab(3)">Parâmetros de Auditoria</button>
-<                       div class="admin-card" style="margin-top: 15px; border-color: rgba(239, 68, 68, 0.4);">
-                        <h4 style="color: #ff4d4d; margin-bottom: 10px; font-size: 0.95em;">🗑️ Excluir Jogador Completamente</h4>
-                        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                        <input type="text" id="deletePlayerInput" class="input-field-sm" placeholder="Digite o Nome, ID ou Email do jogador" style="flex: 1; min-                          width: 200px;">
-                        <button class="btn btn-remove" onclick="confirmarExclusaoJogador()">Excluir Permanentemente</button>
-                        </div>
-    <p style="font-size: 0.75em; color: rgba(255,255,255,0.5); margin-top: 8px; margin-bottom: 0;">
-        ⚠️ Atenção: Esta ação removerá o jogador, suas cartelas, histórico e saldo de forma irreversível.
-    </p>
-</div>
                     </div>
 
                     <!-- Conteúdos das Abas Administrativas -->
@@ -199,11 +189,13 @@
         <div class="admin-card" style="margin-top: 15px; border-color: rgba(239, 68, 68, 0.4);">
             <h4 style="color: #ff4d4d; margin-bottom: 10px; font-size: 0.95em;">🗑️ Excluir Jogador Completamente</h4>
             <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                <input type="text" id="deletePlayerInput" class="input-field-sm" placeholder="Nome, ID ou Email" style="flex: 1; min-width: 200px;">
+                <select id="deletePlayerSelect" class="input-field-sm" style="flex: 1; min-width: 220px; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.08); font-family: 'Poppins', sans-serif;">
+                    <option value="">-- Selecione um jogador para excluir --</option>
+                </select>
                 <button class="btn btn-remove" onclick="confirmarExclusaoJogador()">Excluir Permanentemente</button>
             </div>
             <p style="font-size: 0.75em; color: rgba(255,255,255,0.5); margin-top: 8px; margin-bottom: 0;">
-                ⚠️ Atenção: Esta ação é irreversível.
+                ⚠️ Atenção: Esta ação é irreversível. Selecione o jogador na lista acima.
             </p>
         </div>
     </div>
@@ -217,28 +209,13 @@
         </div>
     </div>
 
-    <!-- Aba 3 -->
-    <div id="atContent3" style="display: none;">
-        <div class="admin-card">⚙️ Limite Bola Ouro Jackpot: 58 bolas fixas.</div>
-        <div class="admin-card">🔒 Criptografia das Cartelas SHA-256 ativa.</div>
+        <!-- Aba 3 -->
+        <div id="atContent3" style="display: none;">
+            <div class="admin-card">⚙️ Limite Bola Ouro Jackpot: 58 bolas fixas.</div>
+            <div class="admin-card">🔒 Criptografia das Cartelas SHA-256 ativa.</div>
+        </div>
     </div>
 </div>
-                        <!-- Aba 2 -->
-                        <div id="atContent2" style="display: none;">
-                            <h4>Últimas movimentações via Pix aprovadas</h4>
-                            <div id="adminFinanceList">
-                                <div class="admin-card">🟩 Pix Recebido: Marcos +$50.00 - Sucesso</div>
-                                <div class="admin-card">🟨 Retirada Solicitada: Carlos -$200.00 - Processando em Lote</div>
-                            </div>
-                        </div>
-                        <!-- Aba 3 -->
-                        <div id="atContent3" style="display: none;">
-                            <div class="admin-card">⚙️ Limite Bola Ouro Jackpot: 58 bolas fixas.</div>
-                            <div class="admin-card">🔒 Criptografia das Cartelas SHA-256 ativa.</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
 
             <!-- Corpo Principal com Duas Colunas -->
             <div class="game-body">
@@ -453,6 +430,8 @@
             renderDrawnGrid();
             renderPlayerRanking();
             setupConnectivitySim();
+            renderAdminUsers();
+            populateDeleteDropdown();
         });
 
         // Controle de Conexão Estável Simulada
@@ -1126,6 +1105,55 @@
                                   <div>Saldo: $${p.chips.toFixed(2)} <button class="btn btn-remove" style="padding:2px 8px; font-size:0.7em; margin-left:6px;" onclick="removeAdminUser('${p.id}')">Kikar</button></div>`;
                 container.appendChild(card);
             });
+
+            populateDeleteDropdown();
+        }
+
+        // Preencher Dropdown de Seleção de Jogador para Exclusão
+        function populateDeleteDropdown() {
+            const select = document.getElementById('deletePlayerSelect');
+            if (!select) return;
+            const currentValue = select.value;
+            select.innerHTML = '<option value="">-- Selecione um jogador para excluir --</option>';
+            playersData.forEach(p => {
+                if (p.id === 'player_main') return;
+                const opt = document.createElement('option');
+                opt.value = p.id;
+                const tipo = p.isBot ? '🤖 Bot' : '👤 Real';
+                opt.textContent = `${tipo} • ${p.name} • Saldo: $${p.chips.toFixed(2)}`;
+                select.appendChild(opt);
+            });
+            if (currentValue && playersData.some(p => p.id === currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        // Confirmar e Executar Exclusão Permanente do Jogador Selecionado
+        function confirmarExclusaoJogador() {
+            const select = document.getElementById('deletePlayerSelect');
+            const selectedId = select ? select.value : '';
+            if (!selectedId) {
+                showToast("Selecione um jogador na lista para excluir.", "warning");
+                return;
+            }
+            const player = playersData.find(p => p.id === selectedId);
+            if (!player) {
+                showToast("Jogador não encontrado.", "error");
+                return;
+            }
+            if (player.id === 'player_main') {
+                showToast("Você não pode excluir a si mesmo da sessão.", "error");
+                return;
+            }
+            const confirmMsg = `Tem certeza que deseja EXCLUIR PERMANENTEMENTE o jogador "${player.name}"?\n\nEsta ação removerá o jogador, suas cartelas, histórico e saldo de forma IRREVERSÍVEL.`;
+            if (!confirm(confirmMsg)) return;
+
+            const removedName = player.name;
+            playersData = playersData.filter(p => p.id !== selectedId);
+            renderPlayerRanking();
+            renderAdminUsers();
+            showToast(`Jogador "${removedName}" foi excluído permanentemente.`, "success");
+            pushLog(`Administrador excluiu permanentemente o jogador: ${removedName}`);
         }
 
         // Adicionar Bot com Nome Limpo via Painel Admin
@@ -1158,6 +1186,7 @@
                 document.getElementById(`atTab${i}`).classList.toggle('active', i === tabIndex);
                 document.getElementById(`atContent${i}`).style.display = i === tabIndex ? 'block' : 'none';
             }
+            if (tabIndex === 1) populateDeleteDropdown();
         }
 
         // Gerenciamento de Janelas Modais (Pix / Saque)
