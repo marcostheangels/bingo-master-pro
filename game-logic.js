@@ -1,3 +1,6 @@
+const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'))
+    ? '' : 'https://bingo-master-pro-2026.onrender.com';
+
 const INITIAL_CHIPS = 0;
 let minhaSessaoToken = localStorage.getItem('bingo_session_token') || '';
 let meuCpf = (localStorage.getItem('bingo_meu_cpf') || '').padStart(11, '0').slice(0, 11);
@@ -60,7 +63,7 @@ async function registrar() {
         return;
     }
     try {
-        const res = await fetch('/api/register', {
+        const res = await fetch(API_BASE + '/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ nomeCompleto: nome, cpf: cpfLimpo, email, senha, chavePix })
@@ -93,7 +96,7 @@ async function fazerLogin() {
         return;
     }
     try {
-        const res = await fetch('/api/login', {
+        const res = await fetch(API_BASE + '/api/login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cpf, senha })
@@ -142,7 +145,7 @@ function conectarAposAuth() {
 async function validarSessaoExistente() {
     if (!minhaSessaoToken || !meuCpf) return false;
     try {
-        const res = await fetch('/api/validar-sessao', {
+        const res = await fetch(API_BASE + '/api/validar-sessao', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ sessionToken: minhaSessaoToken, cpf: meuCpf })
@@ -1426,7 +1429,7 @@ function processPhaseWinners(winners, phaseKey) {
         saveChips(result.player.name, result.player.chips);
         // Registra a transação de prêmio no servidor (para o painel do admin)
         try {
-            fetch('/api/registrar-premio', {
+            fetch(API_BASE + '/api/registrar-premio', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nome: result.player.name, valor: result.totalReward, fase: phaseKey })
@@ -1984,7 +1987,7 @@ function salvarHistoricoRodada() {
         totalBolas: drawnBalls.length,
         vencedores: getVencedoresRodada()
     };
-    fetch('/api/salvar-historico', {
+    fetch(API_BASE + '/api/salvar-historico', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(dados)
@@ -2445,7 +2448,7 @@ async function gerarPix() {
     document.getElementById('pixLoader').style.display = 'block';
 
     try {
-        const res = await fetch('/api/criar-pix', {
+        const res = await fetch(API_BASE + '/api/criar-pix', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ valor, nome: myName, cpf: meuCpf, email: myName.replace(/\s+/g, '.').toLowerCase() + '@email.com' })
@@ -2505,7 +2508,7 @@ async function gerarPix() {
             if (pixPolling) clearInterval(pixPolling);
             pixPolling = setInterval(async () => {
                 try {
-                    const statusRes = await fetch('/api/status-pix/' + data.paymentId);
+                    const statusRes = await fetch(API_BASE + '/api/status-pix/' + data.paymentId);
                     const statusData = await statusRes.json();
                     if (statusData.status === 'approved') {
                         clearInterval(pixPolling);
@@ -2579,7 +2582,7 @@ async function processarConfirmacaoPix(statusData, paymentId) {
         sendToHost({ type: 'recargaFeita', nome: myName, fichas });
     }
 
-    await fetch('/api/confirmar-recarga', {
+    await fetch(API_BASE + '/api/confirmar-recarga', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ paymentId })
@@ -2591,7 +2594,7 @@ async function processarConfirmacaoPix(statusData, paymentId) {
 
 async function verificarRecargas() {
     try {
-        const res = await fetch('/api/recargas-pendentes/' + encodeURIComponent(myName));
+        const res = await fetch(API_BASE + '/api/recargas-pendentes/' + encodeURIComponent(myName));
         const recargas = await res.json();
         for (const r of recargas) {
             const fichas = r.fichas;
@@ -2607,7 +2610,7 @@ async function verificarRecargas() {
                 sendToHost({ type: 'adminUpdateChips', players: allPlayers });
             }
 
-            await fetch('/api/sincronizar-recarga', {
+            await fetch(API_BASE + '/api/sincronizar-recarga', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ paymentId: r.paymentId })
@@ -2622,7 +2625,7 @@ async function verificarRecargas() {
 
 // ==================== SAQUE ====================
 function abrirModalSaque() {
-    fetch('/api/admin/modo-teste')
+    fetch(API_BASE + '/api/admin/modo-teste')
         .then(r => r.json())
         .then(d => {
             if (typeof modoTesteSaque !== 'undefined') {
@@ -2672,7 +2675,7 @@ async function solicitarSaque() {
     try {
         const payload = { nome: myName, valor, chavePix, tipoChave, sessionToken: minhaSessaoToken };
         console.log('[SAQUE FRONTEND] Enviando:', payload);
-        const res = await fetch('/api/solicitar-saque', {
+        const res = await fetch(API_BASE + '/api/solicitar-saque', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)

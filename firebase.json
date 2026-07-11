@@ -1,0 +1,23 @@
+{
+  "hosting": {
+    "public": ".",
+    "ignore": [
+      "node_modules/**",
+      ".git/**",
+      ".env",
+      "balls/**",
+      "*.py",
+      "*.backup",
+      "debug*",
+      "server.js",
+      "server.js.backup",
+      "db.js",
+      "engine.js",
+      "fix_*.js",
+      "test_*.js",
+      "api_fix.js",
+      "debug_old.js"
+    ],
+    "rewrites": []
+  }
+}
