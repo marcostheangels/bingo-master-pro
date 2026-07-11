@@ -349,8 +349,6 @@ function createBotPlayer(index) {
     };
 }
 
-const CARD_COST = 150; // R$0,15 cada cartela
-
 function addBotsToGame() {
     if (allPlayers.some(p => p.isBot)) return;
 
