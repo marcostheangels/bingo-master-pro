@@ -1163,7 +1163,7 @@ app.get('/api/admin/usuarios-com-saldo', (req, res) => {
 });
 
 // Admin - Dar bônus de fichas para usuário
-app.post('/api/admin/usuario/bonus', (req, res) => {
+app.post('/api/admin/usuario/bonus', async (req, res) => {
     try {
         const { cpf, bonus } = req.body;
         if (!cpf || !bonus || bonus <= 0) {
@@ -1184,13 +1184,44 @@ app.post('/api/admin/usuario/bonus', (req, res) => {
             fichasStore[key] = { chips: engine.INITIAL_CHIPS, winnings: 0 };
         }
         fichasStore[key].chips += parseInt(bonus);
-        db.setFichasStore(fichasStore);
+        await db.setFichasStore(fichasStore);
+
+        db.setBonusPrimeiroDepositoJaUsado(usuario.nomeCompleto);
 
         console.log(`[BONUS] ${bonus} fichas concedidas para ${usuario.nomeCompleto} via painel admin`);
         res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips });
     } catch (err) {
         console.error('[API] Erro ao conceder bônus:', err);
         res.status(500).json({ error: 'Erro interno.' });
+    }
+});
+
+// Buscar fichas do usuário (para sincronização com servidor)
+app.get('/api/fichas/:cpf', (req, res) => {
+    try {
+        const cpf = String(req.params.cpf).replace(/\D/g, '').padStart(11, '0');
+        const usuarios = carregarUsuarios();
+        const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
+        const usuario = usuariosArray.find(u => String(u.cpf).padStart(11, '0') === cpf);
+        if (!usuario) {
+            return res.json({ chips: 0, winnings: 0 });
+        }
+        const key = usuario.nomeCompleto.toLowerCase().trim();
+        const fichasStore = db.getFichasStore();
+        const fichas = fichasStore[key] || { chips: engine.INITIAL_CHIPS, winnings: 0 };
+        res.json({ chips: fichas.chips, winnings: fichas.winnings });
+    } catch (err) {
+        res.json({ chips: 0, winnings: 0 });
+    }
+});
+
+// Admin - Listar usuários com bônus já concedidos
+app.get('/api/admin/usuarios-com-bonus', (req, res) => {
+    try {
+        const bonusCache = db.getBonusPrimeiroDeposito();
+        res.json(Object.keys(bonusCache));
+    } catch (err) {
+        res.json([]);
     }
 });
 

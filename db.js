@@ -333,7 +333,10 @@ function setUsuarios(lista) {
 function getFichasStore() { return fichasCache; }
 function setFichasStore(store) {
     fichasCache = store;
-    syncFichas().catch(e => console.error('[DB] syncFichas failed:', e.message));
+    return syncFichas().catch(e => {
+        console.error('[DB] syncFichas failed:', e.message);
+        throw e;
+    });
 }
 function syncFichasStore() {
     syncFichas().catch(e => console.error('[DB] syncFichas failed:', e.message));

@@ -32,6 +32,21 @@ function saveChips(name, amount) {
     localStorage.setItem(key, amount);
 }
 
+async function syncChipsFromServer(cpf, name) {
+    if (!cpf || !name) return 0;
+    try {
+        const res = await fetch(API_BASE + '/api/fichas/' + cpf);
+        const data = await res.json();
+        if (data.chips !== undefined) {
+            saveChips(name, data.chips);
+            return data.chips;
+        }
+    } catch (e) {
+        console.error('[SYNC] Erro ao sincronizar fichas:', e);
+    }
+    return 0;
+}
+
 function setStatusMessage(message, type = 'info') {
     const statusBox = document.getElementById('connectionStatusMsg');
     const statusTxt = document.getElementById('statusTxt');
@@ -959,21 +974,27 @@ function updatePlayerListUI() {
 }
 
 function carregarCadastrosAdmin() {
-    fetch(API_BASE + '/api/admin/usuarios')
-        .then(r => r.json())
-        .then(usuarios => {
+    Promise.all([
+        fetch(API_BASE + '/api/admin/usuarios').then(r => r.json()),
+        fetch(API_BASE + '/api/admin/usuarios-com-bonus').then(r => r.json())
+    ])
+    .then(([usuarios, usuariosComBonus]) => {
             const div = document.getElementById('adminCadastrosList');
             if (!div) return;
             if (usuarios.length === 0) {
                 div.innerHTML = '<p style="color:#a0a0b0;font-size:0.82em">Nenhum cadastro.</p>';
                 return;
             }
-            div.innerHTML = usuarios.map(u => `
+            const bonusSet = new Set(usuariosComBonus.map(n => n.toLowerCase().trim()));
+            div.innerHTML = usuarios.map(u => {
+                const key = (u.nomeCompleto || u.nome || '').toLowerCase().trim();
+                const jaTemBonus = bonusSet.has(key);
+                return `
                 <div class="admin-card" style="position:relative;padding-bottom:40px">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
                         <strong>${u.nomeCompleto || u.nome || 'Sem nome'}</strong>
                         <div style="display:flex;gap:6px">
-                            <button class="btn" onclick="darBonusUsuario('${u.cpf}', '${u.nomeCompleto || u.nome}')" style="padding:6px 12px;font-size:0.75em;background:#10b981;min-width:80px">🎁 Bônus</button>
+                            ${jaTemBonus ? '<span style="color:#10b981;font-size:0.8em">✓ Bônus dado</span>' : `<button class="btn" onclick="darBonusUsuario('${u.cpf}', '${u.nomeCompleto || u.nome}')" style="padding:6px 12px;font-size:0.75em;background:#10b981;min-width:80px">🎁 Bônus</button>`}
                             <button class="btn btn-remove" onclick="excluirUsuarioAdmin('${u.cpf}', '${u.nomeCompleto || u.nome}')" style="padding:6px 12px;font-size:0.75em;min-width:80px">🗑️ Excluir</button>
                         </div>
                     </div>
@@ -984,7 +1005,7 @@ function carregarCadastrosAdmin() {
                     <div style="color:#6b6599;font-size:0.75em;margin-top:4px">${u.data ? new Date(u.data).toLocaleString('pt-BR') : ''}</div>
                     <div style="color:#ef4444;font-size:0.72em;margin-top:8px;font-weight:600">⚠️ Esta ação remove TODOS os dados: usuário, fichas, ganhos, saques, transações e histórico. O jogador poderá se cadastrar novamente.</div>
                 </div>
-            `).join('');
+            `}).join('');
         })
         .catch(() => {
             const div = document.getElementById('adminCadastrosList');

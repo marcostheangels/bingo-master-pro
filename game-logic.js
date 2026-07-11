@@ -113,6 +113,7 @@ async function fazerLogin() {
         localStorage.setItem('bingo_last_name', data.nome);
         myName = data.nome;
         showToast('Login realizado com sucesso!', 'success');
+        if (typeof syncChipsFromServer === 'function') await syncChipsFromServer(data.cpf, data.nome);
         conectarAposAuth();
     } catch (e) {
         errEl.textContent = 'Erro de conexão com o servidor.';
@@ -155,6 +156,7 @@ async function validarSessaoExistente() {
             myName = data.nome;
             meuCpf = data.cpf;
             localStorage.setItem('bingo_last_name', data.nome);
+            if (typeof syncChipsFromServer === 'function') await syncChipsFromServer(meuCpf, myName);
             return true;
         }
     } catch (e) {}
