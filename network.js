@@ -727,7 +727,7 @@ function atualizarSaldoJogadorSelecionado() {
     }
     
     // Se não está na sala, busca no servidor pelo nome completo
-    fetch('/api/admin/usuarios-com-saldo')
+    fetch(API_BASE + '/api/admin/usuarios-com-saldo')
         .then(r => r.json())
         .then(usuarios => {
             const usuario = usuarios.find(u => u.nomeCompleto === selectedNome);
@@ -783,7 +783,7 @@ function sendAction(action, payload) {
 }
 
 function carregarSaquesAdmin() {
-    fetch('/api/admin/saques')
+    fetch(API_BASE + '/api/admin/saques')
         .then(r => r.json())
         .then(saques => {
             const div = document.getElementById('adminSaquesList');
@@ -809,7 +809,7 @@ function carregarSaquesAdmin() {
 }
 
 function carregarModoTeste() {
-    fetch('/api/admin/modo-teste')
+    fetch(API_BASE + '/api/admin/modo-teste')
         .then(r => r.json())
         .then(d => {
             modoTesteSaque = !!(d && d.ligado);
@@ -826,7 +826,7 @@ function carregarModoTeste() {
 
 function alternarModoTeste() {
     const novo = !modoTesteSaque;
-    fetch('/api/admin/modo-teste', {
+    fetch(API_BASE + '/api/admin/modo-teste', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ligado: novo })
@@ -842,12 +842,12 @@ function alternarModoTeste() {
 
 function processarSaqueAuto(id) {
     if (!confirm('Enviar PIX automaticamente para este jogador via Asaas?')) return;
-    fetch('/api/admin/saques')
+    fetch(API_BASE + '/api/admin/saques')
         .then(r => r.json())
         .then(saques => {
             const saque = saques.find(s => s.id === id);
             if (!saque) { showToast('Saque não encontrado.', 'error', 4000); return; }
-            return fetch('/api/admin/enviar-pix', {
+            return fetch(API_BASE + '/api/admin/enviar-pix', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -872,7 +872,7 @@ function processarSaqueAuto(id) {
 
 function processarSaqueManual(id) {
     if (!confirm('Marcar este saque como pago (manual)?')) return;
-    fetch('/api/admin/saque-pago', {
+    fetch(API_BASE + '/api/admin/saque-pago', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ saqueId: id })
@@ -913,7 +913,7 @@ function updatePlayerListUI() {
 }
 
 function carregarCadastrosAdmin() {
-    fetch('/api/admin/usuarios')
+    fetch(API_BASE + '/api/admin/usuarios')
         .then(r => r.json())
         .then(usuarios => {
             const div = document.getElementById('adminCadastrosList');
@@ -940,7 +940,7 @@ function carregarCadastrosAdmin() {
 }
 
 function carregarAdminUsuariosComSaldo() {
-    fetch('/api/admin/usuarios-com-saldo')
+    fetch(API_BASE + '/api/admin/usuarios-com-saldo')
         .then(r => r.json())
         .then(usuarios => {
             const select = document.getElementById('adminPlayerSelect');
@@ -1022,7 +1022,7 @@ function carregarHistoricoAdmin() {
     if (!div) return;
     div.innerHTML = '<p style="color:#a0a0b0;font-size:0.82em">Carregando...</p>';
     const filtro = getDataFiltro('filtroHistDe', 'filtroHistAte');
-    fetch('/api/admin/historico')
+    fetch(API_BASE + '/api/admin/historico')
         .then(r => r.json())
         .then(historico => {
             if (!div) return;
@@ -1091,7 +1091,7 @@ function carregarTransacoesAdmin() {
     if (!div) return;
     div.innerHTML = '<p style="color:#a0a0b0;font-size:0.82em">Carregando...</p>';
     const filtro = getDataFiltro('filtroTransDe', 'filtroTransAte');
-    fetch('/api/admin/transacoes')
+    fetch(API_BASE + '/api/admin/transacoes')
         .then(r => r.json())
         .then(transacoes => {
             if (!div) return;
@@ -1140,14 +1140,14 @@ function baixarCSV(data, nomeArquivo, colunas) {
 }
 
 function baixarHistoricoJSON() {
-    fetch('/api/admin/historico').then(r => r.json()).then(d => {
+    fetch(API_BASE + '/api/admin/historico').then(r => r.json()).then(d => {
         const filtro = getDataFiltro('filtroHistDe', 'filtroHistAte');
         baixarJSON(filtrarPorData(d, 'data', filtro.de, filtro.ate), 'historico_sorteios.json');
     }).catch(() => showToast('Erro ao baixar.', 'error', 4000));
 }
 
 function baixarHistoricoCSV() {
-    fetch('/api/admin/historico').then(r => r.json()).then(d => {
+    fetch(API_BASE + '/api/admin/historico').then(r => r.json()).then(d => {
         const filtro = getDataFiltro('filtroHistDe', 'filtroHistAte');
         const dados = filtrarPorData(d, 'data', filtro.de, filtro.ate);
         baixarCSV(dados, 'historico_sorteios.csv', ['numero', 'data', 'totalBolas']);
@@ -1155,14 +1155,14 @@ function baixarHistoricoCSV() {
 }
 
 function baixarTransacoesJSON() {
-    fetch('/api/admin/transacoes').then(r => r.json()).then(d => {
+    fetch(API_BASE + '/api/admin/transacoes').then(r => r.json()).then(d => {
         const filtro = getDataFiltro('filtroTransDe', 'filtroTransAte');
         baixarJSON(filtrarPorData(d, 'data', filtro.de, filtro.ate), 'transacoes.json');
     }).catch(() => showToast('Erro ao baixar.', 'error', 4000));
 }
 
 function baixarTransacoesCSV() {
-    fetch('/api/admin/transacoes').then(r => r.json()).then(d => {
+    fetch(API_BASE + '/api/admin/transacoes').then(r => r.json()).then(d => {
         const filtro = getDataFiltro('filtroTransDe', 'filtroTransAte');
         const dados = filtrarPorData(d, 'data', filtro.de, filtro.ate);
         baixarCSV(dados, 'transacoes.csv', ['tipo', 'nome', 'valor', 'data', 'detalhe']);
