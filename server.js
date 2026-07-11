@@ -1724,4 +1724,4 @@ async function iniciarServidor() {
 iniciarServidor().catch(err => {
     console.error('Falha ao iniciar servidor:', err);
     process.exit(1);
-});/ /   d e p l o y   t r i g g e r
+});//   d e p l o y   t r i g g e r
