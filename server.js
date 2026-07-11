@@ -1202,7 +1202,7 @@ app.delete('/api/admin/usuario/excluir', (req, res) => {
             return res.status(400).json({ error: 'CPF é obrigatório.' });
         }
         const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
-        
+
         // 1. Remover de usuarios.json
         const usuarios = carregarUsuarios();
         const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
@@ -1213,7 +1213,7 @@ app.delete('/api/admin/usuario/excluir', (req, res) => {
         const nomeUsuario = usuariosArray[usuarioIdx].nomeCompleto;
         usuariosArray.splice(usuarioIdx, 1);
         salvarUsuarios(usuariosArray);
-        
+
         // 2. Remover de fichasStore
         const fichasStore = db.getFichasStore();
         const keyNome = nomeUsuario.toLowerCase().trim();
@@ -1221,30 +1221,45 @@ app.delete('/api/admin/usuario/excluir', (req, res) => {
         if (fichasStore[keyNome]) delete fichasStore[keyNome];
         if (fichasStore[keyBot]) delete fichasStore[keyBot];
         db.setFichasStore(fichasStore);
-        
+
         // 3. Remover de adminCreditsStore
         const adminCreditsStore = db.getAdminCreditsStore();
         if (adminCreditsStore[keyNome]) delete adminCreditsStore[keyNome];
         if (adminCreditsStore[keyBot]) delete adminCreditsStore[keyBot];
         db.setAdminCreditsStore(adminCreditsStore);
-        
+
         // 4. Remover saques do usuário
         const saques = db.getSaques();
         const saquesFiltrados = saques.filter(s => (s.nome || '').toLowerCase().trim() !== keyNome);
         db.setSaques(saquesFiltrados);
-        
+
         // 5. Remover transações do usuário
         const transacoes = db.getTransacoes();
         const transacoesFiltradas = transacoes.filter(t => (t.nome || '').toLowerCase().trim() !== keyNome);
         db.setTransacoes(transacoesFiltradas);
-        
+
         // 6. Remover recargas do usuário
         const recargas = db.getRecargas();
         const recargasFiltradas = recargas.filter(r => (r.nome || '').toLowerCase().trim() !== keyNome);
         db.setRecargas(recargasFiltradas);
-        
+
+        // 7. Forçar logout do jogador deletado (se estiver conectado)
+        try {
+            const sessao = sessoesAtivas.get(cpfLimpo);
+            if (sessao && sessao.ws && sessao.ws.readyState === WebSocket.OPEN) {
+                sessao.ws.send(JSON.stringify({
+                    type: 'accountDeleted',
+                    message: `Sua conta "${nomeUsuario}" foi removida pelo administrador. Você será desconectado.`
+                }));
+                sessao.ws.close();
+            }
+            sessoesAtivas.delete(cpfLimpo);
+        } catch (e) {
+            console.error('[ADMIN EXCLUIR] Erro ao forçar logout:', e.message);
+        }
+
         console.log(`[ADMIN EXCLUIR] Usuário "${nomeUsuario}" (CPF: ${cpfLimpo}) excluído completamente com todos os dados`);
-        
+
         res.json({ success: true, message: `Usuário "${nomeUsuario}" excluído com sucesso. Todos os dados foram removidos.` });
     } catch (err) {
         console.error('[ADMIN EXCLUIR] Erro:', err);

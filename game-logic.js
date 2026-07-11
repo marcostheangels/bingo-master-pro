@@ -2572,7 +2572,9 @@ async function confirmarRecargaSimulada(data) {
     document.getElementById('pixLoader').style.display = 'none';
 
     const fichas = Math.round(data.valor * 1000);
-    myChips += fichas;
+    const bonus = Math.round(fichas * 0.10); // 🎁 Bônus de 10% sobre o depósito
+    const totalFichas = fichas + bonus;
+    myChips += totalFichas;
     saveChips(myName, myChips);
     updateChipsDisplay();
 
@@ -2581,10 +2583,10 @@ async function confirmarRecargaSimulada(data) {
         if (hostPlayer) hostPlayer.chips = myChips;
         sendToGuest({ type: 'gameState', players: allPlayers, drawnBalls, currentPhaseIndex });
     } else {
-        sendToHost({ type: 'recargaFeita', nome: myName, fichas });
+        sendToHost({ type: 'recargaFeita', nome: myName, fichas: totalFichas });
     }
 
-    showToast(`💰 Depósito de ${fichas.toLocaleString('pt-BR')} fichas confirmado!`, 'success');
+    showToast(`💰 Depósito de ${fichas.toLocaleString('pt-BR')} fichas + 🎁 Bônus de ${bonus.toLocaleString('pt-BR')} fichas (10%) confirmado!`, 'success', 7000);
     setTimeout(() => fecharModal('modalPix'), 2000);
 }
 
@@ -2594,7 +2596,9 @@ async function processarConfirmacaoPix(statusData, paymentId) {
     document.getElementById('pixLoader').style.display = 'none';
 
     const fichas = statusData.fichas || Math.round(statusData.valor * 1000);
-    myChips += fichas;
+    const bonus = Math.round(fichas * 0.10); // 🎁 Bônus de 10% sobre o depósito
+    const totalFichas = fichas + bonus;
+    myChips += totalFichas;
     saveChips(myName, myChips);
     updateChipsDisplay();
 
@@ -2603,7 +2607,7 @@ async function processarConfirmacaoPix(statusData, paymentId) {
         if (hostPlayer) hostPlayer.chips = myChips;
         sendToGuest({ type: 'gameState', players: allPlayers, drawnBalls, currentPhaseIndex });
     } else {
-        sendToHost({ type: 'recargaFeita', nome: myName, fichas });
+        sendToHost({ type: 'recargaFeita', nome: myName, fichas: totalFichas });
     }
 
     await fetch(API_BASE + '/api/confirmar-recarga', {
@@ -2612,7 +2616,7 @@ async function processarConfirmacaoPix(statusData, paymentId) {
         body: JSON.stringify({ paymentId })
     });
 
-    showToast(`💰 Depósito de ${fichas.toLocaleString('pt-BR')} fichas confirmado!`, 'success');
+    showToast(`💰 Depósito de ${fichas.toLocaleString('pt-BR')} fichas + 🎁 Bônus de ${bonus.toLocaleString('pt-BR')} fichas (10%) confirmado!`, 'success', 7000);
     setTimeout(() => fecharModal('modalPix'), 2000);
 }
 
@@ -2622,7 +2626,9 @@ async function verificarRecargas() {
         const recargas = await res.json();
         for (const r of recargas) {
             const fichas = r.fichas;
-            myChips += fichas;
+            const bonus = Math.round(fichas * 0.10); // 🎁 Bônus de 10% sobre o depósito
+            const totalFichas = fichas + bonus;
+            myChips += totalFichas;
             saveChips(myName, myChips);
             updateChipsDisplay();
 
@@ -2640,7 +2646,7 @@ async function verificarRecargas() {
                 body: JSON.stringify({ paymentId: r.paymentId })
             });
 
-            showToast(`💰 Depósito de ${fichas.toLocaleString('pt-BR')} fichas confirmado!`, 'success');
+            showToast(`💰 Depósito de ${fichas.toLocaleString('pt-BR')} fichas + 🎁 Bônus de ${bonus.toLocaleString('pt-BR')} fichas (10%) confirmado!`, 'success', 7000);
         }
     } catch (e) {
         console.warn('Erro ao verificar recargas:', e);
