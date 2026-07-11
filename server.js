@@ -21,8 +21,9 @@ const mailTransporter = nodemailer.createTransport({
         user: ADMIN_EMAIL,
         pass: 'gnbdjxgqjttrkgiy'
     },
-    logger: true,
-    debug: true
+    connectionTimeout: 10000,
+    greetingTimeout: 10000,
+    socketTimeout: 15000
 });
 
 function enviarEmailNotificacao(assunto, texto) {
@@ -34,10 +35,13 @@ function enviarEmailNotificacao(assunto, texto) {
         text: texto
     }).then(() => console.log('[EMAIL] Notificação enviada:', assunto))
     .catch(err => {
-        console.error('[EMAIL] Erro detalhado:', err);
+        console.error('[EMAIL] Erro detalhado:', err.message, err.code);
         // Fallback: tenta sem auth se falhar por credencial
         if (err.code === 'EAUTH' || err.responseCode === 535) {
             console.log('[EMAIL] Credencial inválida ou expirada. Gere uma nova senha de app em: https://myaccount.google.com/apppasswords');
+        }
+        if (err.code === 'ETIMEDOUT' || err.code === 'ECONNECTION') {
+            console.log('[EMAIL] Problema de conexão com smtp.gmail.com. Render pode estar bloqueando a porta 587.');
         }
     });
 }
@@ -1738,12 +1742,15 @@ async function iniciarServidor() {
         console.log(`WebSocket em ws://localhost:${PORT}`);
         console.log('Bingo Master Pro rodando - Asaas integrado');
         // Testa config de email ao iniciar
-        mailTransporter.verify().then(() => {
-            console.log('[EMAIL] Configuração SMTP verificada com sucesso!');
-        }).catch(err => {
-            console.error('[EMAIL] ERRO na configuração SMTP:', err.message);
-            console.error('[EMAIL] Stack:', err.stack);
-        });
+        setTimeout(() => {
+            mailTransporter.verify().then(() => {
+                console.log('[EMAIL] Configuração SMTP verificada com sucesso!');
+            }).catch(err => {
+                console.error('[EMAIL] ERRO na configuração SMTP:', err.message);
+                console.error('[EMAIL] Código:', err.code);
+                if (err.response) console.error('[EMAIL] Resposta:', err.response);
+            });
+        }, 5000);
     });
 }
 
