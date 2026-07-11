@@ -13,11 +13,15 @@ const DONO_CPF = '05893761600';
 const ADMIN_EMAIL = 'marcostheangels@gmail.com';
 
 const mailTransporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
     auth: {
         user: ADMIN_EMAIL,
         pass: 'gnbdjxgqjttrkgiy'
-    }
+    },
+    logger: true,
+    debug: true
 });
 
 function enviarEmailNotificacao(assunto, texto) {
@@ -1732,6 +1736,13 @@ async function iniciarServidor() {
         console.log(`Servidor rodando em http://localhost:${PORT}`);
         console.log(`WebSocket em ws://localhost:${PORT}`);
         console.log('Bingo Master Pro rodando - Asaas integrado');
+        // Testa config de email ao iniciar
+        mailTransporter.verify().then(() => {
+            console.log('[EMAIL] Configuração SMTP verificada com sucesso!');
+        }).catch(err => {
+            console.error('[EMAIL] ERRO na configuração SMTP:', err.message);
+            console.error('[EMAIL] Stack:', err.stack);
+        });
     });
 }
 
