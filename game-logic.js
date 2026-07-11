@@ -387,7 +387,8 @@ function goToScreen(screenId) {
         const adminTop = document.getElementById('adminPanelTop');
         const isMarcos = typeof isMarcosName === 'function' && isMarcosName(myName);
         const ehDono = isMarcos || (typeof souDono !== 'undefined' && souDono);
-        if (adminTop) adminTop.style.display = (isHost || ehDono) ? 'block' : 'none';
+        const ehEspectador = typeof myRole !== 'undefined' && myRole === 'spectator';
+        if (adminTop) adminTop.style.display = (!ehEspectador && (isHost || ehDono)) ? 'block' : 'none';
         
         const hostMsgEl = document.getElementById('hostOnlyMsg');
         if (hostMsgEl) hostMsgEl.style.display = isHost ? 'block' : 'none';
@@ -2853,6 +2854,7 @@ function sairDaConta() {
     myRole = '';
     myRoomId = '';
     myId = '';
+    souDono = false;
     pendingConnect = null;
     isReady = false;
     readyPlayers = {};
