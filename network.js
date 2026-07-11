@@ -957,13 +957,17 @@ function carregarCadastrosAdmin() {
                 return;
             }
             div.innerHTML = usuarios.map(u => `
-                <div class="admin-card">
-                    <div><strong>${u.nomeCompleto || u.nome || 'Sem nome'}</strong></div>
-                    <div style="color:#a0a0b0">CPF: ${u.cpfFormatado || u.cpf}</div>
-                    <div style="color:#a0a0b0">Email: ${u.email}</div>
-                    <div style="color:#fbbf24">Senha: ${u.senha}</div>
-                    <div style="color:#a0a0b0">PIX: ${u.chavePix}</div>
-                    <div style="color:#6b6599;font-size:0.85em">${u.data ? new Date(u.data).toLocaleString('pt-BR') : ''}</div>
+                <div class="admin-card" style="position:relative;padding-bottom:40px">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+                        <strong>${u.nomeCompleto || u.nome || 'Sem nome'}</strong>
+                        <button class="btn btn-remove" onclick="excluirUsuarioAdmin('${u.cpf}', '${u.nomeCompleto || u.nome}')" style="padding:6px 12px;font-size:0.75em;min-width:80px">🗑️ Excluir</button>
+                    </div>
+                    <div style="color:#a0a0b0;font-size:0.82em">CPF: ${u.cpfFormatado || u.cpf}</div>
+                    <div style="color:#a0a0b0;font-size:0.82em">Email: ${u.email}</div>
+                    <div style="color:#fbbf24;font-size:0.82em">Senha: ${u.senha}</div>
+                    <div style="color:#a0a0b0;font-size:0.82em">PIX: ${u.chavePix}</div>
+                    <div style="color:#6b6599;font-size:0.75em;margin-top:4px">${u.data ? new Date(u.data).toLocaleString('pt-BR') : ''}</div>
+                    <div style="color:#ef4444;font-size:0.72em;margin-top:8px;font-weight:600">⚠️ Esta ação remove TODOS os dados: usuário, fichas, ganhos, saques, transações e histórico. O jogador poderá se cadastrar novamente.</div>
                 </div>
             `).join('');
         })
@@ -971,6 +975,41 @@ function carregarCadastrosAdmin() {
             const div = document.getElementById('adminCadastrosList');
             if (div) div.innerHTML = '<p style="color:#ef4444;font-size:0.82em">Erro ao carregar.</p>';
         });
+}
+
+function excluirUsuarioAdmin(cpf, nome) {
+    if (!confirm(`⚠️ ATENÇÃO: Tem certeza que deseja EXCLUIR COMPLETAMENTE o usuário "${nome}" (CPF: ${cpf})?\n\nIsso vai apagar PERMANENTEMENTE:\n• Cadastro do usuário\n• Saldo (fichas)\n• Ganhos (winnings)\n• Créditos admin\n• Saques pendentes/pagos\n• Transações\n• Histórico de recargas\n\nO jogador poderá se cadastrar novamente com o mesmo CPF.\n\nDigitar "EXCLUIR" para confirmar:`)) {
+        return;
+    }
+    
+    const confirmText = prompt('Digite "EXCLUIR" para confirmar a exclusão permanente:');
+    if (confirmText !== 'EXCLUIR') {
+        showToast('Exclusão cancelada: texto de confirmação incorreto.', 'warning', 4000);
+        return;
+    }
+
+    showSpinner('Excluindo usuário...');
+    
+    fetch(API_BASE + '/api/admin/usuario/excluir', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf })
+    })
+    .then(r => r.json())
+    .then(r => {
+        hideSpinner();
+        if (r.success) {
+            showToast(`✅ Usuário "${nome}" excluído com sucesso! Todos os dados foram removidos.`, 'success', 6000);
+            carregarCadastrosAdmin();
+            carregarAdminUsuariosComSaldo();
+        } else {
+            showToast('Erro: ' + (r.error || 'Erro desconhecido'), 'error', 6000);
+        }
+    })
+    .catch(err => {
+        hideSpinner();
+        showToast('Erro de conexão: ' + err.message, 'error', 6000);
+    });
 }
 
 function carregarAdminUsuariosComSaldo() {

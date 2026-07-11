@@ -1005,7 +1005,13 @@ app.post('/api/register', (req, res) => {
         };
         usuarios.push(novoUsuario);
         salvarUsuarios(usuarios);
-        console.log(`[REGISTER] ${nomeCompleto} (${novoUsuario.cpfFormatado})`);
+
+        const key = nomeCompleto.toLowerCase().trim();
+        const fichasStore = db.getFichasStore();
+        fichasStore[key] = { chips: 5000, winnings: 0 };
+        db.setFichasStore(fichasStore);
+
+        console.log(`[REGISTER] ${nomeCompleto} (${novoUsuario.cpfFormatado}) - Bônus de 5.000 fichas creditado`);
         res.json({ success: true, sessionToken: novoUsuario.sessionToken, cpf, nome: nomeCompleto });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -1185,6 +1191,64 @@ app.post('/api/admin/usuarios/:cpf/edicao', (req, res) => {
         res.json({ success: true, usuario });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno.' });
+    }
+});
+
+// Admin - Excluir usuário completamente (todos os dados)
+app.delete('/api/admin/usuario/excluir', (req, res) => {
+    try {
+        const { cpf } = req.body;
+        if (!cpf) {
+            return res.status(400).json({ error: 'CPF é obrigatório.' });
+        }
+        const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
+        
+        // 1. Remover de usuarios.json
+        const usuarios = carregarUsuarios();
+        const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
+        const usuarioIdx = usuariosArray.findIndex(u => String(u.cpf).padStart(11, '0') === cpfLimpo);
+        if (usuarioIdx === -1) {
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+        const nomeUsuario = usuariosArray[usuarioIdx].nomeCompleto;
+        usuariosArray.splice(usuarioIdx, 1);
+        salvarUsuarios(usuariosArray);
+        
+        // 2. Remover de fichasStore
+        const fichasStore = db.getFichasStore();
+        const keyNome = nomeUsuario.toLowerCase().trim();
+        const keyBot = 'bot-' + nomeUsuario.toLowerCase().trim().replace(/\s+/g, '-');
+        if (fichasStore[keyNome]) delete fichasStore[keyNome];
+        if (fichasStore[keyBot]) delete fichasStore[keyBot];
+        db.setFichasStore(fichasStore);
+        
+        // 3. Remover de adminCreditsStore
+        const adminCreditsStore = db.getAdminCreditsStore();
+        if (adminCreditsStore[keyNome]) delete adminCreditsStore[keyNome];
+        if (adminCreditsStore[keyBot]) delete adminCreditsStore[keyBot];
+        db.setAdminCreditsStore(adminCreditsStore);
+        
+        // 4. Remover saques do usuário
+        const saques = db.getSaques();
+        const saquesFiltrados = saques.filter(s => (s.nome || '').toLowerCase().trim() !== keyNome);
+        db.setSaques(saquesFiltrados);
+        
+        // 5. Remover transações do usuário
+        const transacoes = db.getTransacoes();
+        const transacoesFiltradas = transacoes.filter(t => (t.nome || '').toLowerCase().trim() !== keyNome);
+        db.setTransacoes(transacoesFiltradas);
+        
+        // 6. Remover recargas do usuário
+        const recargas = db.getRecargas();
+        const recargasFiltradas = recargas.filter(r => (r.nome || '').toLowerCase().trim() !== keyNome);
+        db.setRecargas(recargasFiltradas);
+        
+        console.log(`[ADMIN EXCLUIR] Usuário "${nomeUsuario}" (CPF: ${cpfLimpo}) excluído completamente com todos os dados`);
+        
+        res.json({ success: true, message: `Usuário "${nomeUsuario}" excluído com sucesso. Todos os dados foram removidos.` });
+    } catch (err) {
+        console.error('[ADMIN EXCLUIR] Erro:', err);
+        res.status(500).json({ error: 'Erro interno ao excluir usuário.' });
     }
 });
 
