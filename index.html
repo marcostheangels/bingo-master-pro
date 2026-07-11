@@ -180,18 +180,49 @@
                     </div>
 
                     <!-- Conteúdos das Abas Administrativas -->
-                    <div id="adminTabContent" class="admin-tab-content">
-                        <!-- Aba 1 -->
-                        <div id="atContent1">
-                            <div class="admin-filtros">
-                                <label>Filtro:</label>
-                                <input type="text" class="input-field-sm" placeholder="Buscar usuário..." id="searchUserAdmin" oninput="renderAdminUsers()">
-                                <div class="btn-row">
-                                    <button class="btn btn-refresh" onclick="addSimulatedUser()">+ Adicionar Bot</button>
-                                </div>
-                            </div>
-                            <div id="adminUsersList"></div>
-                        </div>
+<div id="adminTabContent" class="admin-tab-content">
+    
+    <!-- Aba 1 -->
+    <div id="atContent1">
+        <div class="admin-filtros">
+            <label>Filtro:</label>
+            <input type="text" class="input-field-sm" placeholder="Buscar usuário..." id="searchUserAdmin" oninput="renderAdminUsers()">
+            <div class="btn-row">
+                <button class="btn btn-refresh" onclick="addSimulatedUser()">+ Adicionar Bot</button>
+            </div>
+        </div>
+        
+        <!-- Lista de Usuários -->
+        <div id="adminUsersList"></div>
+
+        <!-- Painel de Exclusão (Dentro da Aba 1) -->
+        <div class="admin-card" style="margin-top: 15px; border-color: rgba(239, 68, 68, 0.4);">
+            <h4 style="color: #ff4d4d; margin-bottom: 10px; font-size: 0.95em;">🗑️ Excluir Jogador Completamente</h4>
+            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+                <input type="text" id="deletePlayerInput" class="input-field-sm" placeholder="Nome, ID ou Email" style="flex: 1; min-width: 200px;">
+                <button class="btn btn-remove" onclick="confirmarExclusaoJogador()">Excluir Permanentemente</button>
+            </div>
+            <p style="font-size: 0.75em; color: rgba(255,255,255,0.5); margin-top: 8px; margin-bottom: 0;">
+                ⚠️ Atenção: Esta ação é irreversível.
+            </p>
+        </div>
+    </div>
+
+    <!-- Aba 2 -->
+    <div id="atContent2" style="display: none;">
+        <h4>Últimas movimentações via Pix aprovadas</h4>
+        <div id="adminFinanceList">
+            <div class="admin-card">🟩 Pix Recebido: Marcos +$50.00 - Sucesso</div>
+            <div class="admin-card">🟨 Retirada Solicitada: Carlos -$200.00 - Processando em Lote</div>
+        </div>
+    </div>
+
+    <!-- Aba 3 -->
+    <div id="atContent3" style="display: none;">
+        <div class="admin-card">⚙️ Limite Bola Ouro Jackpot: 58 bolas fixas.</div>
+        <div class="admin-card">🔒 Criptografia das Cartelas SHA-256 ativa.</div>
+    </div>
+</div>
                         <!-- Aba 2 -->
                         <div id="atContent2" style="display: none;">
                             <h4>Últimas movimentações via Pix aprovadas</h4>
