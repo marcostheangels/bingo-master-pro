@@ -20,7 +20,18 @@ const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 let mailTransporter = null;
 let emailFrom = ADMIN_EMAIL;
-if (RESEND_API_KEY) {
+
+// ===================== CORREÇÃO DA CONFIGURAÇÃO DE EMAIL =====================
+// Dá prioridade total para o SMTP do Gmail se a senha de app estiver definida no Render
+if (SMTP_PASS) {
+    mailTransporter = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: { user: SMTP_USER, pass: SMTP_PASS }
+    });
+    console.log('[EMAIL] Usando SMTP configurado:', SMTP_HOST);
+} else if (RESEND_API_KEY) {
     mailTransporter = nodemailer.createTransport({
         host: 'smtp.resend.com',
         port: 587,
@@ -37,16 +48,8 @@ if (RESEND_API_KEY) {
         auth: { user: 'apikey', pass: SENDGRID_API_KEY }
     });
     console.log('[EMAIL] Usando SendGrid');
-} else if (SMTP_PASS) {
-    mailTransporter = nodemailer.createTransport({
-        host: SMTP_HOST,
-        port: SMTP_PORT,
-        secure: SMTP_PORT === 465,
-        auth: { user: SMTP_USER, pass: SMTP_PASS }
-    });
-    console.log('[EMAIL] Usando SMTP:', SMTP_HOST);
 } else {
-    console.log('[EMAIL] AVISO: Sem configuração de email (defina RESEND_API_KEY, SENDGRID_API_KEY ou SMTP_PASS)');
+    console.log('[EMAIL] AVISO: Sem configuração de email (defina SMTP_PASS no painel do Render)');
 }
 
 function enviarEmailNotificacao(assunto, texto) {
@@ -121,11 +124,9 @@ function saveFichas() {
 }
 function getChips(nome) {
     const key = (nome || '').toLowerCase().trim().normalize('NFC');
-    // Busca exata
     for (const k of Object.keys(fichasStore)) {
         if (k.normalize('NFC') === key) return fichasStore[k];
     }
-    // Busca por prefixo
     for (const k of Object.keys(fichasStore)) {
         if (k.normalize('NFC').startsWith(key)) return fichasStore[k];
     }
@@ -171,7 +172,6 @@ function getRoom(roomId) {
 }
 
 function sanitizePlayers(room) {
-    // Remove bankrupt bots from the system, hide zero-balance humans
     const toDelete = [];
     const visible = Array.from(room.players.values()).filter(p => {
         if (p.isBot && p.chips <= 0) {
@@ -179,7 +179,7 @@ function sanitizePlayers(room) {
             return false;
         }
         if (!p.isBot && p.chips <= 0 && (!p.cards || p.cards.length === 0)) {
-            return false; // hide from list but keep in system
+            return false;
         }
         return true;
     });
@@ -222,7 +222,6 @@ function sendGameState(room, ws) {
     broadcast(room, msg);
 }
 
-// ===================== SERVER-SIDE GAME LOOP =====================
 function addHistorico(room, msg) {
     room.log.push(msg);
     if (room.log.length > 50) room.log.shift();
@@ -239,7 +238,6 @@ function iniciarAutoStartServer(room) {
     broadcast(room, { type: 'preparingNewRound', seconds: 50 });
     addLog(room, '⏳ Novo sorteio em 50 segundos. Compre suas cartelas!');
     room.autoStartSeconds = 50;
-    console.log(`[AUTOSTART] Iniciando contagem de ${room.autoStartSeconds}s para sala ${room.id}`);
     room.autoStartTimer = setInterval(() => {
         room.autoStartSeconds--;
         broadcast(room, { type: 'autoStart', seconds: room.autoStartSeconds });
@@ -265,11 +263,10 @@ function iniciarNovaRodada(room) {
     room.gameActive = true;
     room.gameEnded = false;
     
-    // Give bots cards, reset awards
     room.players.forEach(p => {
         if (p.isBot) {
-            const maxCards = engine.BOT_MAX_CARDS; // 15
-            const qtd = Math.floor(Math.random() * maxCards) + 1; // 1 a 15
+            const maxCards = engine.BOT_MAX_CARDS;
+            const qtd = Math.floor(Math.random() * maxCards) + 1;
             p.cards = [];
             for (let i = 0; i < qtd; i++) {
                 p.cards.push(engine.generateBingoCardData());
@@ -310,7 +307,6 @@ function sortearProximaBola(room) {
         return;
     }
     
-    // Se a fase atual já foi ganha por alguém, não sortear mais bolas nesta fase
     const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
     let jaTemVencedor = false;
     room.players.forEach(p => {
@@ -332,12 +328,10 @@ function sortearProximaBola(room) {
     
     broadcast(room, { type: 'syncBall', ball, drawnBalls: [...room.drawnBalls] });
     
-    // Broadcast close cards status
     const playersArr = Array.from(room.players.values());
     const closeInfo = engine.computeCloseCardsForAllPlayers(playersArr, room.currentPhaseIndex, room.drawnBalls);
     broadcast(room, { type: 'closeCards', data: closeInfo });
     
-    // Check winners
     const winners = engine.checkAwardsForAllPlayers(playersArr, room.currentPhaseIndex, room.drawnBalls);
     
     if (winners.length > 0) {
@@ -345,13 +339,11 @@ function sortearProximaBola(room) {
         const totalCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
         const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, totalCards);
         
-        // Update persistent chips/winnings
         results.forEach(r => {
             const player = r.player;
             if (!player.isBot) {
                 setChips(player.name, player.chips, player.winnings);
             }
-            // Register prize transaction
             const transacoes = db.getTransacoes();
             transacoes.push({
                 tipo: 'premio', nome: player.name, nomeExibicao: player.name, valor: r.totalReward / 1000,
@@ -366,7 +358,6 @@ function sortearProximaBola(room) {
             addLog(room, `${r.player.name} ganhou ${(r.totalReward / 1000).toFixed(2)} fichas em ${phaseLabel}.${jt}`);
         });
         
-        // Build winning card data for each winner
         const resultsWithCards = results.map(r => {
             const winnerEntry = winners.find(w => w.player === r.player);
             let cardData = null;
@@ -405,7 +396,6 @@ function sortearProximaBola(room) {
                 card: cardData
             };
         });
-        // Broadcast winner event
         broadcast(room, {
             type: 'winnerEvent',
             phaseKey,
@@ -415,16 +405,14 @@ function sortearProximaBola(room) {
         broadcast(room, { type: 'confetti' });
         
         if (isJackpot) {
-    room.jackpot = engine.JACKPOT_REWARD;
-    room.totalCardsAtStart = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
+            room.jackpot = engine.JACKPOT_REWARD;
+            room.totalCardsAtStart = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
             broadcast(room, { type: 'jackpotUpdate', value: room.jackpot });
         }
         
-        // Advance phase or end round
         if (room.currentPhaseIndex < engine.PHASE_SEQUENCE.length - 1) {
             avancarParaProximaFase(room);
         } else {
-            // All phases done (keno finished) - end round
             finalizarRodada(room);
         }
         return;
@@ -438,7 +426,6 @@ function avancarParaProximaFase(room) {
     room.currentPhaseIndex++;
     broadcast(room, { type: 'advancePhase', currentPhaseIndex: room.currentPhaseIndex });
     sendGameState(room);
-    // Pausa antes de começar a sortear bolas da próxima fase
     room.phasePauseTimer = setTimeout(() => {
         room.phasePauseTimer = null;
         agendarProximoDraw(room);
@@ -482,10 +469,8 @@ function finalizarRodada(room) {
     addLog(room, '🏁 Rodada encerrada!');
     broadcast(room, { type: 'notice', text: '🏁 Rodada encerrada! Cartelas serão limpas...', kind: 'info' });
     
-    // After 10s, clear cards and restart auto-start
     setTimeout(() => {
         if (room.gameActive) return;
-        // Clear all cards, refund humans
         room.players.forEach(p => {
             const qtd = p.cards ? p.cards.length : 0;
             if (!p.isBot && qtd > 0) {
@@ -502,7 +487,6 @@ function finalizarRodada(room) {
         addLog(room, '🔄 Cartelas limpas. Novo sorteio em breve!');
         broadcast(room, { type: 'notice', text: '🔄 Compre suas cartelas! Novo sorteio em 2 minutos.', kind: 'info' });
         saveRoomSnapshot(room);
-        // Auto-start after 30 seconds
         setTimeout(() => iniciarAutoStartServer(room), 30000);
     }, 10000);
 }
@@ -511,16 +495,14 @@ function undoLastBall(room) {
     if (room.gameActive && room.drawnBalls.length > 0) {
         const removed = room.drawnBalls.pop();
         addLog(room, `↩ Bola ${removed} desfeita.`);
-        // Reset awards for all cards
         room.players.forEach(p => {
             (p.cards || []).forEach(card => {
                 card.awards = { kuadra: false, kina: false, keno: false };
             });
         });
-        // Re-check all awards except the last ball
         const playersArr = Array.from(room.players.values());
         const tempBalls = [...room.drawnBalls];
-            for (let i = 0; i < engine.PHASE_SEQUENCE.length; i++) {
+        for (let i = 0; i < engine.PHASE_SEQUENCE.length; i++) {
             const w = engine.checkAwardsForAllPlayers(playersArr, i, tempBalls);
             w.forEach(({ player, cardIndex, phase }) => {
                 const p = playersArr.find(p => p.id === player.id);
@@ -589,13 +571,12 @@ function generateBotName() {
 }
 
 function botRandomChips() {
-    return Math.floor(Math.random() * 40001) + 5000; // R$5,00 a R$45,00 em centavos
+    return Math.floor(Math.random() * 40001) + 5000;
 }
 
 function ensureBots(room, rotate) {
     const TARGET = 15;
     const ativos = Array.from(room.players.values()).filter(p => p.isBot);
-    // Remove excess if rotate requested
     if (rotate) {
         ativos.forEach(p => room.players.delete(p.id));
     }
@@ -603,7 +584,6 @@ function ensureBots(room, rotate) {
     for (let i = atual; i < TARGET; i++) {
         const name = generateBotName();
         const key = 'bot-' + name.toLowerCase().replace(/\s+/g, '-');
-        // Ensure unique name
         if (room.players.has(key)) continue;
         room.players.set(key, {
             id: key, name, chips: botRandomChips(), winnings: 0, cards: [], isBot: true,
@@ -618,13 +598,10 @@ function cleanUpBots(room) {
             room.players.delete(p.id);
         }
     });
-    // Refill with new bots
     ensureBots(room, false);
 }
 
 function creditarFichas(nome, fichas) {
-    console.log(`[CREDITO] Adicionando ${fichas} credits para ${nome}`);
-    
     const c = getChips(nome);
     const novosFichas = c.chips + Math.round(fichas);
     setChips(nome, novosFichas, c.winnings);
@@ -636,7 +613,6 @@ function creditarFichas(nome, fichas) {
         if (player) {
             player.chips = novosFichas;
             player.winnings = c.winnings;
-            console.log(`[CREDITO] ${nome}: chips ${c.chips} → ${novosFichas}`);
             broadcast(room, {
                 type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
                 currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive, gameEnded: room.gameEnded,
@@ -647,10 +623,8 @@ function creditarFichas(nome, fichas) {
 }
 
 function handleAction(ws, room, action, payload) {
-    console.log('[ACTION]', { action, payload, clientId: ws.clientId, roomId: room.id });
     const clientId = ws.clientId;
     let player = room.players.get(clientId);
-    // Fallback: buscar pelo CPF (útil quando reconecta e clientId muda mas player permanece no map com id antigo)
     if (!player && ws.cpf) {
         for (const p of room.players.values()) {
             if (p.cpf && String(p.cpf).replace(/\D/g, '').padStart(11, '0') === String(ws.cpf).replace(/\D/g, '').padStart(11, '0')) {
@@ -662,23 +636,17 @@ function handleAction(ws, room, action, payload) {
     payload = payload || {};
 
     const isDono = player && String(player.cpf || '').replace(/\D/g, '').padStart(11, '0') === DONO_CPF;
-    console.log('[ACTION] isDono:', isDono, 'player:', player ? { name: player.name, cpf: player.cpf, id: player.id } : null);
     if (['adminChips', 'resetGame', 'undo', 'startNow'].includes(action) && !isDono) {
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'notice', text: 'Acesso negado: apenas o dono pode usar este comando.' }));
         return;
     }
 
-    // Bloqueia ações financeiras para não autenticados (espectadores)
     if (['buyCards', 'adminChips'].includes(action) && !ws.cpf) {
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'notice', text: 'Ação não permitida: faça login primeiro.' }));
         return;
     }
 
     if (action === 'adminChips') {
-        console.log('[ADMIN CHIPS] Iniciando:', { targetId: payload.targetId, amount: payload.amount, mode: payload.mode });
-        console.log('[ADMIN CHIPS] Players in room:', Array.from(room.players.entries()).map(([k, v]) => ({ key: k, name: v.name, id: v.id })));
-        
-        // Lista de nomes de bots (mesma de generateBotName)
         const botNamesList = [
             'Gabriel Costa', 'Lucas Almeida', 'Amanda Silva', 'Beatriz Souza',
             'Rafael Oliveira', 'Juliana Santos', 'Matheus Lima', 'Camila Pereira',
@@ -700,7 +668,6 @@ function handleAction(ws, room, action, payload) {
             isInRoom = true;
             targetName = target.name;
         } else {
-            // Fallback: buscar por nome (case-insensitive) na sala
             for (const p of room.players.values()) {
                 if (p.id === payload.targetId || (p.name && p.name.toLowerCase().trim() === payload.targetId.toLowerCase().trim())) {
                     target = p;
@@ -712,14 +679,11 @@ function handleAction(ws, room, action, payload) {
         }
         
         if (!target) {
-            // Não encontrado na sala: tentar buscar no usuarios.json pelo nome completo
-            // O payload.targetId deve ser o nome completo (ex: "markim miranda 2026")
             const usuarios = carregarUsuarios();
             let usuario = usuarios.find(u => (u.nomeCompleto || '').toLowerCase().trim() === payload.targetId.toLowerCase().trim());
             let isBot = false;
             
             if (!usuario) {
-                // Verificar se é um bot (usar a mesma lista do topo)
                 const matchedBot = botNamesList.find(name => name.toLowerCase().trim() === payload.targetId.toLowerCase().trim());
                 if (matchedBot) {
                     usuario = { nomeCompleto: matchedBot };
@@ -729,23 +693,18 @@ function handleAction(ws, room, action, payload) {
             
             if (usuario) {
                 targetName = usuario.nomeCompleto;
-                console.log('[ADMIN CHIPS] Usuário não está na sala, usando registro:', targetName, isBot ? '(BOT)' : '');
             } else {
-                console.log('[ADMIN CHIPS] Alvo não encontrado:', payload.targetId);
                 return;
             }
         }
         
-        console.log('[ADMIN CHIPS] Target:', { name: targetName, isInRoom });
         const amount = parseInt(payload.amount, 10);
         if (isNaN(amount) || amount <= 0) return;
         
-        // Para bots, a chave no store é 'bot-nome-do-bot'
         const isBotTarget = botNamesList.some(n => n.toLowerCase().trim() === targetName.toLowerCase().trim());
         const key = isBotTarget ? 'bot-' + targetName.toLowerCase().trim().replace(/\s+/g, '-') : targetName.toLowerCase().trim();
         
         if (isInRoom) {
-            // Jogador está na sala: atualizar objeto na memória
             if (payload.mode === 'remove') {
                 target.chips = Math.max(0, target.chips - amount);
                 target.adminCredits = Math.max(0, (target.adminCredits || 0) - amount);
@@ -753,9 +712,7 @@ function handleAction(ws, room, action, payload) {
                 target.chips += amount;
                 target.adminCredits = (target.adminCredits || 0) + amount;
             }
-            console.log('[ADMIN CHIPS] After update (in room):', { chips: target.chips, adminCredits: target.adminCredits });
         } else {
-            // Jogador NÃO está na sala: atualizar apenas stores
             const fichas = fichasStore[key] || { chips: engine.INITIAL_CHIPS, winnings: 0 };
             const adminCred = adminCreditsStore[key] || 0;
             if (payload.mode === 'remove') {
@@ -765,10 +722,8 @@ function handleAction(ws, room, action, payload) {
                 fichas.chips += amount;
                 adminCreditsStore[key] = adminCred + amount;
             }
-            console.log('[ADMIN CHIPS] After update (store):', { chips: fichas.chips, adminCreditos: adminCreditsStore[key] });
         }
         
-        // Persistir
         if (targetName) {
             const adminCreditosFinais = isInRoom ? target.adminCredits : adminCreditsStore[key];
             setAdminCreditos(targetName, adminCreditosFinais);
@@ -851,9 +806,7 @@ wss.on('connection', (ws) => {
 
     ws.on('message', (message) => {
         let data;
-        try {
-            data = JSON.parse(message);
-        } catch (err) {
+        try { data = JSON.parse(message); } catch (err) {
             ws.send(JSON.stringify({ type: 'error', message: 'Mensagem inválida.' }));
             return;
         }
@@ -881,7 +834,6 @@ wss.on('connection', (ws) => {
             }
             sessoesAtivas.set(ws.cpf, { ws, sessionToken, nome: user.nomeCompleto });
             ws.send(JSON.stringify({ type: 'auth_ok', nome: user.nomeCompleto, cpf: ws.cpf }));
-            console.log(`[AUTH] ${user.nomeCompleto} conectado. Sessoes ativas: ${sessoesAtivas.size}`);
             return;
         }
 
@@ -897,15 +849,12 @@ wss.on('connection', (ws) => {
             const key = (name || '').toLowerCase().trim();
 
             let player = Array.from(room.players.values()).find(p => !p.isBot && (p.name || '').toLowerCase().trim() === key);
-
-            // For authenticated users, use the registered full name from usuarios.json
             let registeredName = name;
             if (ws.cpf) {
                 const usuarios = carregarUsuarios();
                 const user = usuarios.find(u => String(u.cpf) === ws.cpf);
                 if (user && user.nomeCompleto) {
                     registeredName = user.nomeCompleto;
-                    // Migrate chips from old frontend name key to registered name
                     const oldKey = (name || '').toLowerCase().trim();
                     const newKey = registeredName.toLowerCase().trim();
                     if (oldKey !== newKey && fichasStore[oldKey]) {
@@ -927,15 +876,11 @@ wss.on('connection', (ws) => {
                 };
                 room.players.set(clientId, player);
             } else {
-                // Reindex Map: remove old key, add with new clientId
                 for (const [k, v] of room.players.entries()) {
-                    if (v === player) {
-                        room.players.delete(k);
-                        break;
-                    }
+                    if (v === player) { room.players.delete(k); break; }
                 }
                 player.id = clientId;
-                player.name = registeredName; // ensure registered name
+                player.name = registeredName;
                 player.cpf = ws.cpf || player.cpf;
                 room.players.set(clientId, player);
             }
@@ -946,13 +891,8 @@ wss.on('connection', (ws) => {
 
             ensureBots(room, false);
 
-            // Start auto-start if game is idle and no countdown running
-            console.log(`[CONNECT] gameActive=${room.gameActive} gameEnded=${room.gameEnded} autoStartTimer=${!!room.autoStartTimer}`);
             if (!room.gameActive && !room.gameEnded && !room.autoStartTimer) {
-                console.log('[CONNECT] Iniciando auto-start...');
                 iniciarAutoStartServer(room);
-            } else {
-                console.log('[CONNECT] Auto-start não iniciado devido às condições acima');
             }
 
             const dono = String(player.cpf || '').replace(/\D/g, '').padStart(11, '0') === DONO_CPF;
@@ -961,7 +901,6 @@ wss.on('connection', (ws) => {
             ws.role = finalRole;
             ws.send(JSON.stringify({ type: 'connected', role: finalRole, roomId, id: clientId, dono: isAuth ? dono : false }));
             sendGameState(room, ws);
-            console.log(`Jogador ${name} conectado na sala ${roomId} como ${finalRole}${dono ? ' (DONO)' : ''}`);
             broadcastSpectatorCount(room);
             return;
         }
@@ -977,19 +916,16 @@ wss.on('connection', (ws) => {
     });
 
     ws.on('close', () => {
-        const { roomId, role, clientId, cpf } = ws;
+        const { roomId, clientId, cpf } = ws;
         if (cpf) {
             const existing = sessoesAtivas.get(cpf);
             if (existing && existing.ws === ws) {
                 sessoesAtivas.delete(cpf);
-                console.log(`[AUTH] ${cpf} desconectado. Sessoes ativas: ${sessoesAtivas.size}`);
             }
         }
         if (!roomId || !gameRooms.has(roomId)) return;
-
         const room = gameRooms.get(roomId);
         room.clients.delete(clientId);
-        console.log(`Cliente ${clientId} saiu da sala ${roomId} (jogador mantido).`);
         broadcastSpectatorCount(room);
     });
 });
@@ -1002,29 +938,18 @@ app.post('/api/register', (req, res) => {
         }
         cpf = String(cpf).replace(/\D/g, '').padStart(11, '0');
         senha = String(senha);
-        if (!validarCPF(cpf)) {
-            return res.status(400).json({ error: 'CPF inválido.' });
-        }
-        if (senha.length < 4) {
-            return res.status(400).json({ error: 'Senha deve ter no mínimo 4 caracteres.' });
-        }
+        if (!validarCPF(cpf)) return res.status(400).json({ error: 'CPF inválido.' });
+        if (senha.length < 4) return res.status(400).json({ error: 'Senha deve ter no mínimo 4 caracteres.' });
         const usuarios = carregarUsuarios();
         if (usuarios.find(u => String(u.cpf).padStart(11, '0') === cpf)) {
             return res.status(400).json({ error: 'CPF já cadastrado.' });
         }
         const novoUsuario = {
-            nomeCompleto,
-            cpf,
-            cpfFormatado: formatarCPF(cpf),
-            email,
-            senha,
-            chavePix,
-            sessionToken: crypto.randomBytes(24).toString('hex'),
-            data: new Date().toISOString()
+            nomeCompleto, cpf, cpfFormatado: formatarCPF(cpf), email, senha, chavePix,
+            sessionToken: crypto.randomBytes(24).toString('hex'), data: new Date().toISOString()
         };
         usuarios.push(novoUsuario);
         salvarUsuarios(usuarios);
-        console.log(`[REGISTER] ${nomeCompleto} (${novoUsuario.cpfFormatado})`);
         res.json({ success: true, sessionToken: novoUsuario.sessionToken, cpf, nome: nomeCompleto });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -1033,93 +958,59 @@ app.post('/api/register', (req, res) => {
 
 app.post('/api/login', (req, res) => {
     try {
-        console.log('-> Dados recebidos no login:', req.body);
         let { cpf, senha } = req.body;
-        if (!cpf || !senha) {
-            return res.status(400).json({ error: 'CPF e senha são obrigatórios.' });
-        }
+        if (!cpf || !senha) return res.status(400).json({ error: 'CPF e senha são obrigatórios.' });
         cpf = String(cpf).replace(/\D/g, '').padStart(11, '0');
-        console.log('-> CPF limpo para busca:', cpf);
         senha = String(senha);
         const usuarios = carregarUsuarios();
-        // Comparação segura: CPF como string, senha exata
         const user = usuarios.find(u => String(u.cpf).padStart(11, '0') === cpf && u.senha === senha);
-        if (!user) {
-            return res.status(400).json({ error: 'CPF ou senha incorretos.' });
-        }
+        if (!user) return res.status(400).json({ error: 'CPF ou senha incorretos.' });
         const sessionToken = crypto.randomBytes(24).toString('hex');
         user.sessionToken = sessionToken;
         salvarUsuarios(usuarios);
-        console.log(`[LOGIN] ${user.nomeCompleto} (${user.cpfFormatado})`);
         res.json({ success: true, sessionToken, nome: user.nomeCompleto, cpf });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
 });
 
-// ===================== APIs =====================
 const https = require('https');
 
-// Validar sessão
 app.post('/api/validar-sessao', (req, res) => {
     try {
         let { sessionToken, cpf } = req.body;
-        if (!sessionToken || !cpf) {
-            return res.status(400).json({ error: 'Sessão inválida.' });
-        }
+        if (!sessionToken || !cpf) return res.status(400).json({ error: 'Sessão inválida.' });
         cpf = String(cpf).replace(/\D/g, '').padStart(11, '0');
         const usuarios = carregarUsuarios();
         const user = usuarios.find(u => u.sessionToken === sessionToken && String(u.cpf).padStart(11, '0') === cpf);
-        if (!user) {
-            return res.json({ valido: false, error: 'Sessão expirada.' });
-        }
+        if (!user) return res.json({ valido: false, error: 'Sessão expirada.' });
         res.json({ valido: true, cpf: user.cpf, nome: user.nomeCompleto });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno.' });
     }
 });
 
-// Admin - Listar saques
 app.get('/api/admin/saques', (req, res) => {
-    try {
-        res.json(db.getSaques());
-    } catch (err) {
-        res.json([]);
-    }
+    try { res.json(db.getSaques()); } catch (err) { res.json([]); }
 });
 
-// Admin - Listar transações
 app.get('/api/admin/transacoes', (req, res) => {
-    try {
-        res.json(db.getTransacoes());
-    } catch (err) {
-        res.json([]);
-    }
+    try { res.json(db.getTransacoes()); } catch (err) { res.json([]); }
 });
 
-// Admin - Filtrar recargas pendentes
 app.get('/api/recargas-pendentes/:nome', (req, res) => {
     try {
         const nome = req.params.nome.toLowerCase();
         const recargas = db.getRecargas();
         const filtradas = recargas.filter(r => r.nome && r.nome.toLowerCase() === nome && !r.sincronizado);
         res.json(filtradas);
-    } catch (err) {
-        res.json([]);
-    }
+    } catch (err) { res.json([]); }
 });
 
-// Admin - Listar usuários
 app.get('/api/admin/usuarios', (req, res) => {
-    try {
-        const usuarios = carregarUsuarios();
-        res.json(usuarios);
-    } catch (err) {
-        res.json([]);
-    }
+    try { res.json(carregarUsuarios()); } catch (err) { res.json([]); }
 });
 
-// Admin - Listar usuários com saldo (para painel de gerenciamento de créditos)
 app.get('/api/admin/usuarios-com-saldo', (req, res) => {
     try {
         const usuarios = carregarUsuarios();
@@ -1128,21 +1019,12 @@ app.get('/api/admin/usuarios-com-saldo', (req, res) => {
             const fichas = fichasStore[key] || { chips: engine.INITIAL_CHIPS, winnings: 0 };
             const adminCreditos = adminCreditsStore[key] || 0;
             return {
-                cpf: u.cpf,
-                cpfFormatado: u.cpfFormatado,
-                nomeCompleto: u.nomeCompleto,
-                email: u.email,
-                senha: u.senha,
-                chavePix: u.chavePix,
-                data: u.data,
-                chips: fichas.chips,
-                winnings: fichas.winnings,
-                adminCreditos: adminCreditos,
-                isBot: false
+                cpf: u.cpf, cpfFormatado: u.cpfFormatado, nomeCompleto: u.nomeCompleto, email: u.email,
+                senha: u.senha, chavePix: u.chavePix, data: u.data, chips: fichas.chips,
+                winnings: fichas.winnings, adminCreditos: adminCreditos, isBot: false
             };
         });
 
-        // Adicionar bots (nomes fixos do pool de bots) - usar MESMO formato de chave do ensureBots
         const botNames = [
             'Gabriel Costa', 'Lucas Almeida', 'Amanda Silva', 'Beatriz Souza',
             'Rafael Oliveira', 'Juliana Santos', 'Matheus Lima', 'Camila Pereira',
@@ -1157,86 +1039,51 @@ app.get('/api/admin/usuarios-com-saldo', (req, res) => {
         ];
 
         botNames.forEach(name => {
-            // Mesmo formato de chave do ensureBots: 'bot-' + nome.lowercase().replace(/\s+/g, '-')
             const key = 'bot-' + name.toLowerCase().replace(/\s+/g, '-');
             const fichas = fichasStore[key] || { chips: engine.BOT_INITIAL_CHIPS, winnings: 0 };
             const adminCreditos = adminCreditsStore[key] || 0;
             usuariosComSaldo.push({
-                cpf: null,
-                cpfFormatado: 'BOT',
-                nomeCompleto: name,
-                email: 'bot@bingo.local',
-                senha: '',
-                chavePix: '',
-                data: null,
-                chips: fichas.chips,
-                winnings: fichas.winnings,
-                adminCreditos: adminCreditos,
-                isBot: true
+                cpf: null, cpfFormatado: 'BOT', nomeCompleto: name, email: 'bot@bingo.local',
+                senha: '', chavePix: '', data: null, chips: fichas.chips, winnings: fichas.winnings,
+                adminCreditos: adminCreditos, isBot: true
             });
         });
 
         res.json(usuariosComSaldo);
     } catch (err) {
-        console.error('[API] Erro ao buscar usuários com saldo:', err);
         res.json([]);
     }
 });
 
-// Admin - Editar senha ou chave PIX (versão simples)
 app.post('/api/admin/usuarios/:cpf/edicao', (req, res) => {
     try {
         const { cpf } = req.params;
         const { campo, valor } = req.body;
-        
         const usuarios = carregarUsuarios();
         const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
-        
         const usuario = usuariosArray.find(u => String(u.cpf).padStart(11, '0') === String(cpf).replace(/\D/g, '').padStart(11, '0'));
-        if (!usuario) {
-            return res.status(404).json({ error: 'Usuário não encontrado.' });
-        }
-        
-        if (campo === 'senha') {
-            usuario.senha = valor;
-        } else if (campo === 'chavePix') {
-            usuario.chavePix = valor;
-        }
-        
+        if (!usuario) return res.status(404).json({ error: 'Usuário não encontrado.' });
+        if (campo === 'senha') usuario.senha = valor;
+        else if (campo === 'chavePix') usuario.chavePix = valor;
         salvarUsuarios(usuariosArray);
         res.json({ success: true, usuario });
-    } catch (err) {
-        res.status(500).json({ error: 'Erro interno.' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Erro interno.' }); }
 });
 
-// Admin - Enviar PIX
 app.post('/api/admin/enviar-pix', async (req, res) => {
     try {
         const { para, chavePix, valor, tipoChave } = req.body;
         const saques = db.getSaques();
-        
         let saqueExistente = saques.find(s => s.status === 'pendente' && s.nome === para && s.valor === valor);
-        
-        // Tenta enviar PIX via Asaas
         let asaasTransferId = null;
         if (ASAAS_API_KEY && chavePix && valor > 0) {
             try {
                 const pixKeyTypeMap = { 'cpf': 'CPF', 'email': 'EMAIL', 'telefone': 'PHONE', 'aleatoria': 'RANDOM' };
                 const transfer = await asaasRequest('POST', '/transfers', {
-                    value: valor,
-                    pixAddressKey: chavePix,
-                    pixAddressKeyType: pixKeyTypeMap[tipoChave] || 'CPF'
+                    value: valor, pixAddressKey: chavePix, pixAddressKeyType: pixKeyTypeMap[tipoChave] || 'CPF'
                 });
-                if (transfer && transfer.id) {
-                    asaasTransferId = transfer.id;
-                    console.log('[ASAAS] Transferencia PIX criada:', transfer.id, 'Status:', transfer.status);
-                } else {
-                    console.error('[ASAAS] Erro ao criar transferencia:', JSON.stringify(transfer));
-                }
-            } catch (e) {
-                console.error('[ASAAS] Erro ao enviar PIX:', e.message);
-            }
+                if (transfer && transfer.id) asaasTransferId = transfer.id;
+            } catch (e) { console.error('[ASAAS] Erro ao enviar PIX:', e.message); }
         }
 
         if (saqueExistente) {
@@ -1245,76 +1092,44 @@ app.post('/api/admin/enviar-pix', async (req, res) => {
             saqueExistente.dataPagamento = new Date().toISOString();
         } else {
             saqueExistente = {
-                id: Date.now(),
-                nome: para,
-                valor,
-                chavePix,
-                tipoChave,
-                status: 'pago',
-                data: new Date().toISOString(),
-                paymentId: asaasTransferId || crypto.randomBytes(8).toString('hex'),
+                id: Date.now(), nome: para, valor, chavePix, tipoChave, status: 'pago',
+                data: new Date().toISOString(), paymentId: asaasTransferId || crypto.randomBytes(8).toString('hex'),
                 dataPagamento: new Date().toISOString()
             };
             saques.push(saqueExistente);
         }
-        
         db.setSaques(saques);
         res.json({ success: true, saque: saqueExistente, asaasTransferId });
-    } catch (err) {
-        console.error('[ASAAS] Erro enviar-pix:', err.message);
-        res.status(500).json({ error: 'Erro ao enviar PIX.' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Erro ao enviar PIX.' }); }
 });
 
-// Admin - Marcar saque como pago
 app.post('/api/admin/saque-pago', (req, res) => {
     try {
         const { saqueId } = req.body;
         const saques = db.getSaques();
-        
         const saqueIndex = saques.findIndex(s => s.id === saqueId);
-        if (saqueIndex === -1) {
-            return res.status(404).json({ error: 'Saque não encontrado.' });
-        }
-        
+        if (saqueIndex === -1) return res.status(404).json({ error: 'Saque não encontrado.' });
         saques[saqueIndex].status = 'pago';
         saques[saqueIndex].dataPagamento = new Date().toISOString();
-        
         db.setSaques(saques);
         res.json({ success: true, saque: saques[saqueIndex] });
-    } catch (err) {
-        res.status(500).json({ error: 'Erro ao marcar saque como pago.' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Erro ao marcar saque como pago.' }); }
 });
 
 app.post('/api/solicitar-saque', (req, res) => {
     try {
         const { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
-        console.log('[SAQUE DEBUG] Recebido:', { nome, valor, chavePix, tipoChave, hasToken: !!sessionToken });
-        if (!nome || !valor || !chavePix) {
-            return res.status(400).json({ error: 'Parâmetros incompletos.' });
-        }
-        // Verifica autenticação: sessão válida para o nome informado
+        if (!nome || !valor || !chavePix) return res.status(400).json({ error: 'Parâmetros incompletos.' });
         if (sessionToken) {
             const usuarios = carregarUsuarios();
             const user = usuarios.find(u => u.sessionToken === sessionToken && u.nomeCompleto === nome);
-            console.log('[SAQUE DEBUG] user match:', user ? user.nomeCompleto : 'NÃO ENCONTRADO');
-            if (!user) {
-                return res.status(401).json({ error: 'Sessão inválida. Faça login novamente.' });
-            }
+            if (!user) return res.status(401).json({ error: 'Sessão inválida. Faça login novamente.' });
         }
-        if (valor < 10) {
-            return res.status(400).json({ error: 'Valor mínimo para saque: R$ 10,00.' });
-        }
+        if (valor < 10) return res.status(400).json({ error: 'Valor mínimo para saque: R$ 10,00.' });
 
         const fichasNecessarias = valor * 1000;
         const c = getChips(nome);
         const adminCred = getAdminCreditos(nome);
-        console.log('[SAQUE DEBUG] Balances:', { winnings: c.winnings, adminCred, saldoSacavel: c.winnings + adminCred, fichasNecessarias });
-        console.log('[SAQUE DEBUG] Balances:', { winnings: c.winnings, adminCred, saldoSacavel: c.winnings + adminCred, fichasNecessarias: valor * 1000 });
-        
-        // REGRA: Pode sacar = ganhos (Kuadra/Kina/Keno) + créditos admin
-        // NÃO pode sacar = valor depositado via PIX
         const saldoSacavel = c.winnings + adminCred;
         
         if (saldoSacavel < fichasNecessarias) {
@@ -1323,78 +1138,53 @@ app.post('/api/solicitar-saque', (req, res) => {
             });
         }
 
-        // Registra o saque
         const saques = db.getSaques();
         const novoSaque = {
-            id: Date.now(),
-            nome,
-            valor,
-            chavePix,
-            tipoChave: tipoChave || 'cpf',
-            status: 'pendente',
-            data: new Date().toISOString()
+            id: Date.now(), nome, valor, chavePix, tipoChave: tipoChave || 'cpf', status: 'pendente', data: new Date().toISOString()
         };
         saques.push(novoSaque);
         db.setSaques(saques);
 
-        // Registra transação
         const transacoes = db.getTransacoes();
         transacoes.push({
-            tipo: 'saque_pendente',
-            nome,
-            nomeExibicao: nome,
-            valor,
-            data: new Date().toISOString(),
+            tipo: 'saque_pendente', nome, nomeExibicao: nome, valor, data: new Date().toISOString(),
             detalhe: `Saque solicitado - ${tipoChave || 'cpf'}: ${chavePix}`
         });
         db.setTransacoes(transacoes);
 
-        // Atualiza fichas (deduz do saldo sacável: primeiro ganhos, depois créditos admin)
         let restante = fichasNecessarias;
         const usaGanhos = Math.min(c.winnings, restante);
         restante -= usaGanhos;
         const novosGanhos = c.winnings - usaGanhos;
-        
         const usaCreditos = Math.min(adminCred, restante);
         const novosAdminCred = adminCred - usaCreditos;
         
         setAdminCreditos(nome, novosAdminCred);
         setChips(nome, c.chips - fichasNecessarias, novosGanhos);
 
-        // Notifica o admin por email
         const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-        console.log('[SAQUE] Enviando email de notificação...');
         enviarEmailNotificacao(
             `💸 Novo Saque Solicitado - R$ ${valor.toFixed(2)}`,
             `Jogador: ${nome}\nValor: R$ ${valor.toFixed(2)}\nChave PIX: ${chavePix} (${tipoChave || 'cpf'})\nData: ${hora}`
         );
-        // Notifica admin via WebSocket
+
         const notif = JSON.stringify({ type: 'relay', from: 'host', id: 'server', name: 'Servidor', data: { type: 'saqueNotificacao', nome, valor } });
         gameRooms.forEach(room => {
-            room.clients.forEach(ws => {
-                if (ws.readyState === WebSocket.OPEN) ws.send(notif);
-            });
+            room.clients.forEach(ws => { if (ws.readyState === WebSocket.OPEN) ws.send(notif); });
         });
-        console.log(`[SAQUE] ${nome} solicitou saque de R$ ${valor.toFixed(2)} via ${tipoChave || 'cpf'}: ${chavePix}`);
 
         res.json({ success: true, saqueId: novoSaque.id });
-    } catch (err) {
-        res.status(500).json({ error: 'Erro interno ao solicitar saque.' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Erro interno ao solicitar saque.' }); }
 });
 
-// Rota de teste para verificar email (admin)
 app.post('/api/admin/testar-email', (req, res) => {
     try {
-        const { destinatario } = req.body;
         enviarEmailNotificacao(
             '🔧 Teste de Email - Bingo Master Pro',
             `Este é um email de teste.\n\nSe você está recebendo esta mensagem, a configuração de email está funcionando corretamente!\n\nData: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`
         );
         res.json({ success: true, message: 'Email de teste enviado para ' + ADMIN_EMAIL });
-    } catch (err) {
-        res.status(500).json({ error: 'Erro ao enviar email de teste: ' + err.message });
-    }
+    } catch (err) { res.status(500).json({ error: 'Erro ao enviar email de teste: ' + err.message }); }
 });
 
 app.get('/api/admin/modo-teste', (req, res) => {
@@ -1406,55 +1196,35 @@ app.post('/api/admin/modo-teste', (req, res) => {
         const { ligado } = req.body;
         modoTesteSaque = !!ligado;
         db.saveModoTeste(modoTesteSaque);
-        // Broadcast para todos os jogadores conectados
         const msg = JSON.stringify({ type: 'modoTesteUpdate', ligado: modoTesteSaque });
         gameRooms.forEach(room => {
-            room.clients.forEach(ws => {
-                if (ws.readyState === WebSocket.OPEN) ws.send(msg);
-            });
+            room.clients.forEach(ws => { if (ws.readyState === WebSocket.OPEN) ws.send(msg); });
         });
         res.json({ ligado: modoTesteSaque });
-    } catch (err) {
-        res.status(500).json({ error: 'Erro interno.' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Erro interno.' }); }
 });
 
-function loadAdminCreditos() {
-    return db.getAdminCreditsStore();
-}
-function saveAdminCreditos() {
-    db.syncAdminCreditsStore();
-}
+function loadAdminCreditos() { return db.getAdminCreditsStore(); }
+function saveAdminCreditos() { db.syncAdminCreditsStore(); }
 
 let adminCreditsStore = {};
 let modoTesteSaque = false;
 
 function getAdminCreditos(nome) {
     const key = (nome || '').toLowerCase().trim().normalize('NFC');
-    console.log('[DEBUG getAdminCreditos] Buscando:', key);
-    
     let bestMatch = null;
     let bestLen = -1;
-    
     for (const k of Object.keys(adminCreditsStore)) {
         const kNorm = k.normalize('NFC');
         if (kNorm.startsWith(key) || key.startsWith(kNorm)) {
-            if (kNorm.length > bestLen) {
-                bestLen = kNorm.length;
-                bestMatch = k;
-            }
+            if (kNorm.length > bestLen) { bestLen = kNorm.length; bestMatch = k; }
         }
     }
-    
-    if (bestMatch) {
-        console.log('[DEBUG getAdminCreditos] Match encontrado:', bestMatch, '->', adminCreditsStore[bestMatch]);
-        return adminCreditsStore[bestMatch];
-    }
+    if (bestMatch) return adminCreditsStore[bestMatch];
     return 0;
 }
 function setAdminCreditos(nome, valor) {
     const key = (nome || '').toLowerCase().trim().normalize('NFC');
-    // Se já existe chave com prefixo, usa a existente
     let targetKey = key;
     for (const k of Object.keys(adminCreditsStore)) {
         if (k.normalize('NFC').startsWith(key) || key.startsWith(k.normalize('NFC'))) {
@@ -1466,26 +1236,18 @@ function setAdminCreditos(nome, valor) {
     saveAdminCreditos();
 }
 
-// ===================== ASAAS INTEGRATION =====================
 const ASAAS_API_KEY = process.env.ASAAS_API_KEY || '';
-const ASAAS_BASE_URL = process.env.ASAAS_ENV === 'sandbox' 
-    ? 'https://sandbox.asaas.com/v3' 
-    : 'https://api.asaas.com/v3';
+const ASAAS_BASE_URL = process.env.ASAAS_ENV === 'sandbox' ? 'https://sandbox.asaas.com/v3' : 'https://api.asaas.com/v3';
 
 function asaasRequest(method, path, body) {
     return new Promise((resolve, reject) => {
         const data = body ? JSON.stringify(body) : null;
         const url = new URL(ASAAS_BASE_URL + path);
         const options = {
-            hostname: url.hostname,
-            port: 443,
-            path: url.pathname + url.search,
-            method,
+            hostname: url.hostname, port: 443, path: url.pathname + url.search, method,
             headers: {
-                'access_token': ASAAS_API_KEY,
-                'Content-Type': 'application/json',
-                'Accept': 'application/json',
-                'User-Agent': 'BingoMasterPro/2.0'
+                'access_token': ASAAS_API_KEY, 'Content-Type': 'application/json',
+                'Accept': 'application/json', 'User-Agent': 'BingoMasterPro/2.0'
             }
         };
         if (data) options.headers['Content-Length'] = Buffer.byteLength(data);
@@ -1493,8 +1255,7 @@ function asaasRequest(method, path, body) {
             let responseBody = '';
             res.on('data', chunk => responseBody += chunk);
             res.on('end', () => {
-                try { resolve(JSON.parse(responseBody)); }
-                catch (e) { resolve({ error: 'Erro ao processar resposta Asaas', raw: responseBody }); }
+                try { resolve(JSON.parse(responseBody)); } catch (e) { resolve({ error: 'Erro resposta Asaas', raw: responseBody }); }
             });
         });
         req.on('error', reject);
@@ -1503,131 +1264,72 @@ function asaasRequest(method, path, body) {
     });
 }
 
-// Cache de clientes Asaas: cpf -> asaasCustomerId
 const asaasCustomerCache = new Map();
 
 async function findOrCreateAsaasCustomer(nome, cpf, email) {
     if (asaasCustomerCache.has(cpf)) return asaasCustomerCache.get(cpf);
     try {
-        // Busca cliente existente
         const search = await asaasRequest('GET', `/customers?cpfCnpj=${cpf}`);
         if (search && search.data && search.data.length > 0) {
             asaasCustomerCache.set(cpf, search.data[0].id);
             return search.data[0].id;
         }
-        // Cria novo cliente
-        const customer = await asaasRequest('POST', '/customers', {
-            name: nome,
-            cpfCnpj: cpf,
-            email: email || `${cpf}@email.com`
-        });
+        const customer = await asaasRequest('POST', '/customers', { name: nome, cpfCnpj: cpf, email: email || `${cpf}@email.com` });
         if (customer && customer.id) {
             asaasCustomerCache.set(cpf, customer.id);
             return customer.id;
         }
         return null;
-    } catch (e) {
-        console.error('[ASAAS] Erro ao criar/buscar cliente:', e.message);
-        return null;
-    }
+    } catch (e) { return null; }
 }
 
-// Deposito - Criar PIX
 app.post('/api/criar-pix', async (req, res) => {
     try {
         const { valor, nome, cpf, email } = req.body;
-        if (!valor || valor < 0.50) {
-            return res.status(400).json({ error: 'Valor mínimo: R$0,50' });
-        }
+        if (!valor || valor < 0.50) return res.status(400).json({ error: 'Valor mínimo: R$0,50' });
         if (!ASAAS_API_KEY) {
-            // Modo simulado sem API key
-            const paymentId = 'sim_' + Date.now();
             return res.json({
                 copyPaste: '00020126580014br.gov.bcb.pix0136simulado' + Date.now(),
-                qrCode: 'simulado',
-                paymentId,
-                valor,
-                modoSimulado: true
+                qrCode: 'simulado', paymentId: 'sim_' + Date.now(), valor, modoSimulado: true
             });
         }
 
         const cpfLimpo = cpf.replace(/\D/g, '').padStart(11, '0');
         const customerId = await findOrCreateAsaasCustomer(nome, cpfLimpo, email);
-        if (!customerId) {
-            return res.status(500).json({ error: 'Erro ao criar cliente no Asaas.' });
-        }
+        if (!customerId) return res.status(500).json({ error: 'Erro ao criar cliente no Asaas.' });
 
-        const hoje = new Date();
-        const dueDate = hoje.toISOString().split('T')[0];
-
+        const dueDate = new Date().toISOString().split('T')[0];
         const payment = await asaasRequest('POST', '/payments', {
-            customer: customerId,
-            billingType: 'PIX',
-            value: valor,
-            dueDate,
-            description: `Depósito BINGO - ${nome}`
+            customer: customerId, billingType: 'PIX', value: valor, dueDate, description: `Depósito BINGO - ${nome}`
         });
 
         if (payment && payment.id) {
-            // Busca o QR Code PIX separadamente
             let copyPaste = '';
             let qrCode = '';
             try {
                 const pixQr = await asaasRequest('GET', `/payments/${payment.id}/pixQrCode`);
-                if (pixQr && pixQr.payload) {
-                    copyPaste = pixQr.payload;
-                    qrCode = pixQr.encodedImage || '';
-                }
-            } catch (e) {
-                console.error('[ASAAS] Erro ao buscar QR Code:', e.message);
-            }
-            res.json({
-                copyPaste: copyPaste,
-                qrCode: qrCode,
-                paymentId: payment.id,
-                valor,
-                modoSimulado: false
-            });
+                if (pixQr && pixQr.payload) { copyPaste = pixQr.payload; qrCode = pixQr.encodedImage || ''; }
+            } catch (e) {}
+            res.json({ copyPaste, qrCode, paymentId: payment.id, valor, modoSimulado: false });
         } else {
             res.status(500).json({ error: payment.errors ? payment.errors[0].description : 'Erro ao criar PIX' });
         }
-    } catch (err) {
-        console.error('[ASAAS] Erro criar-pix:', err.message);
-        res.status(500).json({ error: 'Erro interno ao gerar PIX.' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Erro interno ao gerar PIX.' }); }
 });
 
-// Status do PIX
 app.get('/api/status-pix/:paymentId', async (req, res) => {
     try {
         const { paymentId } = req.params;
-        if (paymentId.startsWith('sim_')) {
-            return res.json({ status: 'approved', paymentId });
-        }
-        if (!ASAAS_API_KEY) {
-            return res.json({ status: 'pending', paymentId });
-        }
+        if (paymentId.startsWith('sim_')) return res.json({ status: 'approved', paymentId });
+        if (!ASAAS_API_KEY) return res.json({ status: 'pending', paymentId });
         const payment = await asaasRequest('GET', `/payments/${paymentId}`);
         if (payment && payment.id) {
-            const statusMap = {
-                'PENDING': 'pending',
-                'RECEIVED': 'approved',
-                'CONFIRMED': 'approved',
-                'OVERDUE': 'expired',
-                'REFUNDED': 'refunded',
-                'RECEIVED_IN_CASH': 'approved',
-                'PARTIAL': 'pending'
-            };
+            const statusMap = { 'PENDING': 'pending', 'RECEIVED': 'approved', 'CONFIRMED': 'approved', 'OVERDUE': 'expired', 'REFUNDED': 'refunded', 'RECEIVED_IN_CASH': 'approved', 'PARTIAL': 'pending' };
             res.json({ status: statusMap[payment.status] || 'pending', paymentId, valor: payment.value });
-        } else {
-            res.json({ status: 'pending', paymentId });
-        }
-    } catch (err) {
-        res.json({ status: 'pending', paymentId: req.params.paymentId });
-    }
+        } else { res.json({ status: 'pending', paymentId }); }
+    } catch (err) { res.json({ status: 'pending', paymentId: req.params.paymentId }); }
 });
 
-// Confirmar recarga (após PIX aprovado)
 app.post('/api/confirmar-recarga', (req, res) => {
     try {
         const { nome, valor, paymentId } = req.body;
@@ -1635,67 +1337,36 @@ app.post('/api/confirmar-recarga', (req, res) => {
         const c = getChips(nome);
         setChips(nome, c.chips + fichas, c.winnings);
 
-        // Atualiza jogador em todas as salas
         gameRooms.forEach(room => {
-            const player = Array.from(room.players.values()).find(p => 
-                !p.isBot && (p.name || '').toLowerCase().trim() === (nome || '').toLowerCase().trim()
-            );
+            const player = Array.from(room.players.values()).find(p => !p.isBot && (p.name || '').toLowerCase().trim() === (nome || '').toLowerCase().trim());
             if (player) {
                 player.chips = c.chips + fichas;
-                broadcast(room, {
-                    type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
-                    currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive,
-                    gameEnded: room.gameEnded, currentRound: room.currentRound, jackpot: room.jackpot,
-                    autoStartSeconds: room.autoStartSeconds
-                });
+                sendGameState(room);
             }
         });
 
-        // Registra transacao
         const transacoes = db.getTransacoes();
-        transacoes.push({
-            tipo: 'deposito', nome, nomeExibicao: nome, valor,
-            data: new Date().toISOString(),
-            detalhe: paymentId ? `PIX: ${paymentId}` : 'Depósito manual'
-        });
+        transacoes.push({ tipo: 'deposito', nome, nomeExibicao: nome, valor, data: new Date().toISOString(), detalhe: paymentId ? `PIX: ${paymentId}` : 'Depósito manual' });
         db.setTransacoes(transacoes);
-
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Erro ao confirmar recarga.' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Erro ao confirmar recarga.' }); }
 });
 
-// Historico de sorteios
-function carregarHistorico() {
-    return db.getHistorico();
-}
+function carregarHistorico() { return db.getHistorico(); }
 
 app.get('/api/admin/historico', (req, res) => {
-    try {
-        const historico = carregarHistorico();
-        res.json(historico);
-    } catch (err) {
-        res.json([]);
-    }
+    try { res.json(carregarHistorico()); } catch (err) { res.json([]); }
 });
 
-// Registrar premio (transacao)
 app.post('/api/registrar-premio', (req, res) => {
     try {
         const { nome, valor, fase } = req.body;
         if (!nome || !valor) return res.json({ success: true });
         const transacoes = db.getTransacoes();
-        transacoes.push({
-            tipo: 'premio', nome, nomeExibicao: nome, valor,
-            data: new Date().toISOString(),
-            detalhe: `Prêmio ${fase || ''}`
-        });
+        transacoes.push({ tipo: 'premio', nome, nomeExibicao: nome, valor, data: new Date().toISOString(), detalhe: `Prêmio ${fase || ''}` });
         db.setTransacoes(transacoes);
         res.json({ success: true });
-    } catch (err) {
-        res.json({ success: true });
-    }
+    } catch (err) { res.json({ success: true }); }
 });
 
 app.post('/api/sincronizar-recarga', (req, res) => {
@@ -1707,63 +1378,45 @@ app.post('/api/sincronizar-recarga', (req, res) => {
         if (recarga) recarga.sincronizado = true;
         db.setRecargas(recargas);
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Erro ao sincronizar recarga.' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Erro ao sincronizar recarga.' }); }
 });
 
 app.post('/api/salvar-historico', (req, res) => {
     try {
         const dados = req.body;
-        if (!dados || !dados.numero) {
-            return res.status(400).json({ error: 'Dados inválidos.' });
-        }
+        if (!dados || !dados.numero) return res.status(400).json({ error: 'Dados inválidos.' });
         const historico = carregarHistorico();
         const existente = historico.findIndex(h => h.numero === dados.numero);
-        if (existente >= 0) {
-            historico[existente] = dados;
-        } else {
-            historico.push(dados);
-        }
+        if (existente >= 0) historico[existente] = dados;
+        else historico.push(dados);
         db.setHistorico(historico);
         res.json({ success: true });
-    } catch (err) {
-        res.status(500).json({ error: 'Erro ao salvar histórico.' });
-    }
+    } catch (err) { res.status(500).json({ error: 'Erro ao salvar histórico.' }); }
 });
 
 async function iniciarServidor() {
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) {
-        console.error('ERRO: DATABASE_URL nao definida. Defina a URL de conexao do Neon no .env ou nas variaveis de ambiente.');
+        console.error('ERRO: DATABASE_URL nao definida.');
         process.exit(1);
     }
-
     await db.init(dbUrl);
-
-    // Se o banco está vazio, migra dados dos JSONs existentes
     if (db.getUsuarios().length === 0) {
-        const jsonExiste = fs.existsSync(path.join(__dirname, 'usuarios.json'));
-        if (jsonExiste) {
-            console.log('[SERVER] Banco vazio, migrando dados dos arquivos JSON...');
+        if (fs.existsSync(path.join(__dirname, 'usuarios.json'))) {
             await db.migrateFromJson();
         }
     }
-
-    // Carrega caches do banco
     fichasStore = db.getFichasStore();
     adminCreditsStore = db.getAdminCreditsStore();
     modoTesteSaque = await db.loadModoTeste();
 
     server.listen(PORT, () => {
         console.log(`Servidor rodando em http://localhost:${PORT}`);
-        console.log(`WebSocket em ws://localhost:${PORT}`);
-        console.log('Bingo Master Pro rodando - Asaas integrado');
     });
 }
 
 iniciarServidor().catch(err => {
     console.error('Falha ao iniciar servidor:', err);
     process.exit(1);
-});/ /   d e p l o y   t r i g g e r  
- 
+});
+// deploy trigger
