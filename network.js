@@ -294,7 +294,7 @@ function handleSocketMessage(raw) {
             if (hostMsg) hostMsg.style.display = 'block';
             if (adminUI && isMarcosName(myName)) {
                 adminUI.style.display = 'block';
-                setTimeout(() => { adminAbrirAba('tabSaques'); carregarModoTeste(); carregarAdminUsuariosComSaldo(); }, 300);
+                setTimeout(() => { adminAbrirAba('tabSaques'); carregarModoTeste(); carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); }, 300);
             }
             document.getElementById('btnSacar').style.display = '';
             document.getElementById('btnDeposit').style.display = '';
@@ -322,7 +322,7 @@ function handleSocketMessage(raw) {
             if (souDono) {
                 const adminUI = document.getElementById('adminPanelTop');
                 if (adminUI) adminUI.style.display = 'block';
-                setTimeout(() => { adminAbrirAba('tabSaques'); carregarModoTeste(); carregarAdminUsuariosComSaldo(); }, 300);
+                setTimeout(() => { adminAbrirAba('tabSaques'); carregarModoTeste(); carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); }, 300);
             }
         }
 
@@ -1110,7 +1110,7 @@ function confirmarExclusaoJogador() {
     }
     const cpf = select.value;
     const selectedOption = select.options[select.selectedIndex];
-    const nome = selectedOption.dataset.nome || nome;
+    const nome = selectedOption.dataset.nome || '';
 
     // Reusa a função existente com fluxo completo de confirmação
     excluirUsuarioAdmin(cpf, nome);
