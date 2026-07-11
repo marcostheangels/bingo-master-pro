@@ -685,7 +685,7 @@ body {
     font-weight: 600;
 }
 
-.player-list { list-style: none; font-size: 0.92em; }
+.player-list { list-style: none; font-size: 0.92em; max-height: 260px; overflow-y: auto; }
 .player-list li {
     display: flex;
     align-items: center;

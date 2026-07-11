@@ -1411,22 +1411,36 @@ function isJackpotEligible(phaseKey) {
 
 function processPhaseWinners(winners, phaseKey) {
     const reward = PHASES[phaseKey].reward;
-    const playerMap = {};
     const isJackpot = isJackpotEligible(phaseKey);
 
+    // Count unique winners (one prize per player, not per card)
+    const uniquePlayers = [];
+    const seen = new Set();
     winners.forEach(({ player }) => {
         if (!player || typeof player.chips !== 'number') return;
         const key = player.id || player.name;
-        if (!playerMap[key]) {
-            playerMap[key] = { player, cards: 0, totalReward: reward, jackpotCount: 0 };
-            if (isJackpot) {
-                playerMap[key].jackpotCount += 1;
-                playerMap[key].totalReward += JACKPOT_REWARD;
-            }
+        if (!seen.has(key)) {
+            seen.add(key);
+            uniquePlayers.push(player);
         }
     });
 
-    const results = Object.values(playerMap);
+    if (uniquePlayers.length === 0) return [];
+
+    // Split phase prize equally among all winners
+    const perPlayer = Math.max(1, Math.floor(reward / uniquePlayers.length));
+    const jackpotPerPlayer = isJackpot ? Math.floor(JACKPOT_REWARD / uniquePlayers.length) : 0;
+
+    const results = uniquePlayers.map(player => {
+        let totalReward = perPlayer;
+        let jackpotCount = 0;
+        if (isJackpot) {
+            totalReward += jackpotPerPlayer;
+            jackpotCount = 1;
+        }
+        return { player, cards: 0, totalReward, jackpotCount };
+    });
+
     results.forEach(result => {
         const oldWinnings = result.player.winnings || 0;
         result.player.winnings = oldWinnings + result.totalReward;
@@ -1454,11 +1468,11 @@ function processPhaseWinners(winners, phaseKey) {
     if (typeof updatePlayerListUI === 'function') updatePlayerListUI();
 
     if (isJackpot) {
-        JACKPOT_REWARD = 1000000;
+        JACKPOT_REWARD = 100000;
         saveJackpotReward();
         sendToGuest({ type: 'jackpotUpdate', value: JACKPOT_REWARD });
         const jackpotDisplay = document.querySelector('.jackpot-value');
-        if (jackpotDisplay) jackpotDisplay.textContent = 'R$ 1.000,00';
+        if (jackpotDisplay) jackpotDisplay.textContent = 'R$ 100,00';
         updateJackpotPanel();
     }
 
@@ -2192,10 +2206,16 @@ function showKenoRanking() {
             }
             if (card.awards && card.awards.keno && !seen.keno.has(p.name)) {
                 seen.keno.add(p.name);
-                keno.push({ nome: p.name, premio: PHASES ? (PHASES.keno.reward + (drawnBalls.length <= JACKPOT_BALL_LIMIT ? JACKPOT_REWARD : 0)) / 1000 : 5 });
+                const jackpotExtra = drawnBalls.length <= JACKPOT_BALL_LIMIT ? JACKPOT_REWARD : 0;
+                keno.push({ nome: p.name, premio: PHASES ? (PHASES.keno.reward + jackpotExtra) / 1000 : 5 });
             }
         });
     });
+
+    // Divide prize among winners of same phase
+    if (kuadra.length > 1) kuadra.forEach(w => w.premio /= kuadra.length);
+    if (kina.length > 1) kina.forEach(w => w.premio /= kina.length);
+    if (keno.length > 1) keno.forEach(w => w.premio /= keno.length);
 
     if (!kuadra.length && !kina.length && !keno.length) return;
 

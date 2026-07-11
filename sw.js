@@ -1,7 +1,5 @@
-const CACHE_NAME = 'bingo-master-pro-v6';
+const CACHE_NAME = 'bingo-master-pro-v8';
 const ASSETS = [
-    '.',
-    'index.html',
     'style.css',
     'game-logic.js',
     'network.js',

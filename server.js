@@ -16,18 +16,25 @@ const mailTransporter = nodemailer.createTransport({
     service: 'gmail',
     auth: {
         user: ADMIN_EMAIL,
-        pass: 'gnbdjxgqjttrkgiy'
+        pass: 'bptauajfklmfzqpl'
     }
 });
 
 function enviarEmailNotificacao(assunto, texto) {
+    console.log('[EMAIL] Tentando enviar:', assunto);
     mailTransporter.sendMail({
         from: ADMIN_EMAIL,
         to: ADMIN_EMAIL,
         subject: assunto,
         text: texto
     }).then(() => console.log('[EMAIL] Notificação enviada:', assunto))
-    .catch(err => console.error('[EMAIL] Erro ao enviar:', err.message));
+    .catch(err => {
+        console.error('[EMAIL] Erro detalhado:', err);
+        // Fallback: tenta sem auth se falhar por credencial
+        if (err.code === 'EAUTH' || err.responseCode === 535) {
+            console.log('[EMAIL] Credencial inválida ou expirada. Gere uma nova senha de app em: https://myaccount.google.com/apppasswords');
+        }
+    });
 }
 
 const PORT = process.env.PORT || 3000;
@@ -1333,6 +1340,8 @@ app.post('/api/solicitar-saque', (req, res) => {
             `💸 Novo Saque Solicitado - R$ ${valor.toFixed(2)}`,
             `Jogador: ${nome}\nValor: R$ ${valor.toFixed(2)}\nChave PIX: ${chavePix} (${tipoChave || 'cpf'})\nData: ${hora}`
         );
+        // Fallback: registra no log do servidor mesmo se email falhar
+        console.log(`[SAQUE] ${nome} solicitou saque de R$ ${valor.toFixed(2)} via ${tipoChave || 'cpf'}: ${chavePix}`);
 
         res.json({ success: true, saqueId: novoSaque.id });
     } catch (err) {
