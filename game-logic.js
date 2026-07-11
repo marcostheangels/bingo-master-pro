@@ -552,13 +552,14 @@ function updateJackpotBallsPanel() {
 }
 
 function showWinnerToast(phaseKey, results) {
-    const reward = PHASES[phaseKey].reward;
+    if (!results || !results.length) return;
     const names = results.map(result => (result.player ? result.player.name : result.name)).join(', ');
     const jackpotWinner = results.some(result => result.jackpotCount > 0);
-    const firstReward = results[0]?.totalReward || reward;
+    const firstReward = results[0]?.totalReward || 0;
+    const rewardStr = 'R$ ' + (firstReward / 1000).toFixed(2).replace('.', ',');
     const message = results.length === 1
-        ? `${names} venceu ${PHASES[phaseKey].label} e recebeu ${firstReward.toLocaleString('pt-BR')} fichas!`
-        : `${names} ganharam ${PHASES[phaseKey].label} e receberam ${reward.toLocaleString('pt-BR')} fichas cada!`;
+        ? `${names} venceu ${PHASES[phaseKey].label} e recebeu ${rewardStr}!`
+        : `${names} ganharam ${PHASES[phaseKey].label} e receberam ${rewardStr} cada!`;
 
     const finalMessage = jackpotWinner
         ? `${message} Jackpot ativado!`

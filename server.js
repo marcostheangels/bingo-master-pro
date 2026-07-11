@@ -559,7 +559,7 @@ function botRandomChips() {
 }
 
 function ensureBots(room, rotate) {
-    const TARGET = 10;
+    const TARGET = 15;
     const ativos = Array.from(room.players.values()).filter(p => p.isBot);
     // Remove excess if rotate requested
     if (rotate) {
