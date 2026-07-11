@@ -12,19 +12,23 @@ const nodemailer = require('nodemailer');
 const DONO_CPF = '05893761600';
 const ADMIN_EMAIL = 'marcostheangels@gmail.com';
 
-const mailTransporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
-    requireTLS: true,
-    auth: {
-        user: ADMIN_EMAIL,
-        pass: 'gnbdjxgqjttrkgiy'
-    },
-    connectionTimeout: 10000,
-    greetingTimeout: 10000,
-    socketTimeout: 15000
-});
+let mailTransporter = null;
+try {
+    mailTransporter = nodemailer.createTransport({
+        host: 'smtp.gmail.com',
+        port: 465,
+        secure: true,
+        auth: {
+            user: ADMIN_EMAIL,
+            pass: 'gnbdjxgqjttrkgiy'
+        },
+        connectionTimeout: 10000,
+        greetingTimeout: 10000,
+        socketTimeout: 15000
+    });
+} catch (e) {
+    console.error('[EMAIL] Erro ao criar transporter:', e.message);
+}
 
 function enviarEmailNotificacao(assunto, texto) {
     console.log('[EMAIL] Tentando enviar:', assunto);
