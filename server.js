@@ -13,7 +13,9 @@ const DONO_CPF = '05893761600';
 const ADMIN_EMAIL = 'marcostheangels@gmail.com';
 
 const mailTransporter = nodemailer.createTransport({
-    service: 'gmail',
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false,
     auth: {
         user: ADMIN_EMAIL,
         pass: 'bptauajfklmfzqpl'
@@ -1334,8 +1336,9 @@ app.post('/api/solicitar-saque', (req, res) => {
         setAdminCreditos(nome, novosAdminCred);
         setChips(nome, c.chips - fichasNecessarias, novosGanhos);
 
-        // Notifica o admin por email
+// Notifica o admin por email
         const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        console.log('[SAQUE] Enviando email de notificação...');
         enviarEmailNotificacao(
             `💸 Novo Saque Solicitado - R$ ${valor.toFixed(2)}`,
             `Jogador: ${nome}\nValor: R$ ${valor.toFixed(2)}\nChave PIX: ${chavePix} (${tipoChave || 'cpf'})\nData: ${hora}`
@@ -1346,6 +1349,20 @@ app.post('/api/solicitar-saque', (req, res) => {
         res.json({ success: true, saqueId: novoSaque.id });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno ao solicitar saque.' });
+    }
+});
+
+// Rota de teste para verificar email (admin)
+app.post('/api/admin/testar-email', (req, res) => {
+    try {
+        const { destinatario } = req.body;
+        enviarEmailNotificacao(
+            '🔧 Teste de Email - Bingo Master Pro',
+            `Este é um email de teste.\n\nSe você está recebendo esta mensagem, a configuração de email está funcionando corretamente!\n\nData: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`
+        );
+        res.json({ success: true, message: 'Email de teste enviado para ' + ADMIN_EMAIL });
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao enviar email de teste: ' + err.message });
     }
 });
 

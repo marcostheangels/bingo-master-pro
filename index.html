@@ -174,7 +174,10 @@
                     <div class="admin-tab-content" id="tabSaques">
                         <h4>💸 Saques Pendentes</h4>
                         <div id="adminSaquesList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
-                        <button class="btn btn-refresh" onclick="carregarSaquesAdmin()" style="margin-top:8px">🔄 Atualizar</button>
+                        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+                            <button class="btn btn-refresh" onclick="carregarSaquesAdmin()">🔄 Atualizar</button>
+                            <button class="btn btn-primary" onclick="testarEmailAdmin()" style="font-size:0.82em;padding:4px 12px">📧 Testar Email</button>
+                        </div>
                     </div>
 
                     <div class="admin-tab-content" id="tabUsuarios" style="display:none">

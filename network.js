@@ -902,6 +902,19 @@ function processarSaqueManual(id) {
         .catch(() => showToast('Erro de conexao.', 'error', 5000));
 }
 
+function testarEmailAdmin() {
+    fetch(API_BASE + '/api/admin/testar-email', { method: 'POST' })
+        .then(r => r.json())
+        .then(r => {
+            if (r.success) {
+                showToast('📧 Email de teste enviado para ' + r.message, 'success', 6000);
+            } else {
+                showToast('Erro: ' + (r.error || 'Erro desconhecido'), 'error', 6000);
+            }
+        })
+        .catch(() => showToast('Erro de conexao ao testar email.', 'error', 6000));
+}
+
 function updatePlayerListUI() {
     const list = document.getElementById('playerListUI');
     const isMarcos = souDono;
