@@ -272,6 +272,22 @@ function sortearProximaBola(room) {
         return;
     }
     
+    // Se a fase atual já foi ganha por alguém, não sortear mais bolas nesta fase
+    const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
+    let jaTemVencedor = false;
+    room.players.forEach(p => {
+        (p.cards || []).forEach(c => {
+            if (c.awards && c.awards[phaseKey]) jaTemVencedor = true;
+        });
+    });
+    if (jaTemVencedor) {
+        room.phasePauseTimer = setTimeout(() => {
+            room.phasePauseTimer = null;
+            avancarParaProximaFase(room);
+        }, 3000);
+        return;
+    }
+    
     let ball;
     do { ball = Math.floor(Math.random() * 90) + 1; } while (room.drawnBalls.includes(ball));
     room.drawnBalls.push(ball);
@@ -366,13 +382,7 @@ function sortearProximaBola(room) {
         
         // Advance phase or end round
         if (room.currentPhaseIndex < engine.PHASE_SEQUENCE.length - 1) {
-            room.currentPhaseIndex++;
-            broadcast(room, { type: 'advancePhase', currentPhaseIndex: room.currentPhaseIndex });
-            sendGameState(room);
-            room.phasePauseTimer = setTimeout(() => {
-                room.phasePauseTimer = null;
-                agendarProximoDraw(room);
-            }, 5000);
+            avancarParaProximaFase(room);
         } else {
             // All phases done (keno finished) - end round
             finalizarRodada(room);
@@ -382,6 +392,17 @@ function sortearProximaBola(room) {
     
     sendGameState(room);
     agendarProximoDraw(room);
+}
+
+function avancarParaProximaFase(room) {
+    room.currentPhaseIndex++;
+    broadcast(room, { type: 'advancePhase', currentPhaseIndex: room.currentPhaseIndex });
+    sendGameState(room);
+    // Pausa antes de começar a sortear bolas da próxima fase
+    room.phasePauseTimer = setTimeout(() => {
+        room.phasePauseTimer = null;
+        agendarProximoDraw(room);
+    }, 8000);
 }
 
 function salvarHistoricoSorteio(room) {
