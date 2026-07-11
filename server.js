@@ -1245,15 +1245,43 @@ app.delete('/api/admin/usuario/excluir', (req, res) => {
 
         // 7. Forçar logout do jogador deletado (se estiver conectado)
         try {
+            // Tentar via sessoesAtivas (jogador autenticado por CPF)
+            let desconectado = false;
             const sessao = sessoesAtivas.get(cpfLimpo);
             if (sessao && sessao.ws && sessao.ws.readyState === WebSocket.OPEN) {
-                sessao.ws.send(JSON.stringify({
-                    type: 'accountDeleted',
-                    message: `Sua conta "${nomeUsuario}" foi removida pelo administrador. Você será desconectado.`
-                }));
-                sessao.ws.close();
+                try {
+                    sessao.ws.send(JSON.stringify({
+                        type: 'accountDeleted',
+                        message: `Sua conta "${nomeUsuario}" foi removida pelo administrador. Você será desconectado.`
+                    }));
+                } catch (e) {}
+                try { sessao.ws.close(); } catch (e) {}
+                desconectado = true;
             }
-            sessoesAtivas.delete(cpfLimpo);
+
+            // Se não encontrou via sessoesAtivas, buscar nas rooms ativas (jogador na sala sem auth separado)
+            if (!desconectado) {
+                const keyNome = (nomeUsuario || '').toLowerCase().trim();
+                for (const room of gameRooms) {
+                    for (const [clientId, ws] of room.clients) {
+                        try {
+                            if (ws.nome && ws.nome.toLowerCase().trim() === keyNome && ws.readyState === WebSocket.OPEN) {
+                                ws.send(JSON.stringify({
+                                    type: 'accountDeleted',
+                                    message: `Sua conta "${nomeUsuario}" foi removida pelo administrador. Você será desconectado.`
+                                }));
+                                try { ws.close(); } catch (e) {}
+                                console.log(`[ADMIN EXCLUIR] Jogador "${nomeUsuario}" desconectado via room.`);
+                                desconectado = true;
+                                break;
+                            }
+                        } catch (e) {}
+                    }
+                    if (desconectado) break;
+                }
+            }
+
+            if (sessao) sessoesAtivas.delete(cpfLimpo);
         } catch (e) {
             console.error('[ADMIN EXCLUIR] Erro ao forçar logout:', e.message);
         }
