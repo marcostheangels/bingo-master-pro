@@ -1006,12 +1006,7 @@ app.post('/api/register', (req, res) => {
         usuarios.push(novoUsuario);
         salvarUsuarios(usuarios);
 
-        const key = nomeCompleto.toLowerCase().trim();
-        const fichasStore = db.getFichasStore();
-        fichasStore[key] = { chips: 5000, winnings: 0 };
-        db.setFichasStore(fichasStore);
-
-        console.log(`[REGISTER] ${nomeCompleto} (${novoUsuario.cpfFormatado}) - Bônus de 5.000 fichas creditado`);
+        console.log(`[REGISTER] ${nomeCompleto} (${novoUsuario.cpfFormatado}) - Conta criada`);
         res.json({ success: true, sessionToken: novoUsuario.sessionToken, cpf, nome: nomeCompleto });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno no servidor.' });

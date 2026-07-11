@@ -380,11 +380,26 @@ function syncAdminCreditsStore() {
     syncAdminCreditos().catch(e => console.error('[DB] syncAdminCreditos failed:', e.message));
 }
 
-// Bonus Primeiro Depósito (in-memory, uma vez por usuário)
+// Bonus Primeiro Depósito (persistente em arquivo, uma vez por usuário)
 function getBonusPrimeiroDeposito() { return bonusPrimeiroDepositoCache; }
 function setBonusPrimeiroDepositoJaUsado(nome) {
     const key = (nome || '').toLowerCase().trim();
     bonusPrimeiroDepositoCache[key] = true;
+    syncBonusCache();
+}
+function syncBonusCache() {
+    const path = path.join(__dirname, 'bonus_deposito.json');
+    fs.writeFileSync(path, JSON.stringify(bonusPrimeiroDepositoCache, null, 2));
+}
+function loadBonusCache() {
+    const path = path.join(__dirname, 'bonus_deposito.json');
+    if (fs.existsSync(path)) {
+        try {
+            const data = JSON.parse(fs.readFileSync(path, 'utf8'));
+            Object.keys(data).forEach(k => { bonusPrimeiroDepositoCache[k] = data[k]; });
+            console.log('[DB] Bonus cache carregado:', Object.keys(bonusPrimeiroDepositoCache).length, 'usuários');
+        } catch (e) { console.error('[DB] Erro ao carregar bonus cache:', e.message); }
+    }
 }
 
 // Bot Fichas
