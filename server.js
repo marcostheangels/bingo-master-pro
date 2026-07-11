@@ -14,8 +14,9 @@ const ADMIN_EMAIL = 'marcostheangels@gmail.com';
 
 const mailTransporter = nodemailer.createTransport({
     host: 'smtp.gmail.com',
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false,
+    requireTLS: true,
     auth: {
         user: ADMIN_EMAIL,
         pass: 'gnbdjxgqjttrkgiy'
