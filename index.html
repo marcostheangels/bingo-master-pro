@@ -2,1284 +2,413 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#06030f">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>BINGO MASTER PRO</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎱%3C/text%3E%3C/svg%3E">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.0.8/index.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="style.css?v=5">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                regs.forEach(r => r.unregister());
+            }).then(() => {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('sw.js').catch(() => {});
+                });
+            });
+        }
+    </script>
 </head>
 <body>
 
-    <!-- Canvas para Efeito de Confete -->
-    <canvas id="confettiCanvas"></canvas>
-
-    <!-- Banner Offline -->
-    <div id="offlineBanner" class="offline-banner">Você está desconectado. Verifique sua conexão com a internet.</div>
-
-    <!-- Tela do Loader Geral -->
-    <div id="spinnerOverlay" class="spinner-overlay">
+    <!-- Overlays -->
+    <div class="spinner-overlay" id="spinnerOverlay">
         <div class="spinner"></div>
-        <div class="spinner-text" id="spinnerText">Carregando dados com segurança...</div>
+        <div class="spinner-text" id="spinnerText">Conectando...</div>
     </div>
+    <div class="offline-banner" id="offlineBanner">🔌 Conexão perdida. Tentando reconectar...</div>
+    <canvas id="confettiCanvas"></canvas>
+    <div class="toast-container" id="toastContainer"></div>
+    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Tela Cheia">⛶</button>
 
-    <!-- Toasts Notificações -->
-    <div id="toastContainer" class="toast-container"></div>
-
-    <!-- Overlay de Contagem Regressiva -->
-    <div id="countdownOverlay" class="countdown-overlay">
-        <div class="countdown-content">
-            <div class="countdown-label">O Sorteio vai começar em</div>
-            <div id="countdownTimer" class="countdown-timer">5</div>
-            <div class="countdown-hint">Prepare suas cartelas! A marcação é automática.</div>
-        </div>
-    </div>
-
-    <!-- Overlay de Vencedor de Linha (Kuadra/Kina) -->
-    <div id="winnerBannerOverlay" class="winner-banner-overlay" onclick="closeWinnerBanner()">
-        <div class="winner-banner">
-            <h1 id="wbTitle">BINGO!</h1>
-            <h2 id="wbUser">Jogador</h2>
-            <h3 id="wbDetails">Ganhou a Fase Kuadra</h3>
-        </div>
-    </div>
-
-    <!-- Overlay de Ranking Geral (Fim de Jogo Keno) -->
-    <div id="kenoRankingOverlay" class="keno-ranking-overlay">
-        <div class="keno-ranking-content">
-            <div class="keno-ranking-header">PODIUM FINAL</div>
-            <div id="rankingRound" class="keno-ranking-round">Rodada #101</div>
-            
-            <div class="ranking-section">
-                <div class="ranking-section-title kuadra-title">🏆 Ganhador Kuadra</div>
-                <div id="rankKuadra" class="ranking-winner">Nenhum</div>
-            </div>
-            <div class="ranking-section">
-                <div class="ranking-section-title kina-title">🏆 Ganhador Kina</div>
-                <div id="rankKina" class="ranking-winner">Nenhum</div>
-            </div>
-            <div class="ranking-section">
-                <div class="ranking-section-title keno-title">👑 Grande Campeão Keno</div>
-                <div id="rankKeno" class="ranking-winner">Nenhum</div>
-            </div>
-
-            <button class="ranking-close-btn" onclick="closeRankingOverlay()">Iniciar Nova Rodada</button>
-        </div>
-    </div>
-
-    <!-- ========================================
-         TELA DE AUTENTICAÇÃO (LOGIN / REGISTRO)
-         ======================================== -->
-    <div id="authScreen" class="screen active">
+    <!-- ===== REGISTER / LOGIN SCREEN ===== -->
+    <div class="screen active" id="screenHome">
         <div class="box">
-            <h1>BINGO MASTER PRO</h1>
-            <div class="subtitle">Premium Gaming Platform</div>
+            <h1>🎱 BINGO MASTER PRO</h1>
+            <p class="subtitle">Kuadra • Kina • Keno</p>
 
-            <div class="auth-tabs">
-                <button id="tabLogin" class="auth-tab active" onclick="switchAuthTab('login')">Entrar</button>
-                <button id="tabRegister" class="auth-tab" onclick="switchAuthTab('register')">Cadastrar</button>
+            <!-- LOGIN (padrão) -->
+            <div id="authLogin">
+                <div class="auth-field">
+                    <label>CPF:</label>
+                    <input type="text" id="loginCpf" class="input-field" placeholder="000.000.000-00" maxlength="14" oninput="mascaraCPF(this)">
+                </div>
+                <div class="auth-field">
+                    <label>Senha:</label>
+                    <input type="password" id="loginSenha" class="input-field" placeholder="Sua senha">
+                </div>
+                <p class="auth-error" id="loginError"></p>
+                <button class="mode-btn" onclick="fazerLogin()" style="width:100%">
+                    <span class="icon">🔑</span>
+                    <span class="text">
+                        <span class="title">Entrar</span>
+                        <span class="desc">Acessar minha conta</span>
+                    </span>
+                </button>
+                <p style="margin-top:16px;font-size:0.85em;color:#6b6599">
+                    Não tem conta? <a href="#" onclick="mostrarAba('register');return false" style="color:#fbbf24;text-decoration:none;font-weight:600">Cadastre-se</a>
+                </p>
             </div>
 
-            <!-- Formulário de Login -->
-            <div id="formLogin" class="login-container">
+            <!-- CADASTRO -->
+            <div id="authRegister" style="display:none">
                 <div class="auth-field">
-                    <label>Usuário ou Email</label>
-                    <input type="text" id="loginUser" class="input-field" placeholder="Digite seu usuário">
+                    <label>Nome Completo:</label>
+                    <input type="text" id="regNome" class="input-field" placeholder="Seu nome completo" autocomplete="off">
                 </div>
                 <div class="auth-field">
-                    <label>Senha Secreta</label>
-                    <input type="password" id="loginPass" class="input-field" placeholder="••••••••">
+                    <label>CPF:</label>
+                    <input type="text" id="regCpf" class="input-field" placeholder="000.000.000-00" maxlength="14" oninput="mascaraCPF(this)">
                 </div>
-                <div id="loginError" class="auth-error"></div>
-                <button class="btn btn-primary" style="width: 100%;" onclick="executeAuth('login')">Acessar Conta</button>
+                <div class="auth-field">
+                    <label>E-mail:</label>
+                    <input type="email" id="regEmail" class="input-field" placeholder="seu@email.com" autocomplete="off">
+                </div>
+                <div class="auth-field">
+                    <label>Senha:</label>
+                    <input type="password" id="regSenha" class="input-field" placeholder="Mínimo 4 caracteres">
+                </div>
+                <div class="auth-field">
+                    <label>Confirmar Senha:</label>
+                    <input type="password" id="regConfirma" class="input-field" placeholder="Repita a senha">
+                </div>
+                <div class="auth-field">
+                    <label>Chave PIX (para saque):</label>
+                    <input type="text" id="regChavePix" class="input-field" placeholder="CPF, e-mail, telefone ou chave aleatória">
+                </div>
+                <p class="auth-error" id="regError"></p>
+                <button class="mode-btn" onclick="registrar()" style="width:100%">
+                    <span class="icon">✅</span>
+                    <span class="text">
+                        <span class="title">Cadastrar</span>
+                        <span class="desc">Criar minha conta</span>
+                    </span>
+                </button>
+                <p style="margin-top:16px;font-size:0.85em;color:#6b6599">
+                    Já tem conta? <a href="#" onclick="mostrarAba('login');return false" style="color:#fbbf24;text-decoration:none;font-weight:600">Faça login</a>
+                </p>
             </div>
 
-            <!-- Formulário de Registro -->
-            <div id="formRegister" class="login-container" style="display: none;">
-                <div class="regra-deposito">
-                    📌 <strong>Bônus Inicial:</strong> Cadastre-se e ganhe <strong>100 Moedas VIP</strong> para jogar de graça imediatamente!
-                </div>
-                <div class="auth-field">
-                    <label>Nome de Usuário</label>
-                    <input type="text" id="regUser" class="input-field" placeholder="Ex: marcos_pro">
-                </div>
-                <div class="auth-field">
-                    <label>Endereço de Email</label>
-                    <input type="email" id="regEmail" class="input-field" placeholder="seu@email.com">
-                </div>
-                <div class="auth-field">
-                    <label>Senha Forte</label>
-                    <input type="password" id="regPass" class="input-field" placeholder="Mínimo 6 dígitos">
-                </div>
-                <div id="regError" class="auth-error"></div>
-                <button class="btn btn-success" style="width: 100%;" onclick="executeAuth('register')">Criar Conta Premium</button>
+            <div class="spectator-entry">
+                <button class="mode-btn" onclick="conectarComoEspectador()" style="width:100%;margin-top:8px">
+                    <span class="icon">👁️</span>
+                    <span class="text">
+                        <span class="title">Assistir ao Vivo</span>
+                        <span class="desc">Acompanhe o sorteio sem fazer login</span>
+                    </span>
+                </button>
+            </div>
+
+            <div id="connectionStatusMsg" class="connection-status">
+                <p id="statusTxt"></p>
             </div>
         </div>
     </div>
 
-    <!-- ========================================
-         TELA PRINCIPAL DO JOGO (GAME VIEW)
-         ======================================== -->
-    <div id="gameScreen" class="screen">
+    <!-- ===== GAME SCREEN ===== -->
+    <div class="screen" id="screenGame">
         <div class="game-wrapper">
-            
-            <!-- Barra Superior do Usuário -->
-            <div class="top-bar">
-                <div class="connection-info">
-                    <div id="connDot" class="conn-dot"></div>
-                    <span id="connText">Servidor Protegido SSL</span>
-                </div>
-                <div class="user-info">
-                    <div id="userAvatar" class="user-avatar">M</div>
-                    <div>
-                        <div id="profileName" class="user-name">Marcos</div>
-                        <div id="profileChips" class="user-chips">$ 100.00</div>
-                    </div>
-                    <button class="btn-deposit" onclick="openModal('deposit')">💰 Depositar</button>
-                    <button class="btn-withdraw" onclick="openModal('withdraw')">💸 Sacar</button>
-                    <button class="btn-logout" onclick="logout()">Sair</button>
-                </div>
-            </div>
 
-            <!-- Painel de Controle de Host / Admin -->
-            <div class="admin-panel">
+            <!-- Painel Admin (Dono) - só aparece para Marcos -->
+            <div class="admin-panel" id="adminPanelTop" style="display: none;">
                 <div class="admin-panel-content">
-                    <h3>🛠️ PAINEL ADMINISTRATIVO MASTER</h3>
-                    
+                    <h3>⚙️ Painel do Dono</h3>
+
+                    <!-- Fichas -->
                     <div class="admin-controls">
-                        <div>
-                            <label>Modo de Extração</label>
-                            <div class="draw-mode-toggle" style="margin-top: 10px;">
-                                <span>Manual</span>
-                                <input type="checkbox" id="drawModeCheck" onchange="toggleDrawMode(this.checked)">
-                                <span>Automático</span>
+                        <h4>💰 Gerenciar Fichas</h4>
+                        <label for="adminPlayerSelect">Jogador:</label>
+                        <div style="display:flex;gap:8px;align-items:center">
+                            <select id="adminPlayerSelect" class="input-field" style="flex:1"></select>
+                            <button class="btn btn-refresh" onclick="carregarAdminUsuariosComSaldo()" style="padding:8px 12px" title="Recarregar lista de usuários">🔄</button>
+                        </div>
+                        <label for="adminChipAmount">Fichas:</label>
+                        <input type="number" id="adminChipAmount" class="input-field" value="5000">
+                        <div class="btn-row">
+                            <button class="btn btn-add" onclick="executeAdminAction('add')">➕ Adicionar</button>
+                            <button class="btn btn-remove" onclick="executeAdminAction('remove')">➖ Retirar</button>
+                        </div>
+                    </div>
+
+                    <!-- Saldo do Jogador Selecionado -->
+                    <div class="admin-controls" style="border:1px solid #3b82f6;background:rgba(59,130,246,0.05)">
+                        <h4 style="color:#3b82f6">💳 Saldo do Jogador Selecionado</h4>
+                        <div id="adminPlayerBalance" style="font-size:0.85em;color:#a0a0b0">
+                            Selecione um jogador acima para ver os detalhes.
+                        </div>
+                        <button class="btn btn-refresh" onclick="atualizarSaldoJogadorSelecionado()" style="margin-top:8px">🔄 Atualizar Saldo</button>
+                    </div>
+
+                    <!-- Modo Teste -->
+                    <div class="admin-controls" style="border:1px dashed #fbbf24">
+                        <h4>🧪 Modo Teste — Saque de Créditos</h4>
+                        <p style="color:#fbbf24;font-size:0.78em;margin:4px 0 8px">Quando ligado, créditos adicionados podem ser sacados.</p>
+                        <div class="btn-row">
+                            <button class="btn btn-success" id="btnModoTeste" onclick="alternarModoTeste()">🔄 Carregando…</button>
+                        </div>
+                    </div>
+
+                    <!-- Abas de Navegação -->
+                    <div class="admin-tabs">
+                        <button class="admin-tab active" data-tab="tabSaques" onclick="adminAbrirAba('tabSaques')">💸 Saques Pendentes</button>
+                        <button class="admin-tab" data-tab="tabUsuarios" onclick="adminAbrirAba('tabUsuarios')">📋 Usuários</button>
+                        <button class="admin-tab" data-tab="tabHistorico" onclick="adminAbrirAba('tabHistorico')">📜 Histórico</button>
+                        <button class="admin-tab" data-tab="tabTransacoes" onclick="adminAbrirAba('tabTransacoes')">💳 Transações</button>
+                    </div>
+
+                    <!-- Conteúdo das Abas -->
+                    <div class="admin-tab-content" id="tabSaques">
+                        <h4>💸 Saques Pendentes</h4>
+                        <div id="adminSaquesList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
+                        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+                            <button class="btn btn-refresh" onclick="carregarSaquesAdmin()">🔄 Atualizar</button>
+                            <button class="btn btn-primary" onclick="testarEmailAdmin()" style="font-size:0.82em;padding:4px 12px">📧 Testar Email</button>
+                        </div>
+                    </div>
+
+                    <div class="admin-tab-content" id="tabUsuarios" style="display:none">
+                        <h4>📋 Usuários Cadastrados</h4>
+                        <div id="adminCadastrosList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
+                        <button class="btn btn-refresh" onclick="carregarCadastrosAdmin()" style="margin-top:8px">🔄 Atualizar</button>
+                    </div>
+
+                    <div class="admin-tab-content" id="tabHistorico" style="display:none">
+                        <h4>📜 Histórico de Sorteios</h4>
+                        <div class="admin-filtros">
+                            <label>De:</label>
+                            <input type="date" id="filtroHistDe" class="input-field input-field-sm">
+                            <label>Até:</label>
+                            <input type="date" id="filtroHistAte" class="input-field input-field-sm">
+                            <div class="btn-row">
+                                <button class="btn btn-refresh" onclick="carregarHistoricoAdmin()">🔍 Filtrar</button>
+                                <button class="btn btn-download" onclick="baixarHistoricoCSV()">⬇️ CSV</button>
+                                <button class="btn btn-download" onclick="baixarHistoricoJSON()">⬇️ JSON</button>
                             </div>
                         </div>
-                        <div class="speed-control">
-                            <label>Intervalo: <span id="speedVal">3</span>s</label>
-                            <input type="range" id="speedSlider" min="2" minmax="3" max="6" value="3" oninput="changeSpeed(this.value)">
-                        </div>
-                        <div class="btn-row">
-                            <button id="btnNextBall" class="btn-next-ball" disabled onclick="manualDrawBall()">Pedir Bola 🎲</button>
-                            <button class="btn btn-remove" style="padding: 10px 14px;" onclick="resetMatchData()">Resetar Partida</button>
-                        </div>
+                        <div id="adminHistoricoList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
                     </div>
 
-                    <div class="admin-tabs">
-                        <button id="atTab1" class="admin-tab active" onclick="switchAdminTab(1)">Usuários Logados</button>
-                        <button id="atTab2" class="admin-tab" onclick="switchAdminTab(2)">Transações Financeiras</button>
-                        <button id="atTab3" class="admin-tab" onclick="switchAdminTab(3)">Parâmetros de Auditoria</button>
+                    <div class="admin-tab-content" id="tabTransacoes" style="display:none">
+                        <h4>💳 Transações dos Jogadores</h4>
+                        <div class="admin-filtros">
+                            <label>De:</label>
+                            <input type="date" id="filtroTransDe" class="input-field input-field-sm">
+                            <label>Até:</label>
+                            <input type="date" id="filtroTransAte" class="input-field input-field-sm">
+                            <div class="btn-row">
+                                <button class="btn btn-refresh" onclick="carregarTransacoesAdmin()">🔍 Filtrar</button>
+                                <button class="btn btn-download" onclick="baixarTransacoesCSV()">⬇️ CSV</button>
+                                <button class="btn btn-download" onclick="baixarTransacoesJSON()">⬇️ JSON</button>
+                            </div>
+                        </div>
+                        <div id="adminTransacoesList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
                     </div>
-
-                    <!-- Conteúdos das Abas Administrativas -->
-<div id="adminTabContent" class="admin-tab-content">
-    
-    <!-- Aba 1 -->
-    <div id="atContent1">
-        <div class="admin-filtros">
-            <label>Filtro:</label>
-            <input type="text" class="input-field-sm" placeholder="Buscar usuário..." id="searchUserAdmin" oninput="renderAdminUsers()">
-            <div class="btn-row">
-                <button class="btn btn-refresh" onclick="addSimulatedUser()">+ Adicionar Bot</button>
+                </div>
             </div>
-        </div>
-        
-        <!-- Lista de Usuários -->
-        <div id="adminUsersList"></div>
 
-        <!-- Painel de Exclusão (Dentro da Aba 1) -->
-        <div class="admin-card" style="margin-top: 15px; border-color: rgba(239, 68, 68, 0.4);">
-            <h4 style="color: #ff4d4d; margin-bottom: 10px; font-size: 0.95em;">🗑️ Excluir Jogador Completamente</h4>
-            <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
-                <select id="deletePlayerSelect" class="input-field-sm" style="flex: 1; min-width: 220px; padding: 10px 12px; border-radius: 10px; background: rgba(0,0,0,0.4); color: #fff; border: 1px solid rgba(255,255,255,0.08); font-family: 'Poppins', sans-serif;">
-                    <option value="">-- Selecione um jogador para excluir --</option>
-                </select>
-                <button class="btn btn-remove" onclick="confirmarExclusaoJogador()">Excluir Permanentemente</button>
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <div class="connection-info" id="connectionInfo">
+                    <span class="conn-dot" id="connDot"></span>
+                    <span id="connStatus">Conectado ao Bingo</span>
+                </div>
+                <div class="user-info">
+                    <div class="user-avatar" id="avatarIcon">B</div>
+                    <span class="user-name" id="labelMyName">Jogador</span>
+                    <span class="user-chips" id="labelMyChips">💰 0  🏆 0</span>
+                    <button class="btn-deposit" onclick="abrirModalDeposito()">💰 Depositar</button>
+                    <button class="btn-withdraw" id="btnSacar" onclick="abrirModalSaque()" style="display:none">💸 Sacar</button>
+                    <button class="btn-logout" onclick="sairDaConta()">🚪 Sair</button>
+                </div>
             </div>
-            <p style="font-size: 0.75em; color: rgba(255,255,255,0.5); margin-top: 8px; margin-bottom: 0;">
-                ⚠️ Atenção: Esta ação é irreversível. Selecione o jogador na lista acima.
-            </p>
-        </div>
-    </div>
 
-    <!-- Aba 2 -->
-    <div id="atContent2" style="display: none;">
-        <h4>Últimas movimentações via Pix aprovadas</h4>
-        <div id="adminFinanceList">
-            <div class="admin-card">🟩 Pix Recebido: Marcos +$50.00 - Sucesso</div>
-            <div class="admin-card">🟨 Retirada Solicitada: Carlos -$200.00 - Processando em Lote</div>
-        </div>
-    </div>
-
-        <!-- Aba 3 -->
-        <div id="atContent3" style="display: none;">
-            <div class="admin-card">⚙️ Limite Bola Ouro Jackpot: 58 bolas fixas.</div>
-            <div class="admin-card">🔒 Criptografia das Cartelas SHA-256 ativa.</div>
-        </div>
-    </div>
-</div>
-
-            <!-- Corpo Principal com Duas Colunas -->
+            <!-- Game Body -->
             <div class="game-body">
-                
-                <!-- Coluna da Esquerda: Painel do Globo e Cartelas -->
+
+                <!-- MAIN COLUMN -->
                 <div class="game-main">
-                    
-                    <!-- Seção do Globo / Sorteio -->
+
+                    <!-- Ball Section -->
                     <div class="ball-section">
                         <div class="ball-area">
                             <div class="current-ball">
-                                <div class="label">Última Bola</div>
-                                <div id="ballDisplay" class="ball-display">--</div>
+                                <p class="label">Última Bola</p>
+                                <div class="ball-display" id="mainBall">-</div>
                             </div>
-                            <div id="drawnGrid" class="drawn-grid">
-                                <!-- Preenchido dinamicamente de 1 a 90 -->
-                            </div>
+                            <div class="drawn-grid" id="drawnGrid"></div>
                         </div>
 
                         <div class="ball-actions">
-                            <div class="buy-options">
-                                <span class="buy-label">Comprar Cartelas:</span>
-                                <button class="btn btn-primary" onclick="buyTickets(1)">+1 Cartela ($10)</button>
-                                <button class="btn btn-warning" onclick="buyTickets(2)">+2 Cartelas ($20)</button>
-                                <button class="btn btn-success" onclick="buyTickets(4)">+4 Cartelas ($40)</button>
+                            <div class="buy-options" id="buySection">
+                                <span class="buy-label">Comprar Cartelas (R$0,15 cada — máx. 15):</span>
+                                <button class="btn btn-primary" onclick="buyBingoCards(1)">1 (R$0,15)</button>
+                                <button class="btn btn-primary" onclick="buyBingoCards(5)">5 (R$0,75)</button>
+                                <button class="btn btn-primary" onclick="buyBingoCards(10)">10 (R$1,50)</button>
+                                <button class="btn btn-primary" onclick="buyBingoCards(15)">15 (R$2,25)</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Seção das Minhas Cartelas Compradas -->
-                    <div class="my-cards-section">
-                        <h3>🃏 Minhas Cartelas Ativas</h3>
-                        <div id="cardsGrid" class="cards-grid">
-                            <div class="missing-empty" style="text-align: center; width: 100%;">Nenhuma cartela adquirida para esta rodada. Adquira acima para iniciar!</div>
-                        </div>
+                    <!-- Players Panel -->
+                    <div class="players-panel" id="playersPanel">
+                        <h3>👥 Jogadores na Sala</h3>
+                        <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores assistindo ao vivo</div>
+                        <ul class="player-list" id="playerListUI"></ul>
                     </div>
+
                 </div>
 
-                <!-- Coluna da Direita: Painéis de Monitoramento e Estatísticas -->
+                <!-- SIDEBAR -->
                 <div class="game-sidebar">
-                    
-                    <!-- Painel Prêmios Jackpot Acumulado -->
-                    <div id="jackpotPanel" class="jackpot-panel jackpot-active">
-                        <div class="jackpot-label">Acumulado Sorte Grande</div>
-                        <div id="jackpotValue" class="jackpot-value">$ 2.500,00</div>
-                        <div class="jackpot-subtitle">Prêmio Extra Ouro 🌟</div>
-                        <div class="round-number" id="matchRoundLabel">Bolas Restantes Pro Jackpot: <strong id="jackpotCountdown">58</strong></div>
-                    </div>
 
-                    <!-- Painel de Bolas Premiadas do Jackpot -->
-                    <div id="jackpotBallsPanel" class="jackpot-balls-panel visible">
-                        <div class="jackpot-balls-label">Histórico de Linha de Bolas</div>
-                        <div id="jackpotBallsGrid" class="jackpot-balls-grid">
-                            <!-- Preenchido com as últimas 5 bolas sorteadas de forma reduzida -->
-                        </div>
-                    </div>
-
-                    <!-- Painel de Status das Fases de Prêmios -->
+                    <!-- Phases / Prizes -->
                     <div class="sidebar-card">
-                        <h3>🏆 Fases de Premiação</h3>
-                        <div id="phase1" class="phase-item">
-                            <span>Fase 1: <strong>Kuadra</strong> (Linha 4)</span>
-                            <span class="prize">$ 50,00</span>
-                        </div>
-                        <div id="phase2" class="phase-item">
-                            <span>Fase 2: <strong>Kina</strong> (Linha 5)</span>
-                            <span class="prize">$ 120,00</span>
-                        </div>
-                        <div id="phase3" class="phase-item">
-                            <span>Fase 3: <strong>Keno</strong> (Bingo Total)</span>
-                            <span class="prize">$ 500,00</span>
+                        <h3>🏆 Prêmios da Rodada</h3>
+                        <div class="phases-bar" id="phasesStatus">
+                            <div class="phase-item" id="phase_kuadra">Kuadra: <span class="prize">💰 R$ 3,00</span></div>
+                            <div class="phase-item" id="phase_kina">Kina: <span class="prize">💰 R$ 5,00</span></div>
+                            <div class="phase-item" id="phase_keno">Bingo: <span class="prize">💰 R$ 7,00</span></div>
                         </div>
                     </div>
 
-                    <!-- Painel de Jogadores Pertos de Ganhar -->
-                    <div class="close-cards-panel">
-                        <h3>⚡ Quase Premiando (Falta 1 Bola)</h3>
-                        <div id="closeCardsList" class="close-cards-list">
-                            <div class="close-empty">Nenhum jogador no radar por enquanto.</div>
+                    <!-- Close Cards -->
+                    <div class="missing-numbers-panel" id="missingNumbersPanel">
+                        <h3>📊 <span id="missingTitle">Cartelas faltando 1 bola</span></h3>
+                        <div class="missing-numbers-list" id="missingNumbersList">
+                            <p style="color:#6b6599;font-size:0.82em">Nenhum jogo ativo no momento.</p>
                         </div>
-                    </div>
-
-                    <!-- Painel Detalhado de Números Restantes -->
-                    <div class="missing-numbers-panel">
-                        <h3>🔍 Números Faltantes Por Jogador</h3>
-                        <div id="missingNumbersList" class="missing-numbers-list">
-                            <div class="missing-empty">Aguardando início do sorteio de números.</div>
-                        </div>
-                    </div>
-
-                    <!-- Painel do Ranking de Faturamento em Tempo Real -->
-                    <div class="players-panel">
-                        <h3>👥 Ranking de Faturamento</h3>
-                        <ul id="playerList" class="player-list">
-                            <!-- Inserido dinamicamente -->
-                        </ul>
-                    </div>
-
-                    <!-- Console de Eventos Gerais (Logs) -->
-                    <div id="gameLog" class="game-log">
-                        <div>Sistemas carregados e protegidos com sucesso.</div>
-                        <div>Aguardando compra de cartelas para iniciar validação.</div>
                     </div>
 
                 </div>
             </div>
+
+            <!-- Jackpot (perto das cartelas) -->
+            <div class="jackpot-panel">
+                <div class="jackpot-label">🎰 Jackpot Acumulado</div>
+                <div class="jackpot-value" id="jackpotDisplay">R$ 1.000,00</div>
+                <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÉ 37 BOLAS E LEVE O JACKPOT DE R$ 1.000,00!</div>
+                <div class="round-number" id="currentRoundNumber">Nenhum sorteio ainda</div>
+            </div>
+
+            <div class="jackpot-balls-panel" id="jackpotBallsPanel" style="display:none;">
+                <div class="jackpot-balls-label">Bolas para o Jackpot:</div>
+                <div class="jackpot-balls-grid" id="jackpotBallsGrid"></div>
+            </div>
+
+            <!-- My Cards Section (full width) -->
+            <div class="my-cards-section">
+                <h3>📋 Minhas Cartelas</h3>
+                <div class="cards-grid" id="myCardsGrid"></div>
+            </div>
+
+            <!-- Game Log -->
+            <div class="game-log" id="gameLog"></div>
         </div>
     </div>
 
-    <!-- ========================================
-         MODAIS (DEPÓSITO E RETIRADA DE VALORES)
-         ======================================== -->
-    <!-- Modal de Depósito -->
-    <div id="modalDeposit" class="modal-overlay" style="display: none;">
+    <!-- ===== COUNTDOWN OVERLAY ===== -->
+    <div class="countdown-overlay" id="countdownOverlay">
+        <div class="countdown-content">
+            <div class="countdown-label">🔄 PRÓXIMO SORTEIO EM</div>
+            <div class="countdown-timer" id="countdownTimer">2:30</div>
+            <div class="countdown-hint">Compre suas cartelas enquanto aguarda!</div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL PIX ===== -->
+    <div class="modal-overlay" id="modalPix" style="display:none">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeModal('deposit')">×</button>
-            <h2>💳 Adicionar Créditos via Pix</h2>
+            <button class="modal-close" onclick="fecharModal('modalPix')">✕</button>
+            <h2>💰 Depósito via PIX</h2>
+            <div class="regra-deposito">
+                ⚠️ <strong>Valor mínimo de depósito: R$ 10,00.</strong><br>
+                O valor depositado <strong>não pode ser sacado</strong>. Só pode ser usado para comprar cartelas.
+                Você só tem direito a saque dos valores <strong>ganhos</strong> nas fases Kuadra, Kina ou Keno.
+                Saque mínimo: R$ 10,00.
+            </div>
             <div class="pix-form">
-                <label>Valor do Depósito (R$)</label>
-                <input type="number" id="depAmount" class="input-field" value="50" min="10">
-                
-                <button class="btn btn-success" onclick="generatePixCode()">Gerar Código Pix QR</button>
-                
-                <div id="pixQrArea" style="display: none;">
-                    <div class="pix-qr-container">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=00020101021126360014br.gov.bcb.pix0114bingomasterpro" alt="QR Code Pix">
-                    </div>
-                    <div class="pix-instruction">Escaneie o QR Code ou Copie a Chave abaixo para pagar no seu banco:</div>
-                    <div class="pix-copy-area">
-                        <input type="text" id="pixKeyInput" value="00020101021126360014br.gov.bcb.pix0114bingomasterpro50" readonly>
-                        <button class="btn btn-primary" onclick="copyPixKey()">Copiar Chave</button>
-                    </div>
-                    <div class="pix-loader"></div>
-                    <div class="pix-status">Aguardando pagamento na rede do Banco Central...</div>
+                <label>Valor (R$):</label>
+                <input type="number" id="pixValor" class="input-field" value="10" min="10" step="1">
+                <button class="btn btn-primary" onclick="gerarPix()">Gerar QR Code PIX</button>
+            </div>
+            <div id="pixQrArea" style="display:none">
+                <div class="pix-qr-container">
+                    <img id="pixQrCode" src="" alt="QR Code PIX" style="width:200px;height:200px;background:#fff;">
                 </div>
+                <p class="pix-instruction">Escaneie o QR Code ou copie o código abaixo para pagar</p>
+                <div class="pix-copy-area">
+                    <input type="text" id="pixCopyText" readonly>
+                    <button class="btn btn-primary" onclick="copiarPix()">📋 Copiar</button>
+                </div>
+                <p class="pix-status" id="pixStatus">Aguardando pagamento...</p>
+                <div class="pix-loader" id="pixLoader"></div>
             </div>
         </div>
     </div>
 
-    <!-- Modal de Retirada -->
-    <div id="modalWithdraw" class="modal-overlay" style="display: none;">
+    <!-- ===== MODAL SAQUE ===== -->
+    <div class="modal-overlay" id="modalSaque" style="display:none">
         <div class="modal-content">
-            <button class="modal-close" onclick="closeModal('withdraw')">×</button>
-            <h2>💸 Solicitar Saque Imediato</h2>
-            <div class="saque-info">Saldo Disponível: <strong id="withdrawAvailable">$ 100.00</strong></div>
+            <button class="modal-close" onclick="fecharModal('modalSaque')">✕</button>
+            <h2>💸 Solicitar Saque</h2>
+            <div class="regra-deposito">
+                ⚠️ <strong>Saque mínimo: R$ 10,00.</strong><br>
+                Só pode sacar valores <strong>ganhos</strong> nas fases Kuadra, Kina ou Keno.
+                O valor que você <strong>depositou</strong> não pode ser sacado.
+                Saldo sacável: <strong id="saqueSaldo">R$ 0,00</strong>
+            </div>
             <div class="saque-form">
-                <label>Tipo de Chave Pix</label>
-                <select id="saqueKeyType" class="input-field" style="background: rgba(0,0,0,0.5); color:#fff; border:1px solid rgba(255,255,255,0.1);">
+                <label>Valor do Saque (R$):</label>
+                <input type="number" id="saqueValor" class="input-field" value="10" min="10" step="1">
+                <label>Tipo de Chave PIX:</label>
+                <select id="saqueTipoChave" class="input-field">
                     <option value="cpf">CPF</option>
-                    <option value="email">Email</option>
-                    <option value="phone">Celular</option>
+                    <option value="email">E-mail</option>
+                    <option value="telefone">Telefone</option>
                     <option value="aleatoria">Chave Aleatória</option>
                 </select>
-                
-                <label>Dados da Chave Pix</label>
-                <input type="text" id="saqueKeyData" class="input-field" placeholder="Digite sua chave pix destinatária">
-
-                <label>Valor do Resgate ($)</label>
-                <input type="number" id="saqueAmount" class="input-field" placeholder="Valor mínimo $20.00">
-
-                <button class="btn btn-warning" onclick="executeWithdraw()">Confirmar Saque na Conta</button>
-                <div id="saqueMsg" class="saque-msg"></div>
+                <label>Chave PIX:</label>
+                <input type="text" id="saqueChave" class="input-field" placeholder="Digite sua chave PIX">
+                <button class="btn btn-success" onclick="solicitarSaque()">📤 Solicitar Saque</button>
             </div>
+            <div id="saqueMsg" class="saque-msg"></div>
         </div>
     </div>
 
-    <!-- Botão de Suporte Flutuante WhatsApp -->
-    <a href="https://wa.me/5538998558528" target="_blank" class="whatsapp-float" aria-label="Suporte ao Jogador Ao Vivo">
-    <svg viewBox="0 0 32 32" xmlns="http://www.w3.org/2000/svg" fill="currentColor">
-        <path d="M19.11 17.205c-.372 0-1.088 1.39-1.518 1.39a.63.63 0 0 1-.315-.1c-.802-.402-1.504-.812-2.152-1.311-.47-.36-1.045-.806-1.62-1.37-.576-.564-.976-1.045-1.37-1.62-.5-.648-.91-1.35-1.31-2.152-.055-.105-.08-.21-.08-.315 0-.43 1.39-1.145 1.39-1.518 0-.165-.08-.33-.165-.495-.08-.165-.33-.826-.495-1.236-.165-.41-.33-.735-.495-.98-.165-.245-.41-.41-.66-.495-.245-.08-.57-.125-.9-.125-.33 0-.735.04-.98.125-.245.08-.49.245-.66.495-.165.245-.33.57-.495.98-.165.41-.41 1.07-.495 1.236-.08.165-.165.33-.165.495 0 .372 1.39 1.088 1.39 1.518 0 .105-.025.21-.08.315-.4.802-.81 1.504-1.31 2.152-.36.47-.806 1.045-1.37 1.62-.564.576-1.045.976-1.62 1.37-.648.5-1.35.91-2.152 1.31-.105.055-.21.08-.315.08-.43 0-1.145-1.39-1.518-1.39-.165 0-.33.08-.495.165-.165.08-.826.33-1.236.495-.41.165-.735.33-.98.495-.245.165-.41.41-.495.66-.08.245-.125.57-.125.9 0 .33.04.735.125.98.08.245.245.49.495.66.245.165.57.33.98.495.41.165 1.07.41 1.236.495.165.08.33.165.495.165.372 0 1.088-1.39 1.518-1.39.105 0 .21.025.315.08.802.402 1.504.812 2.152 1.311.47.36 1.045.806 1.62 1.37.576.564.976 1.045 1.37 1.62.5.648.91 1.35 1.31 2.152.055.105.08.21.08.315 0 .43-1.39 1.145-1.39 1.518 0 .165.08.33.165.495.08.165.33.826.495 1.236.165.41.33.735.495.98.165.245.41.41.66.495.245.08.57.125.9.125.33 0 .735-.04.98-.125.245-.08.49-.245.66-.495.165-.245.33-.57.495-.98.165-.41.41-1.07.495-1.236.08-.165.165-.33.165-.495 0-.372-1.39-1.088-1.39-1.518 0-.105.025-.21.08-.315.4-.802.81-1.504 1.31-2.152.36-.47.806-1.045 1.37-1.62.564-.576 1.045-.976 1.62-1.37.648-.5 1.35-.91 2.152-1.31.105-.055.21-.08.315-.08.43 0 1.145 1.39 1.518 1.39.165 0 .33-.08.495-.165.165-.08.826-.33 1.236-.495.41-.165.735-.33.98-.495.245-.165.41-.41.495-.66.08-.245.125-.57.125-.9 0-.33-.04-.735-.125-.98-.08-.245-.245-.49-.495-.66-.245-.165-.57-.33-.98-.495-.41-.165-1.07-.41-1.236-.495-.165-.08-.33-.165-.495-.165zM16 0C7.164 0 0 7.164 0 16c0 2.82.736 5.466 2.025 7.77L0 32l8.455-1.97A15.9 15.9 0 0 0 16 32c8.836 0 16-7.164 16-16S24.836 0 16 0zm0 29.2c-2.46 0-4.77-.66-6.75-1.8l-.48-.28-4.99 1.17 1.2-4.86-.31-.5A13.16 13.16 0 0 1 2.8 16C2.8 8.73 8.73 2.8 16 2.8S29.2 8.73 29.2 16 23.27 29.2 16 29.2z"/>
-    </svg>
-    <span>Suporte ao Jogador Ao Vivo</span>
-</a>
-
-    <!-- Botão de Tela Cheia Flutuante -->
-    <button class="fullscreen-btn" onclick="toggleFullscreen()" title="Alternar Tela Cheia">📺</button>
-
-    <!-- ========================================
-         SCRIPT LOGIC - BINGO MASTER PRO ENGINE
-         ======================================== -->
+    <!-- Floating WhatsApp Support -->
+    <a href="https://wa.me/5538998558528" target="_blank" class="whatsapp-float" aria-label="Suporte ao Jogador">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="white" width="24" height="24">
+            <path d="M16 0C7.2 0 0 7.2 0 16c0 3.2 1 6.2 2.6 8.8L1.2 31.2l6.8-1.8C10.4 31 13 32 16 32c8.8 0 16-7.2 16-16S24.8 0 16 0zm8.4 22.4c-.4 1.2-2 2.2-3.4 2.4-.8.2-2 .4-5.8-1.2-4.8-2-7.8-6.8-8-7.2-.4-.4-1.8-2.4-1.8-4.6s1.2-3.2 1.6-3.6c.4-.4.8-.4 1.2-.4h.8c.4 0 .8-.2 1.2.8.4 1 1.4 3.4 1.6 3.6.2.4.2.8-.2 1.2-.2.4-.4.8-.8 1.2-.4.4-.4.8-.2 1.2.4.6 1.6 2.6 3.4 4.2 2.4 2 4.2 2.6 5 2.8.6.2 1.2 0 1.6-.4.4-.4 1.8-2 2.2-2.8.4-.6.8-.6 1.4-.4.6.2 3.4 1.6 4 1.8.6.2 1 .4 1.2.6.2.4.2 1.4-.2 2.6z"/>
+        </svg>
+        <span>Suporte ao Jogador</span>
+    </a>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+<script src="game-logic.js?v=7"></script>
+<script src="network.js?v=7"></script>
     <script>
-        // Dados de Estado Global do Jogo
-        let currentUser = null;
-        let userChips = 100.00;
-        let currentMatchRound = 102;
-        let drawnBalls = [];
-        let totalBallsCount = 90;
-        let isDrawActive = false;
-        let drawIntervalId = null;
-        let drawSpeedSeconds = 3;
-        let isAutomaticDrawMode = false;
-        let boughtTickets = [];
-        let currentPhase = 1; // 1: Kuadra, 2: Kina, 3: Keno
-        let jackpotPoolValue = 2500.00;
-        const jackpotBallLimit = 58;
-
-        // Lista Oficial de Bots do Servidor (Sem símbolos, limpos conforme diretrizes)
-        let playersData = [
-            { id: "player_main", name: "Marcos (Você)", chips: 100.00, isBot: false, tickets: [] },
-            { id: "bot1", name: "Lucas Silva", chips: 450.00, isBot: true, tickets: [] },
-            { id: "bot2", name: "Mariana Costa", chips: 1250.00, isBot: true, tickets: [] },
-            { id: "bot3", name: "Roberto Souza", chips: 890.00, isBot: true, tickets: [] },
-            { id: "bot4", name: "Camila Araujo", chips: 2100.00, isBot: true, tickets: [] },
-            { id: "bot5", name: "Bruno Oliveira", chips: 75.00, isBot: true, tickets: [] }
-        ];
-
-        // Vencedores das Etapas da Rodada Atual
-        let winnersRecord = { kuadra: null, kina: null, keno: null, jackpot: null };
-
-        // Inicialização do App
-        window.addEventListener('DOMContentLoaded', () => {
-            renderDrawnGrid();
-            renderPlayerRanking();
-            setupConnectivitySim();
-            renderAdminUsers();
-            populateDeleteDropdown();
-        });
-
-        // Controle de Conexão Estável Simulada
-        function setupConnectivitySim() {
-            window.addEventListener('offline', () => {
-                document.getElementById('offlineBanner').classList.add('visible');
-                document.getElementById('connDot').classList.add('disconnected');
-                document.getElementById('connText').innerText = "Modo Offline Detectado";
-            });
-            window.addEventListener('online', () => {
-                document.getElementById('offlineBanner').classList.remove('visible');
-                document.getElementById('connDot').classList.remove('disconnected');
-                document.getElementById('connText').innerText = "Conexão VIP Criptografada";
-            });
-        }
-
-        // Alternância de Abas na Autenticação (Login / Registro)
-        function switchAuthTab(type) {
-            document.getElementById('tabLogin').classList.toggle('active', type === 'login');
-            document.getElementById('tabRegister').classList.toggle('active', type === 'register');
-            document.getElementById('formLogin').style.display = type === 'login' ? 'block' : 'none';
-            document.getElementById('formRegister').style.display = type === 'register' ? 'block' : 'none';
-        }
-
-        // Execução do Fluxo de Cadastro e Autenticação com Validações
-        function executeAuth(type) {
-            showSpinner(true, type === 'login' ? "Autenticando credenciais criptografadas..." : "Criando carteira segura e gerando bônus...");
-            
-            setTimeout(() => {
-                showSpinner(false);
-                if (type === 'login') {
-                    const user = document.getElementById('loginUser').value.trim();
-                    const pass = document.getElementById('loginPass').value.trim();
-                    if (!user || !pass) {
-                        document.getElementById('loginError').innerText = "Preencha todos os campos obrigatórios.";
-                        return;
-                    }
-                    currentUser = user;
-                } else {
-                    const user = document.getElementById('regUser').value.trim();
-                    const email = document.getElementById('regEmail').value.trim();
-                    const pass = document.getElementById('regPass').value.trim();
-                    if (!user || !email || !pass) {
-                        document.getElementById('regError').innerText = "Campos inválidos ou vazios.";
-                        return;
-                    }
-                    currentUser = user;
-                    userChips = 100.00; // Bônus Grátis Inicial
+        // Auto-login se tiver sessao valida
+        (async function() {
+            if (typeof validarSessaoExistente === 'function') {
+                const valido = await validarSessaoExistente();
+                if (valido && typeof conectarAposAuth === 'function') {
+                    conectarAposAuth();
                 }
-                
-                // Transição de tela limpa
-                document.getElementById('authScreen').classList.remove('active');
-                document.getElementById('gameScreen').classList.add('active');
-                
-                // Atualizar Perfil do Header
-                document.getElementById('profileName').innerText = currentUser;
-                document.getElementById('userAvatar').innerText = currentUser.charAt(0).toUpperCase();
-                updateChipsDisplay();
-                
-                pushLog(`Usuário ${currentUser} conectou à sala de bingo VIP.`);
-                showToast(`Seja bem-vindo, ${currentUser}!`, 'success');
-                renderAdminUsers();
-            }, 1000);
-        }
-
-        // Gerenciador do Spinner de Carregamento
-        function showSpinner(show, text = "") {
-            const overlay = document.getElementById('spinnerOverlay');
-            if (text) document.getElementById('spinnerText').innerText = text;
-            overlay.classList.toggle('visible', show);
-        }
-
-        // Atualizador Geral de Saldos em Tela
-        function updateChipsDisplay() {
-            const format = `$ ${userChips.toFixed(2)}`;
-            document.getElementById('profileChips').innerText = format;
-            document.getElementById('withdrawAvailable').innerText = format;
-            playersData.find(p => p.id === "player_main").chips = userChips;
-            renderPlayerRanking();
-        }
-
-        // Sistema Push Logs no Console Lateral
-        function pushLog(text) {
-            const logBox = document.getElementById('gameLog');
-            const newDiv = document.createElement('div');
-            newDiv.innerText = `[${new Date().toLocaleTimeString()}] ${text}`;
-            logBox.appendChild(newDiv);
-            logBox.scrollTop = logBox.scrollHeight;
-        }
-
-        // Toasts Rápidos de Feedback do Sistema
-        function showToast(msg, type = 'info') {
-            const container = document.getElementById('toastContainer');
-            const item = document.createElement('div');
-            item.className = `toast-item toast-${type}`;
-            item.innerText = msg;
-            container.appendChild(item);
-            setTimeout(() => item.classList.add('visible'), 50);
-            setTimeout(() => {
-                item.classList.remove('visible');
-                setTimeout(() => item.remove(), 400);
-            }, 3500);
-        }
-
-        // Grid Inicial de 90 Bolas Cinzas
-        function renderDrawnGrid() {
-            const grid = document.getElementById('drawnGrid');
-            grid.innerHTML = '';
-            for (let i = 1; i <= 90; i++) {
-                const cell = document.createElement('div');
-                cell.className = 'dgrid-cell';
-                cell.id = `dcell-${i}`;
-                cell.innerText = i;
-                grid.appendChild(cell);
             }
-        }
-
-        // Compra Real de Cartelas Estruturadas
-        function buyTickets(qty) {
-            const price = qty * 10;
-            if (userChips < price) {
-                showToast("Saldo insuficiente para comprar cartelas premium.", "error");
-                return;
-            }
-            userChips -= price;
-            updateChipsDisplay();
-            
-            // Gerar Cartelas com Números Únicos Fixos Organizados por Coluna (Formato 9x3 Padrão)
-            for (let q = 0; q < qty; q++) {
-                const ticketId = Math.floor(100000 + Math.random() * 900000);
-                const ticketNumbers = generateStandardBingoMatrix();
-                
-                boughtTickets.push({
-                    id: ticketId,
-                    matrix: ticketNumbers, // Array plano de 27 posições (9 colunas x 3 linhas)
-                    theme: ['theme-red', 'theme-blue', 'theme-green', 'theme-purple', 'theme-gold'][Math.floor(Math.random() * 5)]
-                });
-            }
-            
-            // Distribuir de 1 a 3 cartelas aleatórias para os bots simularem participação ativa
-            playersData.forEach(p => {
-                if(p.isBot) {
-                    p.tickets = [];
-                    let botQty = Math.floor(Math.random() * 3) + 1;
-                    for(let b=0; b<botQty; b++) {
-                        p.tickets.push({ id: Math.floor(100000 + Math.random()*900000), matrix: generateStandardBingoMatrix() });
-                    }
-                }
-            });
-
-            renderMyTickets();
-            pushLog(`Você comprou ${qty} cartela(s). Rodada pronta para iniciar.`);
-            showToast("Cartelas prontas para o sorteio!", "success");
-
-            // Acionar contagem automatizada se o painel estiver em modo automático
-            if (isAutomaticDrawMode && !isDrawActive) {
-                startCountdownBeforeMatch();
-            }
-        }
-
-        // Gerador de Matriz de Bingo 9 colunas x 3 linhas (Padrão 90 bolas internacional)
-        function generateStandardBingoMatrix() {
-            let cells = Array(27).fill(null);
-            // Cada coluna obtém números de faixas específicas (Ex: Col 0: 1-9, Col 1: 10-19... Col 8: 80-90)
-            for (let c = 0; c < 9; c++) {
-                let min = c === 0 ? 1 : c * 10;
-                let max = c === 8 ? 90 : (c * 10) + 9;
-                
-                // Escolher 2 linhas aleatórias das 3 disponíveis para colocar números nessa coluna
-                let linesSelected = [];
-                while(linesSelected.length < 2) {
-                    let r = Math.floor(Math.random() * 3);
-                    if(!linesSelected.includes(r)) linesSelected.push(r);
-                }
-                
-                // Gerar os números únicos daquela coluna
-                let colNumbers = [];
-                while(colNumbers.length < 2) {
-                    let num = Math.floor(Math.random() * (max - min + 1)) + min;
-                    if(!colNumbers.includes(num)) colNumbers.push(num);
-                }
-                colNumbers.sort((a,b) => a - b);
-
-                linesSelected.sort((a,b) => a - b).forEach((row, idx) => {
-                    cells[row * 9 + c] = colNumbers[idx];
-                });
-            }
-            return cells;
-        }
-
-        // Renderização Visual das Minhas Cartelas na Tela
-        function renderMyTickets() {
-            const area = document.getElementById('cardsGrid');
-            if (boughtTickets.length === 0) {
-                area.innerHTML = '<div class="missing-empty" style="text-align: center; width: 100%;">Nenhuma cartela adquirida para esta rodada. Adquira acima para iniciar!</div>';
-                return;
-            }
-            area.innerHTML = '';
-
-            boughtTickets.forEach(t => {
-                const card = document.createElement('div');
-                card.className = `bingo-card ${t.theme}`;
-                card.id = `card-view-${t.id}`;
-
-                let title = document.createElement('div');
-                title.className = 'card-title';
-                title.innerHTML = `Cartela Oficial <span class="card-id">#${t.id}</span>`;
-                card.appendChild(title);
-
-                let grid = document.createElement('div');
-                grid.className = 'card-grid';
-
-                t.matrix.forEach(num => {
-                    let cell = document.createElement('div');
-                    cell.className = num ? 'card-cell' : 'card-cell empty';
-                    if (num) {
-                        cell.innerText = num;
-                        cell.id = `cell-${t.id}-${num}`;
-                        // Se já foi sorteado antes (em caso de reinícios rápidos)
-                        if (drawnBalls.includes(num)) cell.classList.add('marked');
-                    }
-                    grid.appendChild(cell);
-                });
-
-                card.appendChild(grid);
-
-                let footer = document.createElement('div');
-                footer.style.textAlign = 'center';
-                footer.innerHTML = `<div class="card-codigo" id="badge-status-${t.id}">Aguardando Sorteio</div>`;
-                card.appendChild(footer);
-
-                area.appendChild(card);
-            });
-        }
-
-        // Controle de Modo de Extração (Auto / Manual)
-        function toggleDrawMode(checked) {
-            isAutomaticDrawMode = checked;
-            document.getElementById('btnNextBall').disabled = isAutomaticDrawMode || !isDrawActive;
-            pushLog(`Modo de extração alterado para: ${isAutomaticDrawMode ? 'Automático' : 'Manual'}.`);
-            
-            if (isAutomaticDrawMode && isDrawActive && !drawIntervalId) {
-                startAutoDrawLoop();
-            } else if (!isAutomaticDrawMode && drawIntervalId) {
-                clearInterval(drawIntervalId);
-                drawIntervalId = null;
-            }
-        }
-
-        // Ajuste Dinâmico de Velocidade pelo Administrador
-        function changeSpeed(val) {
-            drawSpeedSeconds = parseInt(val);
-            document.getElementById('speedVal').innerText = drawSpeedSeconds;
-            if (isDrawActive && isAutomaticDrawMode) {
-                // Reiniciar loop para aplicar nova velocidade instantaneamente
-                startAutoDrawLoop();
-            }
-        }
-
-        // Contagem Regressiva Prominente de Auto-Start
-        function startCountdownBeforeMatch() {
-            if(boughtTickets.length === 0) return;
-            const overlay = document.getElementById('countdownOverlay');
-            const timer = document.getElementById('countdownTimer');
-            overlay.classList.add('visible');
-            let count = 3;
-            timer.innerText = count;
-
-            let interval = setInterval(() => {
-                count--;
-                timer.innerText = count;
-                if(count <= 0) {
-                    clearInterval(interval);
-                    overlay.classList.remove('visible');
-                    initiateMatchDraw();
-                }
-            }, 1000);
-        }
-
-        // Inicialização de Fato da Rodada de Sorteio
-        function initiateMatchDraw() {
-            isDrawActive = true;
-            drawnBalls = [];
-            currentPhase = 1;
-            winnersRecord = { kuadra: null, kina: null, keno: null, jackpot: null };
-            
-            // Resetar interfaces do jogo
-            renderDrawnGrid();
-            document.getElementById('jackpotBallsGrid').innerHTML = '';
-            document.getElementById('phase1').className = 'phase-item phase-active';
-            document.getElementById('phase2').className = 'phase-item';
-            document.getElementById('phase3').className = 'phase-item';
-            
-            pushLog(`Rodada #${currentMatchRound} Iniciada oficialmente!`);
-            
-            if (isAutomaticDrawMode) {
-                startAutoDrawLoop();
-            } else {
-                document.getElementById('btnNextBall').disabled = false;
-            }
-        }
-
-        // Loop de Sorteio Automático
-        function startAutoDrawLoop() {
-            if (drawIntervalId) clearInterval(drawIntervalId);
-            drawIntervalId = setInterval(() => {
-                executeSingleBallExtraction();
-            }, drawSpeedSeconds * 1000);
-        }
-
-        // Extração Manual por Botão do Admin
-        function manualDrawBall() {
-            if (!isDrawActive) return;
-            executeSingleBallExtraction();
-        }
-
-        // Lógica de Extração Única de Bola e Verificação de Regras
-        function executeSingleBallExtraction() {
-            if (drawnBalls.length >= totalBallsCount) {
-                finalizeGameMatch();
-                return;
-            }
-
-            let newBall;
-            do {
-                newBall = Math.floor(Math.random() * 90) + 1;
-            } while (drawnBalls.includes(newBall));
-
-            drawnBalls.push(newBall);
-            
-            // Animação de Giro do Globo na Bola
-            const bDisplay = document.getElementById('ballDisplay');
-            bDisplay.innerText = newBall;
-            bDisplay.className = 'ball-display ball-spinning';
-            
-            setTimeout(() => {
-                bDisplay.className = 'ball-display ball-animate';
-            }, 10);
-
-            // Atualizar Grid Geral de 90 Bolas
-            const gridCell = document.getElementById(`dcell-${newBall}`);
-            if (gridCell) gridCell.classList.add('drawn');
-
-            // Histórico Rápido do Jackpot (Últimas bolas horizontais)
-            updateJackpotBallsRow(newBall);
-
-            // Atualizar Contador Restante Pro Jackpot Limitado a Bola 58
-            let ballsLeftJackpot = jackpotBallLimit - drawnBalls.length;
-            document.getElementById('jackpotCountdown').innerText = ballsLeftJackpot >= 0 ? ballsLeftJackpot : 0;
-            
-            if (drawnBalls.length > jackpotBallLimit) {
-                document.getElementById('jackpotPanel').className = 'jackpot-panel jackpot-inactive';
-            }
-
-            // Anunciação da bola via Áudio sintetizado nativo
-            speakNumber(newBall);
-
-            // Computar Marcação Automática nas Cartelas e Analisar Ganhadores
-            processAutomaticTicketing(newBall);
-
-            // Se o jogo acabou na análise da bola, encerra o loop
-            if (!isDrawActive) {
-                if (drawIntervalId) { clearInterval(drawIntervalId); drawIntervalId = null; }
-            }
-        }
-
-        // Síntese de Voz Nativa em Português
-        function speakNumber(num) {
-            if ('speechSynthesis' in window) {
-                let text = `Número ${num}`;
-                if (num === 90) text = "Último número, noventa!";
-                let utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'pt-BR';
-                utterance.rate = 1.3;
-                window.speechSynthesis.speak(utterance);
-            }
-        }
-
-        // Atualizador Horizontal das Bolas do Painel Jackpot
-        function updateJackpotBallsRow(num) {
-            const row = document.getElementById('jackpotBallsGrid');
-            const ball = document.createElement('div');
-            let phaseClass = currentPhase === 1 ? 'kuadra' : currentPhase === 2 ? 'kina' : 'keno';
-            ball.className = `jackpot-ball ${phaseClass}`;
-            ball.innerText = num;
-            row.insertBefore(ball, row.firstChild);
-            if (row.childNodes.length > 8) row.removeChild(row.lastChild);
-        }
-
-        // Mecanismo Central Automatizado de Análise e Auditoria de Linhas / Cartela Cheia
-        function processAutomaticTicketing(lastBall) {
-            let closeRadarData = [];
-            let missingRadarData = [];
-
-            // Analisar todas as carteiras de todos os players (Inclusive bots)
-            playersData.forEach(player => {
-                let playerBestMissing = 99;
-                
-                player.tickets.forEach(ticket => {
-                    let matrix = ticket.matrix;
-                    let row1 = matrix.slice(0, 9).filter(n => n !== null);
-                    let row2 = matrix.slice(9, 18).filter(n => n !== null);
-                    let row3 = matrix.slice(18, 27).filter(n => n !== null);
-                    let allTicketNumbers = matrix.filter(n => n !== null);
-
-                    // Contar quantos faltam sorteados por linha
-                    let mRow1 = row1.filter(n => !drawnBalls.includes(n));
-                    let mRow2 = row2.filter(n => !drawnBalls.includes(n));
-                    let mRow3 = row3.filter(n => !drawnBalls.includes(n));
-                    let mAll = allTicketNumbers.filter(n => !drawnBalls.includes(n));
-
-                    // Atualizar estilo visual em tempo real se for a cartela do usuário real
-                    if (player.id === "player_main") {
-                        allTicketNumbers.forEach(n => {
-                            if (drawnBalls.includes(n)) {
-                                const cEl = document.getElementById(`cell-${ticket.id}-${n}`);
-                                if (cEl && !cEl.classList.includes) {
-                                    cEl.classList.add('marked');
-                                    if(n === lastBall) cEl.classList.add('marked-last');
-                                }
-                            }
-                        });
-                    }
-
-                    // AUDITORIA DA FASE 1: KUADRA (Qualquer linha com 4 acertos ou 0 faltantes das existentes)
-                    // Para simplificar e manter estabilidade: Kuadra exige que faltem apenas 1 número para completar uma linha cheia de 5, ou seja, acertar 4 na mesma linha.
-                    if (currentPhase === 1) {
-                        let r1Hit = row1.length - mRow1.length;
-                        let r2Hit = row2.length - mRow2.length;
-                        let r3Hit = row3.length - mRow3.length;
-
-                        if (r1Hit >= 4 || r2Hit >= 4 || r3Hit >= 4) {
-                            if (r1Hit === row1.length || r2Hit === row2.length || r3Hit === row3.length || (r1Hit === 4 && mRow1.includes(lastBall)) || (r2Hit === 4 && mRow2.includes(lastBall)) || (r3Hit === 4 && mRow3.includes(lastBall))) {
-                                if (!winnersRecord.kuadra) {
-                                    triggerPhaseVictory('kuadra', player, ticket, lastBall);
-                                }
-                            }
-                        }
-                        
-                        let minMissingLine = Math.min(mRow1.length, mRow2.length, mRow3.length);
-                        if (minMissingLine === 1) closeRadarData.push({ name: player.name, phase: 'Kuadra' });
-                        if (minMissingLine < playerBestMissing) playerBestMissing = minMissingLine;
-                    }
-
-                    // AUDITORIA DA FASE 2: KINA (Uma linha completa de 5 números preenchidos)
-                    if (currentPhase === 2) {
-                        if (mRow1.length === 0 || mRow2.length === 0 || mRow3.length === 0) {
-                            if (!winnersRecord.kina) {
-                                triggerPhaseVictory('kina', player, ticket, lastBall);
-                            }
-                        }
-                        let minMissingLine = Math.min(mRow1.length, mRow2.length, mRow3.length);
-                        if (minMissingLine === 1) closeRadarData.push({ name: player.name, phase: 'Kina' });
-                        if (minMissingLine < playerBestMissing) playerBestMissing = minMissingLine;
-                    }
-
-                    // AUDITORIA DA FASE 3: KENO (Bingo Cheio - Todos os números da cartela sorteados)
-                    if (currentPhase === 3) {
-                        if (mAll.length === 0) {
-                            triggerPhaseVictory('keno', player, ticket, lastBall);
-                        }
-                        if (mAll.length === 1) {
-                            closeRadarData.push({ name: player.name, phase: 'Keno' });
-                            // Adiciona borda amarela pulsante na cartela do player real se faltar 1 número
-                            if(player.id === "player_main") {
-                                document.getElementById(`card-view-${ticket.id}`).classList.add('card-close');
-                            }
-                        }
-                        if (mAll.length < playerBestMissing) playerBestMissing = mAll.length;
-                    }
-                });
-
-                // Coletar dados para o painel de números faltantes por jogador
-                if (isDrawActive && player.tickets.length > 0) {
-                    missingRadarData.push({ name: player.name, count: playerBestMissing, code: player.id.substring(0,5) });
-                }
-            } );
-
-            // Atualizar Paineis Laterais
-            renderCloseCardsPanel(closeRadarData);
-            renderMissingNumbersPanel(missingRadarData, lastBall);
-        }
-
-        // Gatilho de Vitória Por Fase de Jogo com Premiações Reais
-        function triggerPhaseVictory(phase, player, ticket, lastBall) {
-            winnersRecord[phase] = player.name;
-            
-            let prizeAmount = phase === 'kuadra' ? 50.00 : phase === 'kina' ? 120.00 : 500.00;
-            pushLog(`🏆 FASE ${phase.toUpperCase()} CONCLUÍDA! Ganhador: ${player.name} na Cartela #${ticket.id}`);
-
-            // Se o vencedor for o usuário real, adiciona saldo na hora
-            if (player.id === "player_main") {
-                userChips += prizeAmount;
-                updateChipsDisplay();
-                showToast(`Parabéns! Você ganhou $${prizeAmount} na fase ${phase}!`, 'success');
-            } else {
-                // Se for um bot, adiciona no saldo fictício dele para movimentar o ranking
-                player.chips += prizeAmount;
-                renderPlayerRanking();
-            }
-
-            // Regra Crítica do Jackpot Ouro Acumulado (Até a bola 58 na Fase Keno)
-            if (phase === 'keno' && drawnBalls.length <= jackpotBallLimit) {
-                winnersRecord.jackpot = player.name;
-                pushLog(`🌟 JACKPOT ULTRA DETONADO! ${player.name} faturou o prêmio acumulado de $${jackpotPoolValue.toFixed(2)} antes da bola 58!`);
-                if (player.id === "player_main") {
-                    userChips += jackpotPoolValue;
-                    updateChipsDisplay();
-                } else {
-                    player.chips += jackpotPoolValue;
-                }
-                document.getElementById('wbTitle').innerText = "💥 JACKPOT EXTRA! 💥";
-            } else {
-                document.getElementById('wbTitle').innerText = "BINGO DETONADO!";
-            }
-
-            // Exibir Banner Animado Centralizado
-            document.getElementById('wbUser').innerText = player.name;
-            document.getElementById('wbDetails').innerText = `Completou a Fase ${phase.toUpperCase()} na bola ${lastBall}`;
-            document.getElementById('winnerBannerOverlay').classList.add('visible');
-
-            // Mudar de Fase Automaticamente
-            if (phase === 'kuadra') {
-                currentPhase = 2;
-                document.getElementById('phase1').className = 'phase-item phase-completed';
-                document.getElementById('phase2').className = 'phase-item phase-active';
-            } else if (phase === 'kina') {
-                currentPhase = 3;
-                document.getElementById('phase2').className = 'phase-item phase-completed';
-                document.getElementById('phase3').className = 'phase-item phase-active';
-            } else if (phase === 'keno') {
-                document.getElementById('phase3').className = 'phase-item phase-completed';
-                finalizeGameMatch();
-            }
-        }
-
-        // Fechar Banner de Vencedor de Linha
-        function closeWinnerBanner() {
-            document.getElementById('winnerBannerOverlay').classList.remove('visible');
-        }
-
-        // Painel Lateral Quase Premiando
-        function renderCloseCardsPanel(data) {
-            const list = document.getElementById('closeCardsList');
-            if (data.length === 0) {
-                list.innerHTML = '<div class="close-empty">Nenhum jogador no radar por enquanto.</div>';
-                return;
-            }
-            list.innerHTML = '';
-            // Exibir os 4 primeiros para não estourar o layout
-            data.slice(0, 4).forEach(item => {
-                let div = document.createElement('div');
-                div.className = 'close-card-item';
-                div.innerHTML = `<span class="close-player">${item.name}</span>
-                                <div class="close-badges">
-                                    <span class="close-badge close-${item.phase.toLowerCase()}">${item.phase} F.1</span>
-                                </div>`;
-                list.appendChild(div);
-            });
-        }
-
-        // Painel Lateral Números Faltantes Dinâmicos
-        function renderMissingNumbersPanel(data, lastBall) {
-            const list = document.getElementById('missingNumbersList');
-            if(data.length === 0) {
-                list.innerHTML = '<div class="missing-empty">Aguardando início do sorteio de números.</div>';
-                return;
-            }
-            list.innerHTML = '';
-            data.sort((a,b) => a.count - b.count).slice(0, 3).forEach(p => {
-                let card = document.createElement('div');
-                card.className = 'missing-player-card';
-                
-                let phaseLabel = currentPhase === 1 ? 'kuadra' : currentPhase === 2 ? 'kina' : 'keno';
-
-                card.innerHTML = `<div class="missing-player-header">
-                                    <span class="missing-player-name">${p.name}</span>
-                                    <span class="missing-player-codigo">ID:${p.code}</span>
-                                  </div>
-                                  <div class="missing-row">
-                                    <span class="missing-phase-label">${phaseLabel}:</span>
-                                    <div class="missing-ball ${phaseLabel}">${p.count}</div>
-                                    <span style="font-size:0.75em; padding-top:3px; color:#aaa;">números restantes</span>
-                                  </div>`;
-                list.appendChild(card);
-            });
-        }
-
-        // Finalização da Partida e Exibição do Podium Keno
-        function finalizeGameMatch() {
-            isDrawActive = false;
-            if (drawIntervalId) { clearInterval(drawIntervalId); drawIntervalId = null; }
-            document.getElementById('btnNextBall').disabled = true;
-
-            // Abrir Overlay do Podium Geral Final
-            document.getElementById('rankingRound').innerText = `Partida Oficial Encerrada • Rodada #${currentMatchRound}`;
-            document.getElementById('rankKuadra').innerHTML = winnersRecord.kuadra ? `👤 ${winnersRecord.kuadra} <span class="rank-prize">+$50</span>` : 'Nenhum';
-            document.getElementById('rankKina').innerHTML = winnersRecord.kina ? `👤 ${winnersRecord.kina} <span class="rank-prize">+$120</span>` : 'Nenhum';
-            
-            let kenoText = winnersRecord.keno ? `👤 ${winnersRecord.keno} <span class="rank-prize">+$500</span>` : 'Nenhum';
-            if (winnersRecord.jackpot) kenoText += ` <br><span style="color:#ffff00; font-size:0.8em;">💥 LEVOU JACKPOT VORTEX DE $${jackpotPoolValue}!</span>`;
-            document.getElementById('rankKeno').innerHTML = kenoText;
-
-            document.getElementById('kenoRankingOverlay').className = 'keno-ranking-overlay visible';
-            pushLog(`Partida encerrada com auditoria completa das cartelas premiadas.`);
-        }
-
-        // Fechar Overlay de Ranking e Incrementar Rodada
-        function closeRankingOverlay() {
-            document.getElementById('kenoRankingOverlay').className = 'keno-ranking-overlay';
-            currentMatchRound++;
-            boughtTickets = [];
-            renderMyTickets();
-            renderDrawnGrid();
-            document.getElementById('ballDisplay').innerText = '--';
-            pushLog(`Sala limpa. Adquira novas cartelas para a Rodada #${currentMatchRound}.`);
-        }
-
-        // Resetar Forçado Manual da Partida pelo Admin
-        function resetMatchData() {
-            isDrawActive = false;
-            if(drawIntervalId) { clearInterval(drawIntervalId); drawIntervalId = null; }
-            drawnBalls = [];
-            boughtTickets = [];
-            renderDrawnGrid();
-            renderMyTickets();
-            document.getElementById('ballDisplay').innerText = '--';
-            document.getElementById('btnNextBall').disabled = true;
-            document.getElementById('phase1').className = 'phase-item';
-            document.getElementById('phase2').className = 'phase-item';
-            document.getElementById('phase3').className = 'phase-item';
-            pushLog("O Administrador resetou os parâmetros e limpou as cartelas da rodada.");
-            showToast("Partida reiniciada pelo Admin", "warning");
-        }
-
-        // Ordenação e Renderização do Ranking Lateral de Faturamento
-        function renderPlayerRanking() {
-            const list = document.getElementById('playerList');
-            list.innerHTML = '';
-            
-            // Ordenar jogadores por maior saldo em conta
-            let sorted = [...playersData].sort((a,b) => b.chips - a.chips);
-            
-            sorted.forEach((p, idx) => {
-                let badgeClass = idx === 0 ? 'pos-1' : idx === 1 ? 'pos-2' : idx === 2 ? 'pos-3' : 'pos-other';
-                let li = document.createElement('li');
-                li.innerHTML = `<div class="position-badge ${badgeClass}">${idx + 1}</div>
-                                <span class="user-name" style="font-size:0.9em;">${p.name}</span>
-                                <div class="player-chips">
-                                    <span>$ ${p.chips.toFixed(2)}</span>
-                                    <span class="conta-label">VIP BALANCE</span>
-                                </div>`;
-                list.appendChild(li);
-            });
-        }
-
-        // Renderizar Lista de Usuários no Painel Administrativo Aba 1
-        function renderAdminUsers() {
-            const container = document.getElementById('adminUsersList');
-            const search = document.getElementById('searchUserAdmin').value.toLowerCase();
-            container.innerHTML = '';
-
-            playersData.forEach(p => {
-                if (search && !p.name.toLowerCase().includes(search)) return;
-                let card = document.createElement('div');
-                card.className = 'admin-card';
-                card.style.display = 'flex';
-                card.style.justifyContent = 'space-between';
-                card.style.alignItems = 'center';
-                card.innerHTML = `<div><strong>${p.name}</strong> (${p.isBot ? 'Bot Automatizado' : 'Jogador Real'})</div>
-                                  <div>Saldo: $${p.chips.toFixed(2)} <button class="btn btn-remove" style="padding:2px 8px; font-size:0.7em; margin-left:6px;" onclick="removeAdminUser('${p.id}')">Kikar</button></div>`;
-                container.appendChild(card);
-            });
-
-            populateDeleteDropdown();
-        }
-
-        // Preencher Dropdown de Seleção de Jogador para Exclusão
-        function populateDeleteDropdown() {
-            const select = document.getElementById('deletePlayerSelect');
-            if (!select) return;
-            const currentValue = select.value;
-            select.innerHTML = '<option value="">-- Selecione um jogador para excluir --</option>';
-            playersData.forEach(p => {
-                if (p.id === 'player_main') return;
-                const opt = document.createElement('option');
-                opt.value = p.id;
-                const tipo = p.isBot ? '🤖 Bot' : '👤 Real';
-                opt.textContent = `${tipo} • ${p.name} • Saldo: $${p.chips.toFixed(2)}`;
-                select.appendChild(opt);
-            });
-            if (currentValue && playersData.some(p => p.id === currentValue)) {
-                select.value = currentValue;
-            }
-        }
-
-        // Confirmar e Executar Exclusão Permanente do Jogador Selecionado
-        function confirmarExclusaoJogador() {
-            const select = document.getElementById('deletePlayerSelect');
-            const selectedId = select ? select.value : '';
-            if (!selectedId) {
-                showToast("Selecione um jogador na lista para excluir.", "warning");
-                return;
-            }
-            const player = playersData.find(p => p.id === selectedId);
-            if (!player) {
-                showToast("Jogador não encontrado.", "error");
-                return;
-            }
-            if (player.id === 'player_main') {
-                showToast("Você não pode excluir a si mesmo da sessão.", "error");
-                return;
-            }
-            const confirmMsg = `Tem certeza que deseja EXCLUIR PERMANENTEMENTE o jogador "${player.name}"?\n\nEsta ação removerá o jogador, suas cartelas, histórico e saldo de forma IRREVERSÍVEL.`;
-            if (!confirm(confirmMsg)) return;
-
-            const removedName = player.name;
-            playersData = playersData.filter(p => p.id !== selectedId);
-            renderPlayerRanking();
-            renderAdminUsers();
-            showToast(`Jogador "${removedName}" foi excluído permanentemente.`, "success");
-            pushLog(`Administrador excluiu permanentemente o jogador: ${removedName}`);
-        }
-
-        // Adicionar Bot com Nome Limpo via Painel Admin
-        function addSimulatedUser() {
-            const namesPool = ["Gustavo", "Fernanda", "Rodrigo", "Amanda", "Gabriel", "Patricia", "Leonardo"];
-            const randomName = namesPool[Math.floor(Math.random() * namesPool.length)] + " " + ["Martins", "Rocha", "Alves", "Teixeira"].getRandom();
-            const newId = "bot_" + Date.now();
-            playersData.push({ id: newId, name: randomName, chips: Math.floor(Math.random() * 500) + 50, isBot: true, tickets: [] });
-            renderPlayerRanking();
-            renderAdminUsers();
-            pushLog(`Administrador inseriu o bot corporativo: ${randomName}`);
-        }
-        Array.prototype.getRandom = function() { return this[Math.floor(Math.random() * this.length)]; };
-
-        // Remover Usuário via Painel Admin
-        function removeAdminUser(id) {
-            if(id === "player_main") {
-                showToast("Você não pode kikar a si mesmo da sessão.", "error");
-                return;
-            }
-            playersData = playersData.filter(p => p.id !== id);
-            renderPlayerRanking();
-            renderAdminUsers();
-            pushLog(`Usuário com ID ${id} foi desconectado pelo painel moderador.`);
-        }
-
-        // Alternar Abas Administrativas
-        function switchAdminTab(tabIndex) {
-            for(let i=1; i<=3; i++) {
-                document.getElementById(`atTab${i}`).classList.toggle('active', i === tabIndex);
-                document.getElementById(`atContent${i}`).style.display = i === tabIndex ? 'block' : 'none';
-            }
-            if (tabIndex === 1) populateDeleteDropdown();
-        }
-
-        // Gerenciamento de Janelas Modais (Pix / Saque)
-        function openModal(type) {
-            if(type === 'deposit') document.getElementById('modalDeposit').style.display = 'flex';
-            if(type === 'withdraw') {
-                document.getElementById('modalWithdraw').style.display = 'flex';
-                updateChipsDisplay();
-            }
-        }
-        function closeModal(type) {
-            if(type === 'deposit') {
-                document.getElementById('modalDeposit').style.display = 'none';
-                document.getElementById('pixQrArea').style.display = 'none';
-            }
-            if(type === 'withdraw') document.getElementById('modalWithdraw').style.display = 'none';
-        }
-
-        // Geração Simulada do Fluxo de Depósito via Cópia de Código Pix
-        function generatePixCode() {
-            const amt = parseFloat(document.getElementById('depAmount').value);
-            if(isNaN(amt) || amt < 10) {
-                showToast("O valor mínimo de aporte via Pix é de R$ 10,00", "warning");
-                return;
-            }
-            document.getElementById('pixKeyInput').value = `00020101021126360014br.gov.bcb.pix0114bingomasterpro${amt}50303BC`;
-            document.getElementById('pixQrArea').style.display = 'block';
-            
-            // Simular aprovação automática do Pix após 6 segundos para testabilidade fluida
-            setTimeout(() => {
-                if(document.getElementById('modalDeposit').style.display === 'flex') {
-                    userChips += amt;
-                    updateChipsDisplay();
-                    pushLog(`Aporte de R$ ${amt.toFixed(2)} via Pix Aprovado de forma instantânea.`);
-                    showToast(`Pix de R$ ${amt.toFixed(2)} creditado!`, 'success');
-                    closeModal('deposit');
-                }
-            }, 6000);
-        }
-
-        // Copiar Chave Pix Copia e Cola
-        function copyPixKey() {
-            const input = document.getElementById('pixKeyInput');
-            input.select();
-            input.setSelectionRange(0, 99999);
-            navigator.clipboard.writeText(input.value);
-            showToast("Código Copia e Cola enviado para a área de transferência!", "success");
-        }
-
-        // Execução Segura do Pedido de Saque Interno
-        function executeWithdraw() {
-            const amount = parseFloat(document.getElementById('saqueAmount').value);
-            const key = document.getElementById('saqueKeyData').value.trim();
-            const msg = document.getElementById('saqueMsg');
-
-            if(!key || isNaN(amount) || amount < 20) {
-                msg.className = "saque-erro";
-                msg.innerText = "Chave inválida ou valor abaixo do mínimo estipulado ($20.00).";
-                return;
-            }
-            if(amount > userChips) {
-                msg.className = "saque-erro";
-                msg.innerText = "Fundos insuficientes para processar essa retirada.";
-                return;
-            }
-
-            userChips -= amount;
-            updateChipsDisplay();
-            msg.className = "saque-sucesso";
-            msg.innerText = `Saque de $${amount.toFixed(2)} enviado ao lote do Banco Central!`;
-            pushLog(`Retirada solicitada de $${amount.toFixed(2)} para a chave [${key}].`);
-            showToast("Saque efetuado com sucesso!", "success");
-            setTimeout(() => { closeModal('withdraw'); msg.innerText = ''; }, 2000);
-        }
-
-        // Toggle Fullscreen API
-        function toggleFullscreen() {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch(err => {
-                    showToast("Erro ao tentar ativar tela cheia.", "error");
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        }
-
-        // Fluxo de Desconexão / Sair
-        function logout() {
-            currentUser = null;
-            document.getElementById('gameScreen').classList.remove('active');
-            document.getElementById('authScreen').classList.add('active');
-            pushLog("O usuário desconectou da sessão premium.");
-        }
+        })();
     </script>
 </body>
 </html>
