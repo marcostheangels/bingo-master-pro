@@ -710,6 +710,7 @@ function conectarComoEspectador() {
     myName = 'Espectador';
     myRole = 'spectator';
     souDono = false;
+    hideBotoesFinanceiros();
     myId = `spec-${Date.now()}-${Math.floor(Math.random() * 10000)}`;
     myRoomId = 'bingo-master-pro-marcos';
     isHost = false;

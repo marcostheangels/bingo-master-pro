@@ -390,6 +390,10 @@ function goToScreen(screenId) {
         const ehEspectador = typeof myRole !== 'undefined' && myRole === 'spectator';
         if (adminTop) adminTop.style.display = (!ehEspectador && (isHost || ehDono)) ? 'block' : 'none';
         
+        if (ehEspectador && typeof hideBotoesFinanceiros === 'function') {
+            hideBotoesFinanceiros();
+        }
+        
         const hostMsgEl = document.getElementById('hostOnlyMsg');
         if (hostMsgEl) hostMsgEl.style.display = isHost ? 'block' : 'none';
         renderMyCards();
