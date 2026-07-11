@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bingo-master-pro-v4';
+const CACHE_NAME = 'bingo-master-pro-v5';
 const ASSETS = [
     '.',
     'index.html',
