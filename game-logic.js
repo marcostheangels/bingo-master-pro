@@ -2077,15 +2077,17 @@ function computarNumerosFaltando() {
 function renderMissingNumbersPanel() {
     const panel = document.getElementById('missingNumbersList');
     if (!panel) return;
+
     const phaseIdx = typeof currentPhaseIndex !== 'undefined' ? currentPhaseIndex : 0;
     const phaseName = phaseIdx === 0 ? 'Kuadra' : phaseIdx === 1 ? 'Kina' : 'Keno';
-    const target = phaseIdx === 0 ? 3 : phaseIdx === 1 ? 4 : 14;
+    const titleEl = document.getElementById('missingTitle');
+    if (titleEl) titleEl.textContent = 'Cartelas faltando 1 bola ' + phaseName;
 
     const entries = [];
+
     (allPlayers || []).forEach(p => {
         if (!p.cards) return;
-        (p.cards || []).forEach((card, ci) => {
-            if (!card || !card.numbers) return;
+        p.cards.forEach(card => {
             if (card.awards && (
                 (phaseIdx === 0 && card.awards.kuadra) ||
                 (phaseIdx === 1 && card.awards.kina) ||
@@ -2095,26 +2097,22 @@ function renderMissingNumbersPanel() {
             let missing = null;
             if (phaseIdx <= 1) {
                 for (let r = 0; r < 3; r++) {
-                    const row = card.numbers[r] || [];
-                    const marks = row.filter(v => v !== '' && drawnBalls.includes(Number(v))).length;
-                    if (marks === target) {
-                        missing = row.find(v => v !== '' && !drawnBalls.includes(Number(v)));
+                    const marks = card.numbers[r].filter(v => v !== '' && drawnBalls.includes(Number(v))).length;
+                    if (marks === (phaseIdx === 0 ? 3 : 4)) {
+                        missing = card.numbers[r].find(v => v !== '' && !drawnBalls.includes(Number(v)));
                         if (missing !== undefined) break;
                     }
                 }
             } else {
-                const allNums = (card.numbers.flat ? card.numbers.flat() : []).filter(v => v !== '');
+                const allNums = card.numbers.flat().filter(v => v !== '');
                 const marks = allNums.filter(v => drawnBalls.includes(Number(v))).length;
-                if (marks === target) {
+                if (marks === 14) {
                     missing = allNums.find(v => !drawnBalls.includes(Number(v)));
                 }
             }
+
             if (missing !== undefined && !drawnBalls.includes(Number(missing))) {
-                entries.push({
-                    nome: p.name,
-                    bolaFaltando: Number(missing),
-                    phaseIdx
-                });
+                entries.push({ nome: p.name, bolaFaltando: Number(missing) });
             }
         });
     });
@@ -2129,9 +2127,8 @@ function renderMissingNumbersPanel() {
         const key = `${e.nome}|${e.bolaFaltando}`;
         if (shown.has(key)) return '';
         shown.add(key);
-        const cls = e.phaseIdx === 0 ? 'kuadra' : e.phaseIdx === 1 ? 'kina' : 'keno';
-        return `<div class="missing-card-line"><span class="missing-ball ${cls}">${e.bolaFaltando}</span> <strong>${e.nome}</strong> — faltando 1 bola ${phaseName}</div>`;
-    }).filter(Boolean).join('') || '<p style="color:#6b6599;font-size:0.82em">Ninguém com 1 bola de diferença.</p>';
+        return `<div class="missing-card-line"><span class="missing-ball ${phaseName.toLowerCase()}">${e.bolaFaltando}</span> <strong>${e.nome}</strong> — faltando 1 bola ${phaseName}</div>`;
+    }).filter(Boolean).join('');
 }
 
 // ==================== KENO RANKING ANIMATION ====================
