@@ -898,17 +898,6 @@ body {
 .missing-ball.kuadra { background: radial-gradient(circle at 35% 30%, #6ee7b7, #10b981); }
 .missing-ball.kina { background: radial-gradient(circle at 35% 30%, #7dd3fc, #0ea5e9); }
 .missing-ball.keno { background: radial-gradient(circle at 35% 30%, #fb923c, #ea580c); }
-.missing-card-line {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 4px 6px;
-    margin: 2px 0;
-    background: rgba(255,255,255,0.03);
-    border-radius: 6px;
-    font-size: 0.82em;
-}
-.missing-card-line strong { color: #e0dfff; }
 .missing-empty { color: rgba(255,255,255,0.7); font-size: 0.88em; padding: 8px 0; }
 
 /* Jackpot perto das cartelas - layout horizontal */
@@ -1690,7 +1679,7 @@ body {
     .game-body { grid-template-columns: 1fr 300px; gap: 14px; }
 
     .ball-display { width: 100px; height: 100px; font-size: 2.4em; }
-    .dgrid-cell { font-size: 0.55em; }
+    .dgrid-cell { font-size: 0.65em; }
 
     .cards-grid { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
     .card-cell { font-size: 0.92em; min-height: 34px; }
@@ -1706,19 +1695,24 @@ body {
 
     .box { padding: 28px 22px; border-radius: 22px; }
     .box h1 { font-size: 1.8em; }
-    .subtitle { font-size: 0.85em; margin-bottom: 24px; letter-spacing: 2px; }
+    .subtitle { font-size: 0.95em; margin-bottom: 24px; letter-spacing: 2px; }
     .mode-btn { padding: 16px 18px; gap: 12px; }
+    .mode-btn .title { font-size: 1.2em; }
+    .mode-btn .desc { font-size: 0.95em; }
 
     .game-wrapper { padding: 10px; gap: 12px; }
 
     /* Game body - single column */
     .game-body { grid-template-columns: 1fr; gap: 12px; }
 
-    /* Top bar - centered */
-    .top-bar { padding: 10px 14px; border-radius: 12px; flex-direction: column; align-items: center; gap: 8px; text-align: center; }
-    .connection-info { justify-content: center; font-size: 0.88em; }
-    .user-info { justify-content: center; width: 100%; gap: 10px; }
-    .user-name { text-align: center; }
+    /* Top bar - compact */
+    .top-bar { padding: 8px 10px; border-radius: 10px; flex-direction: row; flex-wrap: wrap; align-items: center; justify-content: center; gap: 6px; text-align: center; }
+    .connection-info { justify-content: center; font-size: 0.9em; }
+    .user-info { justify-content: center; width: 100%; gap: 6px; flex-wrap: wrap; }
+    .user-name { text-align: center; font-size: 1em; }
+    .user-chips { font-size: 0.95em; }
+    .btn-deposit, .btn-withdraw, .btn-logout { padding: 6px 12px; font-size: 0.85em; }
+    .user-avatar { width: 32px; height: 32px; font-size: 0.9em; }
 
     /* Admin panel */
     .admin-panel .admin-panel-content { padding: 14px; }
@@ -1729,57 +1723,66 @@ body {
     /* Ball section */
     .ball-section { padding: 16px; border-radius: 16px; align-items: center; }
     .ball-area { flex-direction: column; align-items: center; gap: 12px; }
-    .current-ball .label { font-size: 0.85em; }
-    .ball-display { width: 90px; height: 90px; font-size: 2.2em; }
+    .current-ball .label { font-size: 1em; }
+    .ball-display { width: 100px; height: 100px; font-size: 2.5em; }
 
-    .drawn-grid { max-height: 180px; padding: 6px; gap: 2px; }
-    .dgrid-cell { font-size: 0.5em; }
+    .drawn-grid { max-height: 200px; padding: 6px; gap: 3px; }
+    .dgrid-cell { font-size: 0.9em; }
 
     .ball-actions { gap: 8px; align-items: center; }
     .host-controls-panel { flex-direction: column; align-items: center; }
-    .host-controls-panel button { width: 100%; }
+    .host-controls-panel button { width: 100%; font-size: 1em; }
     .speed-control { width: 100%; justify-content: center; }
 
     .buy-options { flex-wrap: wrap; justify-content: center; }
-    .buy-options .btn { min-width: 100px; padding: 10px 14px; font-size: 0.88em; }
+    .buy-options .buy-label { font-size: 0.95em; }
+    .buy-options .btn { min-width: 100px; padding: 10px 14px; font-size: 0.95em; }
 
     /* Players */
     .players-panel { padding: 12px 14px; border-radius: 14px; text-align: center; }
-    .players-panel h3 { text-align: center; }
-    .player-list { font-size: 0.88em; }
+    .players-panel h3 { text-align: center; font-size: 1em; }
+    .player-list { font-size: 0.95em; }
     .player-list li { padding: 7px 0; gap: 8px; justify-content: center; }
-    .position-badge { width: 24px; height: 24px; font-size: 0.78em; }
+    .position-badge { width: 28px; height: 28px; font-size: 0.85em; }
 
     /* Sidebar cards */
     .sidebar-card { padding: 14px; border-radius: 14px; }
-    .sidebar-card h3 { font-size: 0.85em; margin-bottom: 10px; text-align: center; }
-    .phase-item { padding: 10px 12px; font-size: 0.88em; border-radius: 10px; }
+    .sidebar-card h3 { font-size: 1em; margin-bottom: 10px; text-align: center; }
+    .phase-item { padding: 10px 12px; font-size: 0.95em; border-radius: 10px; }
 
     /* Jackpot */
     .jackpot-panel { padding: 14px; border-radius: 14px; text-align: center; }
-    .jackpot-value { font-size: 1.5em; }
+    .jackpot-value { font-size: 1.8em; }
     .jackpot-balls-panel { padding: 10px; }
-    .jackpot-ball { width: 30px; height: 30px; font-size: 0.78em; }
+    .jackpot-ball { width: 34px; height: 34px; font-size: 0.85em; }
     .jackpot-balls-grid { justify-content: center; }
 
     /* Close cards */
     .close-cards-panel { padding: 14px; border-radius: 14px; }
-    .close-cards-panel h3 { font-size: 0.85em; text-align: center; }
-    .close-card-item { padding: 7px 10px; font-size: 0.9em; }
-    .close-badge { font-size: 0.78em; padding: 3px 8px; }
+    .close-cards-panel h3 { font-size: 1em; text-align: center; }
+    .close-card-item { padding: 7px 10px; font-size: 0.95em; }
+    .close-badge { font-size: 0.85em; padding: 4px 10px; }
+
+    /* Missing numbers */
+    .missing-numbers-panel { padding: 14px; border-radius: 14px; }
+    .missing-numbers-panel h3 { font-size: 1em; text-align: center; }
+    .missing-ball { width: 28px; height: 28px; font-size: 0.75em; }
+    .missing-player-card { padding: 6px; }
+    .missing-player-name { font-size: 0.95em; }
+    .missing-row { font-size: 0.9em; }
 
     /* Game Log */
-    .game-log { max-height: 80px; font-size: 0.78em; padding: 8px 10px; }
+    .game-log { max-height: 80px; font-size: 0.88em; padding: 8px 10px; }
 
     /* My cards */
     .my-cards-section { padding: 2px; border-radius: 8px; display: flex; flex-direction: column; align-items: center; width: 100%; }
-    .my-cards-section h3 { font-size: 0.82em; margin-bottom: 4px; text-align: center; width: 100%; }
+    .my-cards-section h3 { font-size: 0.95em; margin-bottom: 4px; text-align: center; width: 100%; }
     .cards-grid { grid-template-columns: 1fr; gap: 4px; justify-items: center; width: 100%; }
     .bingo-card { padding: 2px; border-radius: 6px; width: 100%; overflow: hidden; }
-    .card-title { font-size: 0.72em; text-align: center; margin-bottom: 2px; }
+    .card-title { font-size: 0.85em; text-align: center; margin-bottom: 2px; }
     .card-grid { gap: 1px; }
-    .card-cell { font-size: 1.15em; min-height: 40px; border-radius: 3px; aspect-ratio: unset; min-width: 0; overflow: hidden; padding: 0; font-weight: 800; }
-    .card-badge { font-size: 0.65em; }
+    .card-cell { font-size: 1.3em; min-height: 44px; border-radius: 3px; aspect-ratio: unset; min-width: 0; overflow: hidden; padding: 0; font-weight: 800; }
+    .card-badge { font-size: 0.75em; }
 
     /* Ready */
     .ready-section { flex-direction: column; align-items: center; text-align: center; }
@@ -1789,20 +1792,20 @@ body {
 
     /* Toast */
     .toast-container { top: 10px; right: 10px; left: 10px; }
-    .toast-item { max-width: 100%; font-size: 0.85em; padding: 12px 16px; }
+    .toast-item { max-width: 100%; font-size: 0.95em; padding: 12px 16px; }
 
     /* Spinner */
     .spinner { width: 40px; height: 40px; border-width: 3px; }
-    .spinner-text { font-size: 0.85em; }
+    .spinner-text { font-size: 0.95em; }
 
     /* Toasts (old) */
-    .winner-toast { left: 16px; right: 16px; bottom: 30px; transform: translateY(30px); padding: 16px 20px; font-size: 0.9em; border-radius: 16px; white-space: normal; text-align: center; }
+    .winner-toast { left: 16px; right: 16px; bottom: 30px; transform: translateY(30px); padding: 16px 20px; font-size: 1em; border-radius: 16px; white-space: normal; text-align: center; }
     .winner-toast.visible { transform: translateY(0); }
 
     .winner-banner { padding: 28px 24px; border-radius: 22px; }
-    .winner-banner h1 { font-size: 2.8em; letter-spacing: 2px; }
-    .winner-banner h2 { font-size: 1.2em; }
-    .winner-banner h3 { font-size: 1.05em; }
+    .winner-banner h1 { font-size: 3em; letter-spacing: 2px; }
+    .winner-banner h2 { font-size: 1.4em; }
+    .winner-banner h3 { font-size: 1.2em; }
 }
 
 /* ========================================
@@ -1814,20 +1817,28 @@ body {
     .box h1 { font-size: 1.6em; }
     .mode-btn { padding: 14px; gap: 10px; }
     .mode-btn .icon { font-size: 1.3em; }
-    .mode-btn .title { font-size: 0.9em; }
-    .mode-btn .desc { font-size: 0.75em; }
+    .mode-btn .title { font-size: 1.1em; }
+    .mode-btn .desc { font-size: 0.9em; }
 
     .game-wrapper { padding: 6px; gap: 10px; }
 
-    .ball-display { width: 80px; height: 80px; font-size: 1.9em; }
-    .dgrid-cell { font-size: 0.45em; }
+    .ball-display { width: 90px; height: 90px; font-size: 2.2em; }
+    .dgrid-cell { font-size: 0.85em; }
 
-    .card-cell { font-size: 1.05em; min-height: 38px; padding: 0; }
-    .jackpot-ball { width: 28px; height: 28px; font-size: 0.75em; }
+    .card-cell { font-size: 1.2em; min-height: 40px; padding: 0; }
+    .jackpot-ball { width: 30px; height: 30px; font-size: 0.8em; }
 
     .admin-panel .admin-controls .btn-row { flex-direction: column; }
     .admin-panel .admin-controls .btn-row .btn { width: 100%; }
-    .history-ball { width: 22px; height: 22px; font-size: 0.62em; }
+    .history-ball { width: 26px; height: 26px; font-size: 0.72em; }
+
+    .top-bar { padding: 6px 8px; gap: 4px; }
+    .connection-info { font-size: 0.85em; }
+    .user-info { gap: 4px; }
+    .btn-deposit, .btn-withdraw, .btn-logout { padding: 4px 10px; font-size: 0.78em; }
+    .user-avatar { width: 28px; height: 28px; font-size: 0.8em; }
+    .user-name { font-size: 0.9em; }
+    .user-chips { font-size: 0.85em; }
 }
 
 /* ========================================

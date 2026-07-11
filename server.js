@@ -182,7 +182,8 @@ function sendGameState(room, ws) {
         gameEnded: room.gameEnded,
         currentRound: room.currentRound,
         jackpot: room.jackpot,
-        autoStartSeconds: room.autoStartSeconds
+        autoStartSeconds: room.autoStartSeconds,
+        totalCardsAtStart: room.totalCardsAtStart || 0
     };
     broadcast(room, msg);
 }
@@ -229,13 +230,12 @@ function iniciarNovaRodada(room) {
     room.currentPhaseIndex = 0;
     room.gameActive = true;
     room.gameEnded = false;
-    room.jackpot = engine.JACKPOT_REWARD;
     
     // Give bots cards, reset awards
     room.players.forEach(p => {
         if (p.isBot) {
-            const maxCards = engine.BOT_MAX_CARDS; // 10
-            const qtd = Math.floor(Math.random() * maxCards) + 1; // 1 a 10
+            const maxCards = engine.BOT_MAX_CARDS; // 15
+            const qtd = Math.floor(Math.random() * maxCards) + 1; // 1 a 15
             p.cards = [];
             for (let i = 0; i < qtd; i++) {
                 p.cards.push(engine.generateBingoCardData());
@@ -246,6 +246,10 @@ function iniciarNovaRodada(room) {
             card.awards = { kuadra: false, kina: false, keno: false };
         });
     });
+    
+    const initialCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
+    room.totalCardsAtStart = initialCards;
+    room.jackpot = Math.floor(initialCards * engine.CARD_COST * engine.PRIZE_PERCENT.jackpot);
     
     saveRoomSnapshot(room);
     sendGameState(room);
@@ -304,7 +308,8 @@ function sortearProximaBola(room) {
     
     if (winners.length > 0) {
         const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
-        const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls);
+        const totalCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
+        const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, totalCards);
         
         // Update persistent chips/winnings
         results.forEach(r => {
@@ -376,7 +381,8 @@ function sortearProximaBola(room) {
         broadcast(room, { type: 'confetti' });
         
         if (isJackpot) {
-            room.jackpot = engine.JACKPOT_REWARD;
+    room.jackpot = engine.JACKPOT_REWARD;
+    room.totalCardsAtStart = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
             broadcast(room, { type: 'jackpotUpdate', value: room.jackpot });
         }
         
@@ -458,7 +464,7 @@ function finalizarRodada(room) {
         room.currentPhaseIndex = 0;
         room.gameEnded = false;
         cleanUpBots(room);
-        broadcast(room, { type: 'resetGame', players: sanitizePlayers(room), drawnBalls: [], currentPhaseIndex: 0, gameActive: false, gameEnded: false });
+        broadcast(room, { type: 'resetGame', players: sanitizePlayers(room), drawnBalls: [], currentPhaseIndex: 0, gameActive: false, gameEnded: false, totalCardsAtStart: 0 });
         addLog(room, '🔄 Cartelas limpas. Novo sorteio em breve!');
         broadcast(room, { type: 'notice', text: '🔄 Compre suas cartelas! Novo sorteio em 2 minutos.', kind: 'info' });
         saveRoomSnapshot(room);
@@ -782,7 +788,7 @@ function handleAction(ws, room, action, payload) {
         room.gameEnded = false;
         broadcast(room, {
             type: 'resetGame', players: sanitizePlayers(room), drawnBalls: [],
-            currentPhaseIndex: 0, gameActive: false, gameEnded: false
+            currentPhaseIndex: 0, gameActive: false, gameEnded: false, totalCardsAtStart: 0
         });
         iniciarAutoStartServer(room);
         saveRoomSnapshot(room);

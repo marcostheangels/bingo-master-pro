@@ -2,19 +2,28 @@
 // Lógica pura e autoritativa do Bingo. O servidor é a única fonte da verdade.
 
 const PHASES = {
-    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 2,00', reward: 2000 },
-    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 3,50', reward: 3500 },
-    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 5,00', reward: 5000 }
+    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 Prêmio dinâmico', reward: 2000 },
+    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 Prêmio dinâmico', reward: 3500 },
+    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 Prêmio dinâmico', reward: 5000 }
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const CARD_COST = 150; // R$0,15 cada cartela (em fichas = centavos de real)
 const JACKPOT_BALL_LIMIT = 37;
-const JACKPOT_REWARD = 1000000;
+const JACKPOT_REWARD = 100000;
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
-const HUMAN_MAX_CARDS = 10;
+const HUMAN_MAX_CARDS = 15;
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋', 'Lucas 🔥', 'Beatriz 🌻', 'Gustavo 🍎', 'Larissa 🦄', 'Rafael 🎲', 'Patrícia 🌹', 'Thiago ⚽', 'Vanessa 🍓', 'Felipe 🚀', 'Mariana 🐬'];
-const BOT_MAX_CARDS = 10;
+const BOT_MAX_CARDS = 15;
 const BOT_INITIAL_CHIPS = 10000; // R$10,00 somente para bots
+
+// Prize distribution percentages (based on total card sales revenue)
+const PRIZE_PERCENT = {
+    kuadra: 0.10,  // 10% for Kuadra winners
+    kina: 0.15,    // 15% for Kina winners
+    keno: 0.20,    // 20% for Bingo winners
+    jackpot: 0.30, // 30% for Jackpot (only if bola limite ≤ 37)
+    house: 0.25    // 25% house profit
+};
 
 function getMaxCardsForPlayer(player) {
     if (!player) return HUMAN_MAX_CARDS;
@@ -166,28 +175,41 @@ function isJackpotEligible(phaseKey, drawnBalls) {
     return phaseKey === 'keno' && drawnBalls.length <= JACKPOT_BALL_LIMIT;
 }
 
-function processPhaseWinners(winners, phaseKey, drawnBalls) {
-    const reward = PHASES[phaseKey].reward;
-    const playerMap = {};
+function processPhaseWinners(winners, phaseKey, drawnBalls, totalCards) {
+    const totalRevenue = totalCards * CARD_COST;
+    const phasePool = Math.floor(totalRevenue * PRIZE_PERCENT[phaseKey]);
     const isJackpot = isJackpotEligible(phaseKey, drawnBalls);
+    const jackpotPool = isJackpot ? Math.floor(totalRevenue * PRIZE_PERCENT.jackpot) : 0;
 
+    // Count unique winners (one prize per player, not per card)
+    const uniquePlayers = [];
+    const seen = new Set();
     winners.forEach(({ player }) => {
         if (!player || typeof player.chips !== 'number') return;
         const key = player.id || player.name;
-        if (!playerMap[key]) {
-            playerMap[key] = { player, cards: 0, totalReward: reward, jackpotCount: 0 };
-            if (isJackpot) {
-                playerMap[key].jackpotCount += 1;
-                playerMap[key].totalReward += JACKPOT_REWARD;
-            }
+        if (!seen.has(key)) {
+            seen.add(key);
+            uniquePlayers.push(player);
         }
     });
 
-    const results = Object.values(playerMap);
-    results.forEach(result => {
-        const oldWinnings = result.player.winnings || 0;
-        result.player.winnings = oldWinnings + result.totalReward;
-        result.player.chips += result.totalReward;
+    if (uniquePlayers.length === 0) return { results: [], isJackpot: false };
+
+    // Split phase prize equally among all winners
+    const perPlayer = Math.max(1, Math.floor(phasePool / uniquePlayers.length));
+    const perPlayerJackpot = isJackpot ? Math.floor(jackpotPool / uniquePlayers.length) : 0;
+
+    const results = uniquePlayers.map(player => {
+        let totalReward = perPlayer;
+        let jackpotCount = 0;
+        if (isJackpot) {
+            totalReward += perPlayerJackpot;
+            jackpotCount = 1;
+        }
+        const oldWinnings = player.winnings || 0;
+        player.winnings = oldWinnings + totalReward;
+        player.chips += totalReward;
+        return { player, cards: 0, totalReward, jackpotCount };
     });
 
     return { results, isJackpot };
@@ -195,7 +217,7 @@ function processPhaseWinners(winners, phaseKey, drawnBalls) {
 
 module.exports = {
     PHASES, PHASE_SEQUENCE, CARD_COST, JACKPOT_BALL_LIMIT, JACKPOT_REWARD,
-    INITIAL_CHIPS, HUMAN_MAX_CARDS, BOT_NAMES, BOT_MAX_CARDS, BOT_INITIAL_CHIPS,
+    INITIAL_CHIPS, HUMAN_MAX_CARDS, BOT_NAMES, BOT_MAX_CARDS, BOT_INITIAL_CHIPS, PRIZE_PERCENT,
     getMaxCardsForPlayer, generateBingoCardData,
     computeCardAwards, getCardClosePhase, computeCloseCardsForAllPlayers,
     checkAwardsForAllPlayers, processPhaseWinners

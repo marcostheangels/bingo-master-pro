@@ -357,6 +357,19 @@ function handleSocketMessage(raw) {
         handleRelayMessage(message.data, message.from, message.id, message.name);
         return;
     }
+
+    if (message.type === 'buySuccess') {
+        if (message.chips !== undefined) myChips = message.chips;
+        if (typeof updateChipsDisplay === 'function') updateChipsDisplay();
+        if (typeof renderMyCards === 'function') renderMyCards();
+        if (typeof showToast === 'function') showToast(`${message.qty} cartela(s) comprada(s)!`, 'success');
+        return;
+    }
+
+    if (message.type === 'buyError') {
+        if (typeof showToast === 'function') showToast(message.message || 'Erro na compra.', 'error', 4000);
+        return;
+    }
 }
 
 function handleRelayMessage(data, senderRole, senderId, senderName) {

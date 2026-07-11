@@ -166,16 +166,24 @@ async function validarSessaoExistente() {
 }
 const BOT_INITIAL_CHIPS = 10000; // bots comecam com R$10,00 em fichas (somente bots)
 const PHASES = {
-    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 2,00', reward: 2000 },
-    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 3,50', reward: 3500 },
-    keno: { label: 'Keno', description: 'Cartela completa', prize: '💰 R$ 5,00', reward: 5000 }
+    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 Prêmio dinâmico', reward: 2000 },
+    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 Prêmio dinâmico', reward: 3500 },
+    keno: { label: 'Keno', description: 'Cartela completa', prize: '💰 Prêmio dinâmico', reward: 5000 }
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋'];
-const BOT_MAX_CARDS = 10;
-const HUMAN_MAX_CARDS = 10;
+const BOT_MAX_CARDS = 15;
+const HUMAN_MAX_CARDS = 15;
+const CARD_COST = 150;
 const JACKPOT_BALL_LIMIT = 37;
-let JACKPOT_REWARD = 1000000;
+const PRIZE_PERCENT = {
+    kuadra: 0.10,
+    kina: 0.15,
+    keno: 0.20,
+    jackpot: 0.30,
+    house: 0.25
+};
+let JACKPOT_REWARD = 100000;
 
 function getRoundNumber() {
     return parseInt(localStorage.getItem('bingo_round_number') || '0', 10);
@@ -424,9 +432,15 @@ function goToScreen(screenId) {
 function updatePhaseUI() {
     const activePhase = getCurrentPhaseKey();
 
+    const totalCards = allPlayers.reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
+    const totalRevenue = totalCards * CARD_COST;
+
     Object.keys(PHASES).forEach(key => {
         const element = document.getElementById(`phase_${key}`);
         if (!element) return;
+
+        const prizeValue = Math.floor(totalRevenue * PRIZE_PERCENT[key]);
+        const prizeText = '💰 R$ ' + (prizeValue / 1000).toFixed(2).replace('.', ',');
 
         const stateLabel = key === activePhase
             ? 'Em jogo'
@@ -434,7 +448,7 @@ function updatePhaseUI() {
                 ? 'Concluído'
                 : 'Aguardando';
 
-        element.innerHTML = `${PHASES[key].label}: <span class="prize">${PHASES[key].prize}</span> <span class="phase-state">${stateLabel}</span>`;
+        element.innerHTML = `${PHASES[key].label}: <span class="prize">${prizeText}</span> <span class="phase-state">${stateLabel}</span>`;
         element.classList.toggle('phase-active', key === activePhase);
         element.classList.toggle('phase-completed', PHASE_SEQUENCE.indexOf(key) < currentPhaseIndex);
     });
@@ -450,16 +464,20 @@ function updateJackpotPanel() {
     const panel = document.querySelector('.jackpot-panel');
     if (!subtitle) return;
 
+    const totalCards = allPlayers.reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
+    const totalRevenue = totalCards * CARD_COST;
+    const jackpotValue = Math.floor(totalRevenue * PRIZE_PERCENT.jackpot);
+
     const remaining = Math.max(0, JACKPOT_BALL_LIMIT - drawnBalls.length);
     if (drawnBalls.length > JACKPOT_BALL_LIMIT) {
         subtitle.innerHTML = 'Jackpot não disponível nesta rodada';
         if (panel) { panel.classList.remove('jackpot-active'); panel.classList.add('jackpot-inactive'); }
     } else {
-        subtitle.innerHTML = `FECHE A CARTELA EM ATÉ <strong>${JACKPOT_BALL_LIMIT}</strong> BOLAS E LEVE O JACKPOT DE <strong style="color:#ffff00">R$ ${formatReais(JACKPOT_REWARD)}</strong>!<br><span style="font-size:0.85em;opacity:0.8;text-transform:none;font-weight:400">${remaining} bola${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'}</span>`;
+        subtitle.innerHTML = `FECHE A CARTELA EM ATÉ <strong>${JACKPOT_BALL_LIMIT}</strong> BOLAS E LEVE O JACKPOT DE <strong style="color:#ffff00">R$ ${formatReais(jackpotValue)}</strong>!<br><span style="font-size:0.85em;opacity:0.8;text-transform:none;font-weight:400">${remaining} bola${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'}</span>`;
         if (panel) { panel.classList.remove('jackpot-inactive'); panel.classList.add('jackpot-active'); }
     }
     const val = document.querySelector('.jackpot-value');
-    if (val) val.textContent = `R$ ${formatReais(JACKPOT_REWARD)}`;
+    if (val) val.textContent = `R$ ${formatReais(jackpotValue)}`;
 
     updateJackpotBallsPanel();
 }
@@ -2083,52 +2101,91 @@ function renderMissingNumbersPanel() {
     const titleEl = document.getElementById('missingTitle');
     if (titleEl) titleEl.textContent = 'Cartelas faltando 1 bola ' + phaseName;
 
-    const entries = [];
+    const filtered = [];
 
     (allPlayers || []).forEach(p => {
         if (!p.cards) return;
-        p.cards.forEach(card => {
-            if (card.awards && (
-                (phaseIdx === 0 && card.awards.kuadra) ||
-                (phaseIdx === 1 && card.awards.kina) ||
-                (phaseIdx === 2 && card.awards.keno)
-            )) return;
+        const pName = p.name;
 
-            let missing = null;
-            if (phaseIdx <= 1) {
+        let kuadraCount = 0;
+        let kinaCount = 0;
+        let kenoCount = 0;
+        const kuadraBalls = new Set();
+        const kinaBalls = new Set();
+        const kenoBalls = new Set();
+
+        p.cards.forEach(card => {
+            if (phaseIdx === 0 && !card.awards.kuadra) {
                 for (let r = 0; r < 3; r++) {
                     const marks = card.numbers[r].filter(v => v !== '' && drawnBalls.includes(Number(v))).length;
-                    if (marks === (phaseIdx === 0 ? 3 : 4)) {
-                        missing = card.numbers[r].find(v => v !== '' && !drawnBalls.includes(Number(v)));
-                        if (missing !== undefined) break;
+                    if (marks === 3) {
+                        kuadraCount++;
+                        const missing = card.numbers[r].find(v => v !== '' && !drawnBalls.includes(Number(v)));
+                        if (missing !== undefined) kuadraBalls.add(Number(missing));
+                        break;
                     }
                 }
-            } else {
+            }
+
+            if (phaseIdx === 1 && !card.awards.kina) {
+                for (let r = 0; r < 3; r++) {
+                    const marks = card.numbers[r].filter(v => v !== '' && drawnBalls.includes(Number(v))).length;
+                    if (marks === 4) {
+                        kinaCount++;
+                        const missing = card.numbers[r].find(v => v !== '' && !drawnBalls.includes(Number(v)));
+                        if (missing !== undefined) kinaBalls.add(Number(missing));
+                        break;
+                    }
+                }
+            }
+
+            if (phaseIdx === 2 && !card.awards.keno) {
                 const allNums = card.numbers.flat().filter(v => v !== '');
                 const marks = allNums.filter(v => drawnBalls.includes(Number(v))).length;
                 if (marks === 14) {
-                    missing = allNums.find(v => !drawnBalls.includes(Number(v)));
+                    kenoCount++;
+                    const missing = allNums.find(v => !drawnBalls.includes(Number(v)));
+                    if (missing !== undefined) kenoBalls.add(Number(missing));
                 }
             }
-
-            if (missing !== undefined && !drawnBalls.includes(Number(missing))) {
-                entries.push({ nome: p.name, bolaFaltando: Number(missing) });
-            }
         });
+
+        const arrKua = [...kuadraBalls].sort((a, b) => a - b);
+        const arrKin = [...kinaBalls].sort((a, b) => a - b);
+        const arrKen = [...kenoBalls].sort((a, b) => a - b);
+
+        if (!arrKua.length && !arrKin.length && !arrKen.length) return;
+
+        filtered.push({ nome: pName, arrKua, arrKin, arrKen, kuadraCount, kinaCount, kenoCount });
     });
 
-    if (!entries.length) {
+    if (!filtered.length) {
         panel.innerHTML = '<p style="color:#6b6599;font-size:0.82em">Ninguém com 1 bola de diferença.</p>';
         return;
     }
 
-    const shown = new Set();
-    panel.innerHTML = entries.map(e => {
-        const key = `${e.nome}|${e.bolaFaltando}`;
-        if (shown.has(key)) return '';
-        shown.add(key);
-        return `<div class="missing-card-line"><span class="missing-ball ${phaseName.toLowerCase()}">${e.bolaFaltando}</span> <strong>${e.nome}</strong> — faltando 1 bola ${phaseName}</div>`;
-    }).filter(Boolean).join('');
+    panel.innerHTML = filtered.map(entry => {
+        const rows = [];
+        if (entry.arrKua.length) {
+            const cnt = entry.kuadraCount;
+            const desc = cnt === 1 ? `${cnt} cartela` : `${cnt} cartelas`;
+            const nums = entry.arrKua.map(n => `<span class="missing-ball kuadra">${n}</span>`).join('');
+            rows.push(`<div class="missing-row"><span class="close-badge close-kuadra">🔥 Kuadra</span> ${desc}: ${nums}</div>`);
+        }
+        if (entry.arrKin.length) {
+            const cnt = entry.kinaCount;
+            const desc = cnt === 1 ? `${cnt} cartela` : `${cnt} cartelas`;
+            const nums = entry.arrKin.map(n => `<span class="missing-ball kina">${n}</span>`).join('');
+            rows.push(`<div class="missing-row"><span class="close-badge close-kina">🔥 Kina</span> ${desc}: ${nums}</div>`);
+        }
+        if (entry.arrKen.length) {
+            const cnt = entry.kenoCount;
+            const desc = cnt === 1 ? `${cnt} cartela` : `${cnt} cartelas`;
+            const nums = entry.arrKen.map(n => `<span class="missing-ball keno">${n}</span>`).join('');
+            rows.push(`<div class="missing-row"><span class="close-badge close-keno">🔥 Keno</span> ${desc}: ${nums}</div>`);
+        }
+        return `<div class="missing-player-card"><div class="missing-player-header"><span class="missing-player-name">${entry.nome}</span></div>${rows.join('')}</div>`;
+    }).join('');
 }
 
 // ==================== KENO RANKING ANIMATION ====================
