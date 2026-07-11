@@ -166,9 +166,9 @@ async function validarSessaoExistente() {
 }
 const BOT_INITIAL_CHIPS = 10000; // bots comecam com R$10,00 em fichas (somente bots)
 const PHASES = {
-    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 Prêmio dinâmico', reward: 2000 },
-    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 Prêmio dinâmico', reward: 3500 },
-    keno: { label: 'Keno', description: 'Cartela completa', prize: '💰 Prêmio dinâmico', reward: 5000 }
+    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 3,00', reward: 3000 },
+    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 5,00', reward: 5000 },
+    keno: { label: 'Keno', description: 'Cartela completa', prize: '💰 R$ 7,00', reward: 7000 }
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋'];
@@ -176,13 +176,6 @@ const BOT_MAX_CARDS = 15;
 const HUMAN_MAX_CARDS = 15;
 const CARD_COST = 150;
 const JACKPOT_BALL_LIMIT = 37;
-const PRIZE_PERCENT = {
-    kuadra: 0.10,
-    kina: 0.15,
-    keno: 0.20,
-    jackpot: 0.30,
-    house: 0.25
-};
 let JACKPOT_REWARD = 100000;
 
 function getRoundNumber() {
@@ -432,15 +425,9 @@ function goToScreen(screenId) {
 function updatePhaseUI() {
     const activePhase = getCurrentPhaseKey();
 
-    const totalCards = allPlayers.reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
-    const totalRevenue = totalCards * CARD_COST;
-
     Object.keys(PHASES).forEach(key => {
         const element = document.getElementById(`phase_${key}`);
         if (!element) return;
-
-        const prizeValue = Math.floor(totalRevenue * PRIZE_PERCENT[key]);
-        const prizeText = '💰 R$ ' + (prizeValue / 1000).toFixed(2).replace('.', ',');
 
         const stateLabel = key === activePhase
             ? 'Em jogo'
@@ -448,7 +435,7 @@ function updatePhaseUI() {
                 ? 'Concluído'
                 : 'Aguardando';
 
-        element.innerHTML = `${PHASES[key].label}: <span class="prize">${prizeText}</span> <span class="phase-state">${stateLabel}</span>`;
+        element.innerHTML = `${PHASES[key].label}: <span class="prize">${PHASES[key].prize}</span> <span class="phase-state">${stateLabel}</span>`;
         element.classList.toggle('phase-active', key === activePhase);
         element.classList.toggle('phase-completed', PHASE_SEQUENCE.indexOf(key) < currentPhaseIndex);
     });
@@ -464,20 +451,16 @@ function updateJackpotPanel() {
     const panel = document.querySelector('.jackpot-panel');
     if (!subtitle) return;
 
-    const totalCards = allPlayers.reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
-    const totalRevenue = totalCards * CARD_COST;
-    const jackpotValue = Math.floor(totalRevenue * PRIZE_PERCENT.jackpot);
-
     const remaining = Math.max(0, JACKPOT_BALL_LIMIT - drawnBalls.length);
     if (drawnBalls.length > JACKPOT_BALL_LIMIT) {
         subtitle.innerHTML = 'Jackpot não disponível nesta rodada';
         if (panel) { panel.classList.remove('jackpot-active'); panel.classList.add('jackpot-inactive'); }
     } else {
-        subtitle.innerHTML = `FECHE A CARTELA EM ATÉ <strong>${JACKPOT_BALL_LIMIT}</strong> BOLAS E LEVE O JACKPOT DE <strong style="color:#ffff00">R$ ${formatReais(jackpotValue)}</strong>!<br><span style="font-size:0.85em;opacity:0.8;text-transform:none;font-weight:400">${remaining} bola${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'}</span>`;
+        subtitle.innerHTML = `FECHE A CARTELA EM ATÉ <strong>${JACKPOT_BALL_LIMIT}</strong> BOLAS E LEVE O JACKPOT DE <strong style="color:#ffff00">R$ ${formatReais(JACKPOT_REWARD)}</strong>!<br><span style="font-size:0.85em;opacity:0.8;text-transform:none;font-weight:400">${remaining} bola${remaining === 1 ? '' : 's'} restante${remaining === 1 ? '' : 's'}</span>`;
         if (panel) { panel.classList.remove('jackpot-inactive'); panel.classList.add('jackpot-active'); }
     }
     const val = document.querySelector('.jackpot-value');
-    if (val) val.textContent = `R$ ${formatReais(jackpotValue)}`;
+    if (val) val.textContent = `R$ ${formatReais(JACKPOT_REWARD)}`;
 
     updateJackpotBallsPanel();
 }

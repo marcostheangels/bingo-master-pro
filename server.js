@@ -249,7 +249,7 @@ function iniciarNovaRodada(room) {
     
     const initialCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
     room.totalCardsAtStart = initialCards;
-    room.jackpot = Math.floor(initialCards * engine.CARD_COST * engine.PRIZE_PERCENT.jackpot);
+    room.jackpot = engine.JACKPOT_REWARD;
     
     saveRoomSnapshot(room);
     sendGameState(room);
