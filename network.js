@@ -282,7 +282,7 @@ function handleSocketMessage(raw) {
             if (hostMsg) hostMsg.style.display = 'block';
             if (adminUI && isMarcosName(myName)) {
                 adminUI.style.display = 'block';
-                setTimeout(() => { adminAbrirAba('tabSaques'); carregarModoTeste(); carregarAdminUsuariosComSaldo(); }, 300);
+                setTimeout(() => { adminAbrirAba('tabSaques'); carregarModoTeste(); carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); }, 300);
             }
             document.getElementById('btnSacar').style.display = '';
             document.getElementById('btnDeposit').style.display = '';
@@ -310,7 +310,7 @@ function handleSocketMessage(raw) {
             if (souDono) {
                 const adminUI = document.getElementById('adminPanelTop');
                 if (adminUI) adminUI.style.display = 'block';
-                setTimeout(() => { adminAbrirAba('tabSaques'); carregarModoTeste(); carregarAdminUsuariosComSaldo(); }, 300);
+                setTimeout(() => { adminAbrirAba('tabSaques'); carregarModoTeste(); carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); }, 300);
             }
         }
 
@@ -1018,16 +1018,16 @@ function carregarAdminUsuariosComSaldo() {
         .then(usuarios => {
             const select = document.getElementById('adminPlayerSelect');
             if (!select) return;
-            
+
             const selectedValue = select.value;
             select.innerHTML = '';
-            
+
             // Adicionar opção padrão
             const defaultOption = document.createElement('option');
             defaultOption.value = '';
             defaultOption.textContent = '-- Selecione um usuário --';
             select.appendChild(defaultOption);
-            
+
             usuarios.forEach(u => {
                 const option = document.createElement('option');
                 option.value = u.nomeCompleto;
@@ -1039,12 +1039,12 @@ function carregarAdminUsuariosComSaldo() {
                 option.textContent = `${prefix}${u.nomeCompleto} (Saldo: R$ ${saldo} | Ganhos: R$ ${ganhos} | Créd. Admin: R$ ${credAdmin})`;
                 select.appendChild(option);
             });
-            
+
             // Restaurar seleção se ainda existir
             if (selectedValue) {
                 select.value = selectedValue;
             }
-            
+
             // Atualizar painel de saldo do jogador selecionado
             if (typeof atualizarSaldoJogadorSelecionado === 'function') {
                 atualizarSaldoJogadorSelecionado();
@@ -1054,6 +1054,81 @@ function carregarAdminUsuariosComSaldo() {
             const select = document.getElementById('adminPlayerSelect');
             if (select) select.innerHTML = '<option value="">Erro ao carregar usuários</option>';
         });
+}
+
+// Admin - Carregar lista específica para o dropdown de exclusão
+function carregarUsuariosParaExclusao() {
+    fetch(API_BASE + '/api/admin/usuarios-com-saldo')
+        .then(r => r.json())
+        .then(usuarios => {
+            const select = document.getElementById('deletePlayerSelect');
+            if (!select) return;
+            const selectedValue = select.value;
+            select.innerHTML = '';
+
+            const defaultOption = document.createElement('option');
+            defaultOption.value = '';
+            defaultOption.textContent = '-- Selecione um jogador para excluir --';
+            select.appendChild(defaultOption);
+
+            usuarios.forEach(u => {
+                const option = document.createElement('option');
+                option.value = u.cpf || ('bot:' + u.nomeCompleto);
+                option.dataset.nome = u.nomeCompleto;
+                option.dataset.bot = u.isBot ? '1' : '0';
+                const prefix = u.isBot ? '🤖 ' : '👤 ';
+                const saldo = (u.chips / 1000).toFixed(2).replace('.', ',');
+                option.textContent = `${prefix}${u.nomeCompleto} (Saldo: R$ ${saldo})`;
+                select.appendChild(option);
+            });
+
+            if (selectedValue) select.value = selectedValue;
+        })
+        .catch(() => {
+            const select = document.getElementById('deletePlayerSelect');
+            if (select) select.innerHTML = '<option value="">Erro ao carregar usuários</option>';
+        });
+}
+
+// Admin - Confirmar e executar exclusão permanente do jogador selecionado
+function confirmarExclusaoJogador() {
+    const select = document.getElementById('deletePlayerSelect');
+    if (!select || !select.value) {
+        showToast('Selecione um jogador para excluir.', 'warning', 3500);
+        return;
+    }
+    const selectedOption = select.options[select.selectedIndex];
+    const selectedValue = select.value;
+    const isBot = selectedOption.dataset.bot === '1';
+    const nomeJogador = selectedOption.dataset.nome || '';
+
+    if (isBot) {
+        showToast('Bots não podem ser excluídos (são parte do sistema).', 'warning', 4000);
+        return;
+    }
+
+    const confirmMsg = `⚠️ EXCLUSÃO PERMANENTE ⚠️\n\nJogador: ${nomeJogador}\n\nEsta ação irá remover:\n• Conta do jogador\n• Todas as cartelas\n• Todo o histórico\n• Saldo e créditos\n\nEsta ação é IRREVERSÍVEL. Continuar?`;
+    if (!confirm(confirmMsg)) return;
+
+    fetch(API_BASE + '/api/admin/usuario/excluir', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf: selectedValue })
+    })
+    .then(r => r.json())
+    .then(data => {
+        if (data.error) {
+            showToast(data.error, 'error', 5000);
+            return;
+        }
+        showToast(data.message || `Jogador "${nomeJogador}" excluído com sucesso!`, 'success', 5000);
+        carregarUsuariosParaExclusao();
+        if (typeof carregarAdminUsuariosComSaldo === 'function') carregarAdminUsuariosComSaldo();
+        if (typeof carregarCadastrosAdmin === 'function') carregarCadastrosAdmin();
+    })
+    .catch(err => {
+        showToast('Erro ao excluir jogador: ' + err.message, 'error', 6000);
+    });
 }
 
 function adminAbrirAba(tabId) {
