@@ -898,6 +898,17 @@ body {
 .missing-ball.kuadra { background: radial-gradient(circle at 35% 30%, #6ee7b7, #10b981); }
 .missing-ball.kina { background: radial-gradient(circle at 35% 30%, #7dd3fc, #0ea5e9); }
 .missing-ball.keno { background: radial-gradient(circle at 35% 30%, #fb923c, #ea580c); }
+.missing-card-line {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 6px;
+    margin: 2px 0;
+    background: rgba(255,255,255,0.03);
+    border-radius: 6px;
+    font-size: 0.82em;
+}
+.missing-card-line strong { color: #e0dfff; }
 .missing-empty { color: rgba(255,255,255,0.7); font-size: 0.88em; padding: 8px 0; }
 
 /* Jackpot perto das cartelas - layout horizontal */

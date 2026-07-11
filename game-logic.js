@@ -1075,8 +1075,13 @@ function buyBingoCards(quantity) {
         showToast('O sorteio já iniciou. Não é possível comprar cartelas durante o jogo.', 'warning', 5000);
         return;
     }
+    if (!socketReady) {
+        showToast('Conectando ao servidor... aguarde e tente novamente.', 'warning', 5000);
+        return;
+    }
     if (typeof sendAction === 'function') {
         sendAction('buyCards', { qty: quantity });
+        showToast('Solicitando compra...', 'info', 2000);
     }
 }
 
@@ -2072,98 +2077,61 @@ function computarNumerosFaltando() {
 function renderMissingNumbersPanel() {
     const panel = document.getElementById('missingNumbersList');
     if (!panel) return;
-
     const phaseIdx = typeof currentPhaseIndex !== 'undefined' ? currentPhaseIndex : 0;
+    const phaseName = phaseIdx === 0 ? 'Kuadra' : phaseIdx === 1 ? 'Kina' : 'Keno';
+    const target = phaseIdx === 0 ? 3 : phaseIdx === 1 ? 4 : 14;
 
-    // Por jogador: quantas cartelas estão próximas por fase, e qual bola falta (1 por cartela)
-    const filtered = [];
-
+    const entries = [];
     (allPlayers || []).forEach(p => {
         if (!p.cards) return;
-        const pName = p.name;
+        (p.cards || []).forEach((card, ci) => {
+            if (!card || !card.numbers) return;
+            if (card.awards && (
+                (phaseIdx === 0 && card.awards.kuadra) ||
+                (phaseIdx === 1 && card.awards.kina) ||
+                (phaseIdx === 2 && card.awards.keno)
+            )) return;
 
-        let kuadraCount = 0;
-        let kinaCount = 0;
-        let kenoCount = 0;
-        const kuadraBalls = new Set();
-        const kinaBalls = new Set();
-        const kenoBalls = new Set();
-
-        p.cards.forEach(card => {
-            // Kuadra: 4 numa linha, close = exatamente 3 marcados
-            if (phaseIdx === 0 && !card.awards.kuadra) {
+            let missing = null;
+            if (phaseIdx <= 1) {
                 for (let r = 0; r < 3; r++) {
-                    const marks = card.numbers[r].filter(v => v !== '' && drawnBalls.includes(Number(v))).length;
-                    if (marks === 3) {
-                        kuadraCount++;
-                        const missing = card.numbers[r].find(v => v !== '' && !drawnBalls.includes(Number(v)));
-                        if (missing !== undefined) kuadraBalls.add(Number(missing));
-                        break; // 1 número por cartela
+                    const row = card.numbers[r] || [];
+                    const marks = row.filter(v => v !== '' && drawnBalls.includes(Number(v))).length;
+                    if (marks === target) {
+                        missing = row.find(v => v !== '' && !drawnBalls.includes(Number(v)));
+                        if (missing !== undefined) break;
                     }
                 }
-            }
-
-            // Kina: 5 numa linha, close = exatamente 4 marcados
-            if (phaseIdx === 1 && !card.awards.kina) {
-                for (let r = 0; r < 3; r++) {
-                    const marks = card.numbers[r].filter(v => v !== '' && drawnBalls.includes(Number(v))).length;
-                    if (marks === 4) {
-                        kinaCount++;
-                        const missing = card.numbers[r].find(v => v !== '' && !drawnBalls.includes(Number(v)));
-                        if (missing !== undefined) kinaBalls.add(Number(missing));
-                        break; // 1 número por cartela
-                    }
-                }
-            }
-
-            // Keno: cartela toda, close = exatamente 14 marcados
-            if (phaseIdx === 2 && !card.awards.keno) {
-                const allNums = card.numbers.flat().filter(v => v !== '');
+            } else {
+                const allNums = (card.numbers.flat ? card.numbers.flat() : []).filter(v => v !== '');
                 const marks = allNums.filter(v => drawnBalls.includes(Number(v))).length;
-                if (marks === 14) {
-                    kenoCount++;
-                    const missing = allNums.find(v => !drawnBalls.includes(Number(v)));
-                    if (missing !== undefined) kenoBalls.add(Number(missing));
+                if (marks === target) {
+                    missing = allNums.find(v => !drawnBalls.includes(Number(v)));
                 }
+            }
+            if (missing !== undefined && !drawnBalls.includes(Number(missing))) {
+                entries.push({
+                    nome: p.name,
+                    bolaFaltando: Number(missing),
+                    phaseIdx
+                });
             }
         });
-
-        const arrKua = [...kuadraBalls].sort((a, b) => a - b);
-        const arrKin = [...kinaBalls].sort((a, b) => a - b);
-        const arrKen = [...kenoBalls].sort((a, b) => a - b);
-
-        if (!arrKua.length && !arrKin.length && !arrKen.length) return;
-
-        filtered.push({ nome: pName, arrKua, arrKin, arrKen, kuadraCount, kinaCount, kenoCount });
     });
 
-    if (!filtered.length) {
+    if (!entries.length) {
         panel.innerHTML = '<p style="color:#6b6599;font-size:0.82em">Ninguém com 1 bola de diferença.</p>';
         return;
     }
 
-    panel.innerHTML = filtered.map(entry => {
-        const rows = [];
-        if (entry.arrKua.length) {
-            const cnt = entry.kuadraCount;
-            const desc = cnt === 1 ? `${cnt} cartela` : `${cnt} cartelas`;
-            const nums = entry.arrKua.map(n => `<span class="missing-ball kuadra">${n}</span>`).join('');
-            rows.push(`<div class="missing-row"><span class="close-badge close-kuadra">🔥 Kuadra</span> ${desc}: ${nums}</div>`);
-        }
-        if (entry.arrKin.length) {
-            const cnt = entry.kinaCount;
-            const desc = cnt === 1 ? `${cnt} cartela` : `${cnt} cartelas`;
-            const nums = entry.arrKin.map(n => `<span class="missing-ball kina">${n}</span>`).join('');
-            rows.push(`<div class="missing-row"><span class="close-badge close-kina">🔥 Kina</span> ${desc}: ${nums}</div>`);
-        }
-        if (entry.arrKen.length) {
-            const cnt = entry.kenoCount;
-            const desc = cnt === 1 ? `${cnt} cartela` : `${cnt} cartelas`;
-            const nums = entry.arrKen.map(n => `<span class="missing-ball keno">${n}</span>`).join('');
-            rows.push(`<div class="missing-row"><span class="close-badge close-keno">🔥 Keno</span> ${desc}: ${nums}</div>`);
-        }
-        return `<div class="missing-player-card"><div class="missing-player-header"><span class="missing-player-name">${entry.nome}</span></div>${rows.join('')}</div>`;
-    }).join('');
+    const shown = new Set();
+    panel.innerHTML = entries.map(e => {
+        const key = `${e.nome}|${e.bolaFaltando}`;
+        if (shown.has(key)) return '';
+        shown.add(key);
+        const cls = e.phaseIdx === 0 ? 'kuadra' : e.phaseIdx === 1 ? 'kina' : 'keno';
+        return `<div class="missing-card-line"><span class="missing-ball ${cls}">${e.bolaFaltando}</span> <strong>${e.nome}</strong> — faltando 1 bola ${phaseName}</div>`;
+    }).filter(Boolean).join('') || '<p style="color:#6b6599;font-size:0.82em">Ninguém com 1 bola de diferença.</p>';
 }
 
 // ==================== KENO RANKING ANIMATION ====================

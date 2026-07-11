@@ -201,9 +201,9 @@ function addLog(room, msg) {
 function iniciarAutoStartServer(room) {
     pararAutoStartServer(room);
     if (room.gameActive || room.gameEnded) return;
-    // Tell all clients to close ranking modal and prepare for new round
-    broadcast(room, { type: 'preparingNewRound', seconds: 10 });
-    room.autoStartSeconds = 10;
+    broadcast(room, { type: 'preparingNewRound', seconds: 50 });
+    addLog(room, '⏳ Novo sorteio em 50 segundos. Compre suas cartelas!');
+    room.autoStartSeconds = 50;
     console.log(`[AUTOSTART] Iniciando contagem de ${room.autoStartSeconds}s para sala ${room.id}`);
     room.autoStartTimer = setInterval(() => {
         room.autoStartSeconds--;
@@ -462,8 +462,8 @@ function finalizarRodada(room) {
         addLog(room, '🔄 Cartelas limpas. Novo sorteio em breve!');
         broadcast(room, { type: 'notice', text: '🔄 Compre suas cartelas! Novo sorteio em 2 minutos.', kind: 'info' });
         saveRoomSnapshot(room);
-        // Auto-start after 5 seconds
-        setTimeout(() => iniciarAutoStartServer(room), 5000);
+        // Auto-start after 30 seconds
+        setTimeout(() => iniciarAutoStartServer(room), 30000);
     }, 10000);
 }
 
