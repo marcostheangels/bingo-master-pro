@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -6,9 +6,9 @@
     <meta name="theme-color" content="#06030f">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>BINGO MASTER PRO</title>
+    <title>BINGO VIP CLUB</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎱%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3EðŸŽ±%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.0.8/index.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=5">
     <script>
@@ -30,18 +30,18 @@
         <div class="spinner"></div>
         <div class="spinner-text" id="spinnerText">Conectando...</div>
     </div>
-    <div class="offline-banner" id="offlineBanner">🔌 Conexão perdida. Tentando reconectar...</div>
+    <div class="offline-banner" id="offlineBanner">ðŸ”Œ ConexÃ£o perdida. Tentando reconectar...</div>
     <canvas id="confettiCanvas"></canvas>
     <div class="toast-container" id="toastContainer"></div>
-    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Tela Cheia">⛶</button>
+    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Tela Cheia">â›¶</button>
 
     <!-- ===== REGISTER / LOGIN SCREEN ===== -->
     <div class="screen active" id="screenHome">
         <div class="box">
-            <h1>🎱 BINGO MASTER PRO</h1>
-            <p class="subtitle">Kuadra • Kina • Keno</p>
+            <h1>ðŸŽ± BINGO VIP CLUB</h1>
+            <p class="subtitle">Kuadra â€¢ Kina â€¢ Keno</p>
 
-            <!-- LOGIN (padrão) -->
+            <!-- LOGIN (padrÃ£o) -->
             <div id="authLogin">
                 <div class="auth-field">
                     <label>CPF:</label>
@@ -53,14 +53,14 @@
                 </div>
                 <p class="auth-error" id="loginError"></p>
                 <button class="mode-btn" onclick="fazerLogin()" style="width:100%">
-                    <span class="icon">🔑</span>
+                    <span class="icon">ðŸ”‘</span>
                     <span class="text">
                         <span class="title">Entrar</span>
                         <span class="desc">Acessar minha conta</span>
                     </span>
                 </button>
                 <p style="margin-top:16px;font-size:0.85em;color:#6b6599">
-                    Não tem conta? <a href="#" onclick="mostrarAba('register');return false" style="color:#fbbf24;text-decoration:none;font-weight:600">Cadastre-se</a>
+                    NÃ£o tem conta? <a href="#" onclick="mostrarAba('register');return false" style="color:#fbbf24;text-decoration:none;font-weight:600">Cadastre-se</a>
                 </p>
             </div>
 
@@ -80,7 +80,7 @@
                 </div>
                 <div class="auth-field">
                     <label>Senha:</label>
-                    <input type="password" id="regSenha" class="input-field" placeholder="Mínimo 4 caracteres">
+                    <input type="password" id="regSenha" class="input-field" placeholder="MÃ­nimo 4 caracteres">
                 </div>
                 <div class="auth-field">
                     <label>Confirmar Senha:</label>
@@ -88,24 +88,24 @@
                 </div>
                 <div class="auth-field">
                     <label>Chave PIX (para saque):</label>
-                    <input type="text" id="regChavePix" class="input-field" placeholder="CPF, e-mail, telefone ou chave aleatória">
+                    <input type="text" id="regChavePix" class="input-field" placeholder="CPF, e-mail, telefone ou chave aleatÃ³ria">
                 </div>
                 <p class="auth-error" id="regError"></p>
                 <button class="mode-btn" onclick="registrar()" style="width:100%">
-                    <span class="icon">✅</span>
+                    <span class="icon">âœ…</span>
                     <span class="text">
                         <span class="title">Cadastrar</span>
                         <span class="desc">Criar minha conta</span>
                     </span>
                 </button>
                 <p style="margin-top:16px;font-size:0.85em;color:#6b6599">
-                    Já tem conta? <a href="#" onclick="mostrarAba('login');return false" style="color:#fbbf24;text-decoration:none;font-weight:600">Faça login</a>
+                    JÃ¡ tem conta? <a href="#" onclick="mostrarAba('login');return false" style="color:#fbbf24;text-decoration:none;font-weight:600">FaÃ§a login</a>
                 </p>
             </div>
 
             <div class="spectator-entry">
                 <button class="mode-btn" onclick="conectarComoEspectador()" style="width:100%;margin-top:8px">
-                    <span class="icon">👁️</span>
+                    <span class="icon">ðŸ‘ï¸</span>
                     <span class="text">
                         <span class="title">Assistir ao Vivo</span>
                         <span class="desc">Acompanhe o sorteio sem fazer login</span>
@@ -123,108 +123,108 @@
     <div class="screen" id="screenGame">
         <div class="game-wrapper">
 
-            <!-- Painel Admin (Dono) - só aparece para Marcos -->
+            <!-- Painel Admin (Dono) - sÃ³ aparece para Marcos -->
             <div class="admin-panel" id="adminPanelTop" style="display: none;">
                 <div class="admin-panel-content">
-                    <h3>⚙️ Painel do Dono</h3>
+                    <h3>âš™ï¸ Painel do Dono</h3>
 
                     <!-- Fichas -->
                     <div class="admin-controls">
-                        <h4>💰 Gerenciar Fichas</h4>
+                        <h4>ðŸ’° Gerenciar Fichas</h4>
                         <label for="adminPlayerSelect">Jogador:</label>
                         <div style="display:flex;gap:8px;align-items:center">
                             <select id="adminPlayerSelect" class="input-field" style="flex:1"></select>
-                            <button class="btn btn-refresh" onclick="carregarAdminUsuariosComSaldo()" style="padding:8px 12px" title="Recarregar lista de usuários">🔄</button>
+                            <button class="btn btn-refresh" onclick="carregarAdminUsuariosComSaldo()" style="padding:8px 12px" title="Recarregar lista de usuÃ¡rios">ðŸ”„</button>
                         </div>
                         <label for="adminChipAmount">Fichas:</label>
                         <input type="number" id="adminChipAmount" class="input-field" value="5000">
                         <div class="btn-row">
-                            <button class="btn btn-add" onclick="executeAdminAction('add')">➕ Adicionar</button>
-                            <button class="btn btn-remove" onclick="executeAdminAction('remove')">➖ Retirar</button>
+                            <button class="btn btn-add" onclick="executeAdminAction('add')">âž• Adicionar</button>
+                            <button class="btn btn-remove" onclick="executeAdminAction('remove')">âž– Retirar</button>
                         </div>
                     </div>
 
                     <!-- Saldo do Jogador Selecionado -->
                     <div class="admin-controls" style="border:1px solid #3b82f6;background:rgba(59,130,246,0.05)">
-                        <h4 style="color:#3b82f6">💳 Saldo do Jogador Selecionado</h4>
+                        <h4 style="color:#3b82f6">ðŸ’³ Saldo do Jogador Selecionado</h4>
                         <div id="adminPlayerBalance" style="font-size:0.85em;color:#a0a0b0">
                             Selecione um jogador acima para ver os detalhes.
                         </div>
-                        <button class="btn btn-refresh" onclick="atualizarSaldoJogadorSelecionado()" style="margin-top:8px">🔄 Atualizar Saldo</button>
+                        <button class="btn btn-refresh" onclick="atualizarSaldoJogadorSelecionado()" style="margin-top:8px">ðŸ”„ Atualizar Saldo</button>
                     </div>
 
                     <!-- Excluir Jogador -->
                     <div class="admin-controls" style="border:1px solid #ef4444;background:rgba(239,68,68,0.05)">
-                        <h4 style="color:#ef4444">🗑️ Excluir Jogador Permanentemente</h4>
-                        <p style="color:#ef4444;font-size:0.78em;margin:4px 0 8px">⚠️ Ação irreversível. O jogador, suas cartelas, histórico e saldo serão removidos.</p>
+                        <h4 style="color:#ef4444">ðŸ—‘ï¸ Excluir Jogador Permanentemente</h4>
+                        <p style="color:#ef4444;font-size:0.78em;margin:4px 0 8px">âš ï¸ AÃ§Ã£o irreversÃ­vel. O jogador, suas cartelas, histÃ³rico e saldo serÃ£o removidos.</p>
                         <label for="deletePlayerSelect">Selecione o jogador:</label>
                         <div style="display:flex;gap:8px;align-items:center">
                             <select id="deletePlayerSelect" class="input-field" style="flex:1"></select>
-                            <button class="btn btn-remove" onclick="carregarUsuariosParaExclusao()" style="padding:8px 12px" title="Recarregar lista de usuários">🔄</button>
+                            <button class="btn btn-remove" onclick="carregarUsuariosParaExclusao()" style="padding:8px 12px" title="Recarregar lista de usuÃ¡rios">ðŸ”„</button>
                         </div>
-                        <button class="btn btn-remove" onclick="confirmarExclusaoJogador()" style="margin-top:8px;width:100%">🗑️ Excluir Jogador Selecionado</button>
+                        <button class="btn btn-remove" onclick="confirmarExclusaoJogador()" style="margin-top:8px;width:100%">ðŸ—‘ï¸ Excluir Jogador Selecionado</button>
                     </div>
 
                     <!-- Modo Teste -->
                     <div class="admin-controls" style="border:1px dashed #fbbf24">
-                        <h4>🧪 Modo Teste — Saque de Créditos</h4>
-                        <p style="color:#fbbf24;font-size:0.78em;margin:4px 0 8px">Quando ligado, créditos adicionados podem ser sacados.</p>
+                        <h4>ðŸ§ª Modo Teste â€” Saque de CrÃ©ditos</h4>
+                        <p style="color:#fbbf24;font-size:0.78em;margin:4px 0 8px">Quando ligado, crÃ©ditos adicionados podem ser sacados.</p>
                         <div class="btn-row">
-                            <button class="btn btn-success" id="btnModoTeste" onclick="alternarModoTeste()">🔄 Carregando…</button>
+                            <button class="btn btn-success" id="btnModoTeste" onclick="alternarModoTeste()">ðŸ”„ Carregandoâ€¦</button>
                         </div>
                     </div>
 
-                    <!-- Abas de Navegação -->
+                    <!-- Abas de NavegaÃ§Ã£o -->
                     <div class="admin-tabs">
-                        <button class="admin-tab active" data-tab="tabSaques" onclick="adminAbrirAba('tabSaques')">💸 Saques Pendentes</button>
-                        <button class="admin-tab" data-tab="tabUsuarios" onclick="adminAbrirAba('tabUsuarios')">📋 Usuários</button>
-                        <button class="admin-tab" data-tab="tabHistorico" onclick="adminAbrirAba('tabHistorico')">📜 Histórico</button>
-                        <button class="admin-tab" data-tab="tabTransacoes" onclick="adminAbrirAba('tabTransacoes')">💳 Transações</button>
+                        <button class="admin-tab active" data-tab="tabSaques" onclick="adminAbrirAba('tabSaques')">ðŸ’¸ Saques Pendentes</button>
+                        <button class="admin-tab" data-tab="tabUsuarios" onclick="adminAbrirAba('tabUsuarios')">ðŸ“‹ UsuÃ¡rios</button>
+                        <button class="admin-tab" data-tab="tabHistorico" onclick="adminAbrirAba('tabHistorico')">ðŸ“œ HistÃ³rico</button>
+                        <button class="admin-tab" data-tab="tabTransacoes" onclick="adminAbrirAba('tabTransacoes')">ðŸ’³ TransaÃ§Ãµes</button>
                     </div>
 
-                    <!-- Conteúdo das Abas -->
+                    <!-- ConteÃºdo das Abas -->
                     <div class="admin-tab-content" id="tabSaques">
-                        <h4>💸 Saques Pendentes</h4>
+                        <h4>ðŸ’¸ Saques Pendentes</h4>
                         <div id="adminSaquesList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
                         <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-                            <button class="btn btn-refresh" onclick="carregarSaquesAdmin()">🔄 Atualizar</button>
-                            <button class="btn btn-primary" onclick="testarEmailAdmin()" style="font-size:0.82em;padding:4px 12px">📧 Testar Email</button>
+                            <button class="btn btn-refresh" onclick="carregarSaquesAdmin()">ðŸ”„ Atualizar</button>
+                            <button class="btn btn-primary" onclick="testarEmailAdmin()" style="font-size:0.82em;padding:4px 12px">ðŸ“§ Testar Email</button>
                         </div>
                     </div>
 
                     <div class="admin-tab-content" id="tabUsuarios" style="display:none">
-                        <h4>📋 Usuários Cadastrados</h4>
+                        <h4>ðŸ“‹ UsuÃ¡rios Cadastrados</h4>
                         <div id="adminCadastrosList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
-                        <button class="btn btn-refresh" onclick="carregarCadastrosAdmin()" style="margin-top:8px">🔄 Atualizar</button>
+                        <button class="btn btn-refresh" onclick="carregarCadastrosAdmin()" style="margin-top:8px">ðŸ”„ Atualizar</button>
                     </div>
 
                     <div class="admin-tab-content" id="tabHistorico" style="display:none">
-                        <h4>📜 Histórico de Sorteios</h4>
+                        <h4>ðŸ“œ HistÃ³rico de Sorteios</h4>
                         <div class="admin-filtros">
                             <label>De:</label>
                             <input type="date" id="filtroHistDe" class="input-field input-field-sm">
-                            <label>Até:</label>
+                            <label>AtÃ©:</label>
                             <input type="date" id="filtroHistAte" class="input-field input-field-sm">
                             <div class="btn-row">
-                                <button class="btn btn-refresh" onclick="carregarHistoricoAdmin()">🔍 Filtrar</button>
-                                <button class="btn btn-download" onclick="baixarHistoricoCSV()">⬇️ CSV</button>
-                                <button class="btn btn-download" onclick="baixarHistoricoJSON()">⬇️ JSON</button>
+                                <button class="btn btn-refresh" onclick="carregarHistoricoAdmin()">ðŸ” Filtrar</button>
+                                <button class="btn btn-download" onclick="baixarHistoricoCSV()">â¬‡ï¸ CSV</button>
+                                <button class="btn btn-download" onclick="baixarHistoricoJSON()">â¬‡ï¸ JSON</button>
                             </div>
                         </div>
                         <div id="adminHistoricoList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
                     </div>
 
                     <div class="admin-tab-content" id="tabTransacoes" style="display:none">
-                        <h4>💳 Transações dos Jogadores</h4>
+                        <h4>ðŸ’³ TransaÃ§Ãµes dos Jogadores</h4>
                         <div class="admin-filtros">
                             <label>De:</label>
                             <input type="date" id="filtroTransDe" class="input-field input-field-sm">
-                            <label>Até:</label>
+                            <label>AtÃ©:</label>
                             <input type="date" id="filtroTransAte" class="input-field input-field-sm">
                             <div class="btn-row">
-                                <button class="btn btn-refresh" onclick="carregarTransacoesAdmin()">🔍 Filtrar</button>
-                                <button class="btn btn-download" onclick="baixarTransacoesCSV()">⬇️ CSV</button>
-                                <button class="btn btn-download" onclick="baixarTransacoesJSON()">⬇️ JSON</button>
+                                <button class="btn btn-refresh" onclick="carregarTransacoesAdmin()">ðŸ” Filtrar</button>
+                                <button class="btn btn-download" onclick="baixarTransacoesCSV()">â¬‡ï¸ CSV</button>
+                                <button class="btn btn-download" onclick="baixarTransacoesJSON()">â¬‡ï¸ JSON</button>
                             </div>
                         </div>
                         <div id="adminTransacoesList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
@@ -241,10 +241,10 @@
                 <div class="user-info">
                     <div class="user-avatar" id="avatarIcon">B</div>
                     <span class="user-name" id="labelMyName">Jogador</span>
-                    <span class="user-chips" id="labelMyChips">💰 0  🏆 0</span>
-                    <button class="btn-deposit" onclick="abrirModalDeposito()">💰 Depositar</button>
-                    <button class="btn-withdraw" id="btnSacar" onclick="abrirModalSaque()" style="display:none">💸 Sacar</button>
-                    <button class="btn-logout" onclick="sairDaConta()">🚪 Sair</button>
+                    <span class="user-chips" id="labelMyChips">ðŸ’° 0  ðŸ† 0</span>
+                    <button class="btn-deposit" onclick="abrirModalDeposito()">ðŸ’° Depositar</button>
+                    <button class="btn-withdraw" id="btnSacar" onclick="abrirModalSaque()" style="display:none">ðŸ’¸ Sacar</button>
+                    <button class="btn-logout" onclick="sairDaConta()">ðŸšª Sair</button>
                 </div>
             </div>
 
@@ -258,7 +258,7 @@
                     <div class="ball-section">
                         <div class="ball-area">
                             <div class="current-ball">
-                                <p class="label">Última Bola</p>
+                                <p class="label">Ãšltima Bola</p>
                                 <div class="ball-display" id="mainBall">-</div>
                             </div>
                             <div class="drawn-grid" id="drawnGrid"></div>
@@ -266,7 +266,7 @@
 
                         <div class="ball-actions">
                             <div class="buy-options" id="buySection">
-                                <span class="buy-label">Comprar Cartelas (R$0,15 cada — máx. 15):</span>
+                                <span class="buy-label">Comprar Cartelas (R$0,15 cada â€” mÃ¡x. 15):</span>
                                 <button class="btn btn-primary" onclick="buyBingoCards(1)">1 (R$0,15)</button>
                                 <button class="btn btn-primary" onclick="buyBingoCards(5)">5 (R$0,75)</button>
                                 <button class="btn btn-primary" onclick="buyBingoCards(10)">10 (R$1,50)</button>
@@ -277,8 +277,8 @@
 
                     <!-- Players Panel -->
                     <div class="players-panel" id="playersPanel">
-                        <h3>👥 Jogadores na Sala</h3>
-                        <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores assistindo ao vivo</div>
+                        <h3>ðŸ‘¥ Jogadores na Sala</h3>
+                        <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">ðŸ‘ï¸ <span id="spectatorCountNum">0</span> espectadores assistindo ao vivo</div>
                         <ul class="player-list" id="playerListUI"></ul>
                     </div>
 
@@ -289,17 +289,17 @@
 
                     <!-- Phases / Prizes -->
                     <div class="sidebar-card">
-                        <h3>🏆 Prêmios da Rodada</h3>
+                        <h3>ðŸ† PrÃªmios da Rodada</h3>
                         <div class="phases-bar" id="phasesStatus">
-                            <div class="phase-item" id="phase_kuadra">Kuadra: <span class="prize">💰 R$ 3,00</span></div>
-                            <div class="phase-item" id="phase_kina">Kina: <span class="prize">💰 R$ 5,00</span></div>
-                            <div class="phase-item" id="phase_keno">Bingo: <span class="prize">💰 R$ 7,00</span></div>
+                            <div class="phase-item" id="phase_kuadra">Kuadra: <span class="prize">ðŸ’° R$ 3,00</span></div>
+                            <div class="phase-item" id="phase_kina">Kina: <span class="prize">ðŸ’° R$ 5,00</span></div>
+                            <div class="phase-item" id="phase_keno">Bingo: <span class="prize">ðŸ’° R$ 7,00</span></div>
                         </div>
                     </div>
 
                     <!-- Close Cards -->
                     <div class="missing-numbers-panel" id="missingNumbersPanel">
-                        <h3>📊 <span id="missingTitle">Cartelas faltando 1 bola</span></h3>
+                        <h3>ðŸ“Š <span id="missingTitle">Cartelas faltando 1 bola</span></h3>
                         <div class="missing-numbers-list" id="missingNumbersList">
                             <p style="color:#6b6599;font-size:0.82em">Nenhum jogo ativo no momento.</p>
                         </div>
@@ -310,9 +310,9 @@
 
             <!-- Jackpot (perto das cartelas) -->
             <div class="jackpot-panel">
-                <div class="jackpot-label">🎰 Jackpot Acumulado</div>
+                <div class="jackpot-label">ðŸŽ° Jackpot Acumulado</div>
                 <div class="jackpot-value" id="jackpotDisplay">R$ 1.000,00</div>
-                <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÉ 37 BOLAS E LEVE O JACKPOT DE R$ 1.000,00!</div>
+                <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÃ‰ 37 BOLAS E LEVE O JACKPOT DE R$ 1.000,00!</div>
                 <div class="round-number" id="currentRoundNumber">Nenhum sorteio ainda</div>
             </div>
 
@@ -323,7 +323,7 @@
 
             <!-- My Cards Section (full width) -->
             <div class="my-cards-section">
-                <h3>📋 Minhas Cartelas</h3>
+                <h3>ðŸ“‹ Minhas Cartelas</h3>
                 <div class="cards-grid" id="myCardsGrid"></div>
             </div>
 
@@ -335,7 +335,7 @@
     <!-- ===== COUNTDOWN OVERLAY ===== -->
     <div class="countdown-overlay" id="countdownOverlay">
         <div class="countdown-content">
-            <div class="countdown-label">🔄 PRÓXIMO SORTEIO EM</div>
+            <div class="countdown-label">ðŸ”„ PRÃ“XIMO SORTEIO EM</div>
             <div class="countdown-timer" id="countdownTimer">2:30</div>
             <div class="countdown-hint">Compre suas cartelas enquanto aguarda!</div>
         </div>
@@ -344,13 +344,13 @@
     <!-- ===== MODAL PIX ===== -->
     <div class="modal-overlay" id="modalPix" style="display:none">
         <div class="modal-content">
-            <button class="modal-close" onclick="fecharModal('modalPix')">✕</button>
-            <h2>💰 Depósito via PIX</h2>
+            <button class="modal-close" onclick="fecharModal('modalPix')">âœ•</button>
+            <h2>ðŸ’° DepÃ³sito via PIX</h2>
             <div class="regra-deposito">
-                ⚠️ <strong>Valor mínimo de depósito: R$ 10,00.</strong><br>
-                O valor depositado <strong>não pode ser sacado</strong>. Só pode ser usado para comprar cartelas.
-                Você só tem direito a saque dos valores <strong>ganhos</strong> nas fases Kuadra, Kina ou Keno.
-                Saque mínimo: R$ 10,00.
+                âš ï¸ <strong>Valor mÃ­nimo de depÃ³sito: R$ 10,00.</strong><br>
+                O valor depositado <strong>nÃ£o pode ser sacado</strong>. SÃ³ pode ser usado para comprar cartelas.
+                VocÃª sÃ³ tem direito a saque dos valores <strong>ganhos</strong> nas fases Kuadra, Kina ou Keno.
+                Saque mÃ­nimo: R$ 10,00.
             </div>
             <div class="pix-form">
                 <label>Valor (R$):</label>
@@ -361,10 +361,10 @@
                 <div class="pix-qr-container">
                     <img id="pixQrCode" src="" alt="QR Code PIX" style="width:200px;height:200px;background:#fff;">
                 </div>
-                <p class="pix-instruction">Escaneie o QR Code ou copie o código abaixo para pagar</p>
+                <p class="pix-instruction">Escaneie o QR Code ou copie o cÃ³digo abaixo para pagar</p>
                 <div class="pix-copy-area">
                     <input type="text" id="pixCopyText" readonly>
-                    <button class="btn btn-primary" onclick="copiarPix()">📋 Copiar</button>
+                    <button class="btn btn-primary" onclick="copiarPix()">ðŸ“‹ Copiar</button>
                 </div>
                 <p class="pix-status" id="pixStatus">Aguardando pagamento...</p>
                 <div class="pix-loader" id="pixLoader"></div>
@@ -375,13 +375,13 @@
     <!-- ===== MODAL SAQUE ===== -->
     <div class="modal-overlay" id="modalSaque" style="display:none">
         <div class="modal-content">
-            <button class="modal-close" onclick="fecharModal('modalSaque')">✕</button>
-            <h2>💸 Solicitar Saque</h2>
+            <button class="modal-close" onclick="fecharModal('modalSaque')">âœ•</button>
+            <h2>ðŸ’¸ Solicitar Saque</h2>
             <div class="regra-deposito">
-                ⚠️ <strong>Saque mínimo: R$ 10,00.</strong><br>
-                Só pode sacar valores <strong>ganhos</strong> nas fases Kuadra, Kina ou Keno.
-                O valor que você <strong>depositou</strong> não pode ser sacado.
-                Saldo sacável: <strong id="saqueSaldo">R$ 0,00</strong>
+                âš ï¸ <strong>Saque mÃ­nimo: R$ 10,00.</strong><br>
+                SÃ³ pode sacar valores <strong>ganhos</strong> nas fases Kuadra, Kina ou Keno.
+                O valor que vocÃª <strong>depositou</strong> nÃ£o pode ser sacado.
+                Saldo sacÃ¡vel: <strong id="saqueSaldo">R$ 0,00</strong>
             </div>
             <div class="saque-form">
                 <label>Valor do Saque (R$):</label>
@@ -391,11 +391,11 @@
                     <option value="cpf">CPF</option>
                     <option value="email">E-mail</option>
                     <option value="telefone">Telefone</option>
-                    <option value="aleatoria">Chave Aleatória</option>
+                    <option value="aleatoria">Chave AleatÃ³ria</option>
                 </select>
                 <label>Chave PIX:</label>
                 <input type="text" id="saqueChave" class="input-field" placeholder="Digite sua chave PIX">
-                <button class="btn btn-success" onclick="solicitarSaque()">📤 Solicitar Saque</button>
+                <button class="btn btn-success" onclick="solicitarSaque()">ðŸ“¤ Solicitar Saque</button>
             </div>
             <div id="saqueMsg" class="saque-msg"></div>
         </div>
@@ -424,3 +424,4 @@
     </script>
 </body>
 </html>
+
