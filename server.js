@@ -21,7 +21,6 @@ async function enviarEmailNotificacao(assunto, texto) {
     }
     console.log('[EMAIL] Tentando enviar via Resend API (HTTP):', assunto);
     try {
-        // Converte as quebras de linha normais para HTML para o email chegar formatado
         const htmlTexto = texto.replace(/\n/g, '<br>');
         
         const response = await fetch('https://api.resend.com/emails', {
