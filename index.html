@@ -1121,6 +1121,36 @@
             pushLog(`Usuário com ID ${id} foi desconectado pelo painel moderador.`);
         }
 
+        // Excluir Jogador Permanentemente (via campo de texto: Nome, ID ou Email)
+        function confirmarExclusaoJogador() {
+            const query = document.getElementById('deletePlayerInput').value.trim().toLowerCase();
+            if (!query) {
+                showToast("Digite o Nome, ID ou Email do jogador para excluir.", "warning");
+                return;
+            }
+            const player = playersData.find(p =>
+                p.id.toLowerCase() === query ||
+                p.name.toLowerCase().includes(query) ||
+                (p.email && p.email.toLowerCase() === query)
+            );
+            if (!player) {
+                showToast("Jogador não encontrado.", "error");
+                return;
+            }
+            if (player.id === 'player_main') {
+                showToast("Você não pode excluir a si mesmo da sessão.", "error");
+                return;
+            }
+            const confirmMsg = `Tem certeza que deseja EXCLUIR PERMANENTEMENTE o jogador "${player.name}"?\n\nEsta ação removerá o jogador, suas cartelas, histórico e saldo de forma IRREVERSÍVEL.`;
+            if (!confirm(confirmMsg)) return;
+            document.getElementById('deletePlayerInput').value = '';
+            playersData = playersData.filter(p => p.id !== player.id);
+            renderPlayerRanking();
+            renderAdminUsers();
+            showToast(`Jogador "${player.name}" foi excluído permanentemente.`, "success");
+            pushLog(`Administrador excluiu permanentemente o jogador: ${player.name}`);
+        }
+
         // Alternar Abas Administrativas
         function switchAdminTab(tabIndex) {
             for(let i=1; i<=3; i++) {
