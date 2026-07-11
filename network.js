@@ -3,7 +3,7 @@
 const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.');
 const WS_SERVER_URL = IS_LOCAL
     ? `ws://${window.location.hostname}:3000`
-    : `wss://bingo-master-pro-2026.onrender.com`; // <-- PRODUÇÃO Render
+    : `wss://api.bingovipclub.online`; // <-- PRODUÇÃO Render
 
 let socket = null;
 let souDono = false;
