@@ -972,7 +972,10 @@ function carregarCadastrosAdmin() {
                 <div class="admin-card" style="position:relative;padding-bottom:40px">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
                         <strong>${u.nomeCompleto || u.nome || 'Sem nome'}</strong>
-                        <button class="btn btn-remove" onclick="excluirUsuarioAdmin('${u.cpf}', '${u.nomeCompleto || u.nome}')" style="padding:6px 12px;font-size:0.75em;min-width:80px">🗑️ Excluir</button>
+                        <div style="display:flex;gap:6px">
+                            <button class="btn" onclick="darBonusUsuario('${u.cpf}', '${u.nomeCompleto || u.nome}')" style="padding:6px 12px;font-size:0.75em;background:#10b981;min-width:80px">🎁 Bônus</button>
+                            <button class="btn btn-remove" onclick="excluirUsuarioAdmin('${u.cpf}', '${u.nomeCompleto || u.nome}')" style="padding:6px 12px;font-size:0.75em;min-width:80px">🗑️ Excluir</button>
+                        </div>
                     </div>
                     <div style="color:#a0a0b0;font-size:0.82em">CPF: ${u.cpfFormatado || u.cpf}</div>
                     <div style="color:#a0a0b0;font-size:0.82em">Email: ${u.email}</div>
@@ -1014,6 +1017,38 @@ function excluirUsuarioAdmin(cpf, nome) {
             showToast(`✅ Usuário "${nome}" excluído com sucesso! Todos os dados foram removidos.`, 'success', 6000);
             carregarCadastrosAdmin();
             carregarAdminUsuariosComSaldo();
+        } else {
+            showToast('Erro: ' + (r.error || 'Erro desconhecido'), 'error', 6000);
+        }
+    })
+    .catch(err => {
+        hideSpinner();
+        showToast('Erro de conexão: ' + err.message, 'error', 6000);
+    });
+}
+
+function darBonusUsuario(cpf, nome) {
+    const bonus = prompt(`Digite o valor do BÔNUS para "${nome}":\n\nIsso adicionará fichas ao saldo do jogador.`);
+    if (bonus === null) return;
+    const valor = parseInt(bonus);
+    if (isNaN(valor) || valor <= 0) {
+        showToast('Valor inválido. O bônus deve ser um número positivo.', 'warning', 4000);
+        return;
+    }
+    
+    showSpinner('Concedendo bônus...');
+    
+    fetch(API_BASE + '/api/admin/usuario/bonus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf, bonus: valor })
+    })
+    .then(r => r.json())
+    .then(r => {
+        hideSpinner();
+        if (r.success) {
+            showToast(`✅ Bônus de ${valor.toLocaleString('pt-BR')} fichas concedido para "${nome}"!`, 'success', 6000);
+            carregarCadastrosAdmin();
         } else {
             showToast('Erro: ' + (r.error || 'Erro desconhecido'), 'error', 6000);
         }

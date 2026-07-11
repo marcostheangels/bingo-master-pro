@@ -1162,6 +1162,38 @@ app.get('/api/admin/usuarios-com-saldo', (req, res) => {
     }
 });
 
+// Admin - Dar bônus de fichas para usuário
+app.post('/api/admin/usuario/bonus', (req, res) => {
+    try {
+        const { cpf, bonus } = req.body;
+        if (!cpf || !bonus || bonus <= 0) {
+            return res.status(400).json({ error: 'CPF e bônus válido são obrigatórios.' });
+        }
+        const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
+
+        const usuarios = carregarUsuarios();
+        const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
+        const usuario = usuariosArray.find(u => String(u.cpf).padStart(11, '0') === cpfLimpo);
+        if (!usuario) {
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+
+        const key = usuario.nomeCompleto.toLowerCase().trim();
+        const fichasStore = db.getFichasStore();
+        if (!fichasStore[key]) {
+            fichasStore[key] = { chips: engine.INITIAL_CHIPS, winnings: 0 };
+        }
+        fichasStore[key].chips += parseInt(bonus);
+        db.setFichasStore(fichasStore);
+
+        console.log(`[BONUS] ${bonus} fichas concedidas para ${usuario.nomeCompleto} via painel admin`);
+        res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips });
+    } catch (err) {
+        console.error('[API] Erro ao conceder bônus:', err);
+        res.status(500).json({ error: 'Erro interno.' });
+    }
+});
+
 // Admin - Editar senha ou chave PIX (versão simples)
 app.post('/api/admin/usuarios/:cpf/edicao', (req, res) => {
     try {
