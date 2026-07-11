@@ -652,6 +652,14 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
             if (typeof showToast === 'function') showToast(data.text || '', data.kind === 'success' ? 'success' : 'warning');
             return;
         }
+
+        if (data.type === 'saqueNotificacao') {
+            if (souDono && typeof showToast === 'function') {
+                showToast(`💸 NOVO SAQUE: ${data.nome} - R$ ${data.valor.toFixed(2)}`, 'warning', 10000);
+            }
+            if (typeof carregarSaquesAdmin === 'function') carregarSaquesAdmin();
+            return;
+        }
     }
 }
 

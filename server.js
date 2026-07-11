@@ -13,12 +13,10 @@ const DONO_CPF = '05893761600';
 const ADMIN_EMAIL = 'marcostheangels@gmail.com';
 
 const mailTransporter = nodemailer.createTransport({
-    host: 'smtp.gmail.com',
-    port: 587,
-    secure: false,
+    service: 'gmail',
     auth: {
         user: ADMIN_EMAIL,
-        pass: 'bptauajfklmfzqpl'
+        pass: 'gnbdjxgqjttrkgiy'
     }
 });
 
@@ -1336,14 +1334,20 @@ app.post('/api/solicitar-saque', (req, res) => {
         setAdminCreditos(nome, novosAdminCred);
         setChips(nome, c.chips - fichasNecessarias, novosGanhos);
 
-// Notifica o admin por email
+        // Notifica o admin por email
         const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         console.log('[SAQUE] Enviando email de notificação...');
         enviarEmailNotificacao(
             `💸 Novo Saque Solicitado - R$ ${valor.toFixed(2)}`,
             `Jogador: ${nome}\nValor: R$ ${valor.toFixed(2)}\nChave PIX: ${chavePix} (${tipoChave || 'cpf'})\nData: ${hora}`
         );
-        // Fallback: registra no log do servidor mesmo se email falhar
+        // Notifica admin via WebSocket
+        const notif = JSON.stringify({ type: 'relay', from: 'host', id: 'server', name: 'Servidor', data: { type: 'saqueNotificacao', nome, valor } });
+        gameRooms.forEach(room => {
+            room.clients.forEach(ws => {
+                if (ws.readyState === WebSocket.OPEN) ws.send(notif);
+            });
+        });
         console.log(`[SAQUE] ${nome} solicitou saque de R$ ${valor.toFixed(2)} via ${tipoChave || 'cpf'}: ${chavePix}`);
 
         res.json({ success: true, saqueId: novoSaque.id });
