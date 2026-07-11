@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jackpot Celebration</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    background: linear-gradient(160deg, #06030f, #0d0825, #120c33);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+    overflow: hidden;
+}
+
+.jackpot-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(12px);
+    z-index: 10000;
+}
+
+.jackpot-banner {
+    background: linear-gradient(160deg, #fbbf24, #f59e0b, #f97316);
+    color: #0b091a;
+    padding: 50px 60px;
+    border-radius: 32px;
+    text-align: center;
+    box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 80px rgba(251,191,36,0.2);
+    animation: jackpotPulse 1.5s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+    max-width: 520px;
+    width: 90%;
+}
+
+.jackpot-banner::before {
+    content: '';
+    position: absolute;
+    inset: -2px;
+    border-radius: 34px;
+    background: conic-gradient(from 0deg, #fbbf24, #f97316, #fbbf24, #f59e0b, #fbbf24);
+    z-index: -1;
+    animation: borderSpin 3s linear infinite;
+}
+
+.jackpot-banner::after {
+    content: '';
+    position: absolute;
+    inset: 3px;
+    border-radius: 30px;
+    background: linear-gradient(160deg, #fbbf24, #f59e0b, #f97316);
+    z-index: -1;
+}
+
+.jackpot-icon {
+    font-size: 4em;
+    margin-bottom: 10px;
+    animation: iconBounce 1s ease-in-out infinite;
+}
+
+.jackpot-title {
+    font-size: 4em;
+    font-weight: 900;
+    letter-spacing: 6px;
+    text-transform: uppercase;
+    text-shadow: 0 4px 20px rgba(0,0,0,0.15);
+    animation: titleGlow 2s ease-in-out infinite;
+}
+
+.jackpot-subtitle {
+    font-size: 1.3em;
+    font-weight: 600;
+    margin-top: 8px;
+    opacity: 0.9;
+}
+
+.jackpot-value {
+    font-size: 3.2em;
+    font-weight: 900;
+    margin: 16px 0;
+    text-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    animation: valuePulse 1s ease-in-out infinite;
+}
+
+.jackpot-winner {
+    font-size: 1.2em;
+    font-weight: 500;
+    opacity: 0.85;
+    margin-bottom: 20px;
+}
+
+.btn-close {
+    padding: 14px 40px;
+    border-radius: 50px;
+    border: 2px solid rgba(0,0,0,0.15);
+    background: rgba(0,0,0,0.05);
+    color: #0b091a;
+    font-size: 1em;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    backdrop-filter: blur(4px);
+}
+
+.btn-close:hover {
+    background: rgba(0,0,0,0.1);
+    transform: translateY(-2px);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.15);
+}
+
+/* Animations */
+@keyframes jackpotPulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 40px 100px rgba(0,0,0,0.6), 0 0 80px rgba(251,191,36,0.2); }
+    50% { transform: scale(1.02); box-shadow: 0 40px 120px rgba(0,0,0,0.6), 0 0 120px rgba(251,191,36,0.35); }
+}
+
+@keyframes borderSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
+@keyframes iconBounce {
+    0%, 100% { transform: translateY(0) scale(1); }
+    50% { transform: translateY(-15px) scale(1.1); }
+}
+
+@keyframes titleGlow {
+    0%, 100% { text-shadow: 0 4px 20px rgba(0,0,0,0.15); }
+    50% { text-shadow: 0 4px 40px rgba(0,0,0,0.25), 0 0 60px rgba(255,215,0,0.3); }
+}
+
+@keyframes valuePulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+/* Coins rain */
+.coin {
+    position: fixed;
+    font-size: 2em;
+    animation: coinFall linear forwards;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+@keyframes coinFall {
+    0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(110vh) rotate(720deg); opacity: 0; }
+}
+
+/* Stars */
+.star {
+    position: fixed;
+    pointer-events: none;
+    z-index: 9998;
+    animation: starFloat ease-out forwards;
+}
+
+@keyframes starFloat {
+    0% { transform: scale(0) rotate(0deg); opacity: 1; }
+    50% { transform: scale(1.5) rotate(180deg); opacity: 0.8; }
+    100% { transform: scale(0) rotate(360deg); opacity: 0; }
+}
+
+/* Sparks */
+.spark-container {
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 10001;
+    overflow: hidden;
+}
+
+.spark {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    animation: sparkBurst ease-out forwards;
+}
+
+@keyframes sparkBurst {
+    0% { transform: translate(0, 0) scale(1); opacity: 1; }
+    100% { transform: translate(var(--tx), var(--ty)) scale(0); opacity: 0; }
+}
+
+@media (max-width: 480px) {
+    .jackpot-banner { padding: 30px 20px; border-radius: 24px; }
+    .jackpot-icon { font-size: 3em; }
+    .jackpot-title { font-size: 2.8em; letter-spacing: 4px; }
+    .jackpot-value { font-size: 2.4em; }
+    .jackpot-subtitle { font-size: 1.1em; }
+}
+</style>
+</head>
+<body>
+
+<div class="jackpot-overlay" id="overlay">
+    <div class="jackpot-banner" id="banner">
+        <div class="jackpot-icon">👑</div>
+        <div class="jackpot-title">JACKPOT!</div>
+        <div class="jackpot-subtitle">GRANDE VENCEDOR</div>
+        <div class="jackpot-value" id="value">R$ 2.000.000</div>
+        <div class="jackpot-winner" id="winner">🎉 PARABÉNS! 🎉</div>
+        <button class="btn-close" onclick="closeJackpot()">Fechar</button>
+    </div>
+</div>
+
+<audio id="jackpotAudio" loop>
+    <source src="chaves_3.mp3" type="audio/mpeg">
+</audio>
+
+<script>
+function createCoins() {
+    const emojis = ['🪙', '💰', '🪙', '💰', '🪙'];
+    for (let i = 0; i < 40; i++) {
+        setTimeout(() => {
+            const coin = document.createElement('div');
+            coin.className = 'coin';
+            coin.textContent = emojis[Math.floor(Math.random() * emojis.length)];
+            coin.style.left = Math.random() * 100 + '%';
+            coin.style.fontSize = (1.5 + Math.random() * 1.5) + 'em';
+            coin.style.animationDuration = (2 + Math.random() * 2) + 's';
+            coin.style.animationDelay = (Math.random() * 0.5) + 's';
+            document.body.appendChild(coin);
+            setTimeout(() => coin.remove(), 5000);
+        }, i * 100);
+    }
+}
+
+function createStars() {
+    const colors = ['#fbbf24', '#f59e0b', '#f97316', '#fff', '#ffd700'];
+    for (let i = 0; i < 30; i++) {
+        setTimeout(() => {
+            const star = document.createElement('div');
+            star.className = 'star';
+            star.textContent = '✦';
+            star.style.left = Math.random() * 100 + '%';
+            star.style.top = Math.random() * 100 + '%';
+            star.style.color = colors[Math.floor(Math.random() * colors.length)];
+            star.style.fontSize = (1 + Math.random() * 2) + 'em';
+            star.style.animationDuration = (1 + Math.random()) + 's';
+            document.body.appendChild(star);
+            setTimeout(() => star.remove(), 3000);
+        }, i * 150);
+    }
+}
+
+function createSparks() {
+    const container = document.createElement('div');
+    container.className = 'spark-container';
+    document.body.appendChild(container);
+    const colors = ['#fbbf24', '#f59e0b', '#f97316', '#fff', '#ffd700', '#10b981'];
+    for (let i = 0; i < 60; i++) {
+        const spark = document.createElement('div');
+        spark.className = 'spark';
+        spark.style.background = colors[Math.floor(Math.random() * colors.length)];
+        spark.style.left = '50%';
+        spark.style.top = '50%';
+        spark.style.width = (3 + Math.random() * 6) + 'px';
+        spark.style.height = spark.style.width;
+        const angle = Math.random() * 360;
+        const dist = 100 + Math.random() * 300;
+        spark.style.setProperty('--tx', Math.cos(angle * Math.PI / 180) * dist + 'px');
+        spark.style.setProperty('--ty', Math.sin(angle * Math.PI / 180) * dist + 'px');
+        spark.style.animationDuration = (0.5 + Math.random() * 0.8) + 's';
+        spark.style.animationDelay = (Math.random() * 0.3) + 's';
+        container.appendChild(spark);
+    }
+    setTimeout(() => container.remove(), 3000);
+}
+
+let audioPlaying = false;
+
+function startCelebration() {
+    const audio = document.getElementById('jackpotAudio');
+    audio.volume = 0.5;
+    audio.play().catch(() => {});
+    audioPlaying = true;
+
+    createCoins();
+    createStars();
+    createSparks();
+
+    setInterval(() => {
+        createCoins();
+        createStars();
+        createSparks();
+    }, 5000);
+}
+
+function closeJackpot() {
+    const audio = document.getElementById('jackpotAudio');
+    audio.pause();
+    audio.currentTime = 0;
+    document.getElementById('overlay').style.display = 'none';
+}
+
+window.onload = startCelebration;
+</script>
+</body>
+</html>

@@ -1,0 +1,18 @@
+services:
+  - type: web
+    name: bingo-master-pro
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: PORT
+        value: 10000
+      - key: ASAAS_API_KEY
+        sync: false
+      - key: ASAAS_ENV
+        value: production
+      - key: DATABASE_URL
+        sync: false

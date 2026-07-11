@@ -1,0 +1,1439 @@
+[
+  {
+    "tipo": "premio",
+    "nome": "marcos",
+    "nomeExibicao": "Marcos",
+    "valor": 2,
+    "detalhe": "Prêmio kuadra",
+    "data": "2026-07-09T17:31:05.327Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "lula",
+    "nomeExibicao": "Lula",
+    "valor": 3.5,
+    "detalhe": "Prêmio kina",
+    "data": "2026-07-09T17:31:28.228Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 5,
+    "detalhe": "Prêmio keno",
+    "data": "2026-07-09T17:32:49.512Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "josé sarney",
+    "nomeExibicao": "José Sarney",
+    "valor": 2,
+    "detalhe": "Prêmio kuadra",
+    "data": "2026-07-09T18:34:25.319Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "rui muniz",
+    "nomeExibicao": "Rui Muniz",
+    "valor": 3.5,
+    "detalhe": "Prêmio kina",
+    "data": "2026-07-09T18:35:21.539Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "rui muniz",
+    "nomeExibicao": "Rui Muniz",
+    "valor": 5,
+    "detalhe": "Prêmio keno",
+    "data": "2026-07-09T18:37:27.468Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "rodrigo ⚡",
+    "nomeExibicao": "Rodrigo ⚡",
+    "valor": 2,
+    "detalhe": "Prêmio kuadra",
+    "data": "2026-07-09T18:47:22.514Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "juliana 💎",
+    "nomeExibicao": "Juliana 💎",
+    "valor": 3.5,
+    "detalhe": "Prêmio kina",
+    "data": "2026-07-09T18:48:06.725Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "fernanda 🌷",
+    "nomeExibicao": "Fernanda 🌷",
+    "valor": 5,
+    "detalhe": "Prêmio keno",
+    "data": "2026-07-09T18:50:00.187Z"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "marcos",
+    "nomeExibicao": "Marcos",
+    "valor": 10,
+    "detalhe": "Solicitação de saque PIX",
+    "data": "2026-07-09T18:56:44.237Z"
+  },
+  {
+    "tipo": "saque_pago",
+    "nome": "marcos",
+    "nomeExibicao": "Marcos",
+    "valor": 10,
+    "detalhe": "Saque PIX enviado",
+    "data": "2026-07-09T18:57:05.980Z"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "marcos",
+    "nomeExibicao": "Marcos",
+    "valor": 10,
+    "detalhe": "Solicitação de saque PIX",
+    "data": "2026-07-09T18:57:45.926Z"
+  },
+  {
+    "tipo": "saque_pago",
+    "nome": "marcos",
+    "nomeExibicao": "Marcos",
+    "valor": 10,
+    "detalhe": "Saque PIX enviado",
+    "data": "2026-07-09T18:57:57.886Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "mariana 🐬",
+    "nomeExibicao": "Mariana 🐬",
+    "valor": 2,
+    "detalhe": "Prêmio kuadra",
+    "data": "2026-07-09T18:59:31.338Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "lucas 🔥",
+    "nomeExibicao": "Lucas 🔥",
+    "valor": 3.5,
+    "detalhe": "Prêmio kina",
+    "data": "2026-07-09T19:00:18.512Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "gustavo 🍎",
+    "nomeExibicao": "Gustavo 🍎",
+    "valor": 2,
+    "detalhe": "Prêmio kuadra",
+    "data": "2026-07-09T19:07:24.869Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "juliana 💎",
+    "nomeExibicao": "Juliana 💎",
+    "valor": 3.5,
+    "detalhe": "Prêmio kina",
+    "data": "2026-07-09T19:08:21.071Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "patrícia 🌹",
+    "nomeExibicao": "Patrícia 🌹",
+    "valor": 5,
+    "detalhe": "Prêmio keno",
+    "data": "2026-07-09T19:10:11.547Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "patrícia 🌹",
+    "nomeExibicao": "Patrícia 🌹",
+    "valor": 2,
+    "detalhe": "Prêmio kuadra",
+    "data": "2026-07-09T19:32:09.133Z"
+  },
+  {
+    "tipo": "premio",
+    "nome": "gustavo 🍎",
+    "nomeExibicao": "Gustavo 🍎",
+    "valor": 3.5,
+    "detalhe": "Prêmio kina",
+    "data": "2026-07-09T19:32:47.274Z"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T03:06:45.114Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T03:13:55.165Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T03:18:31.100Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T03:23:31.104Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T03:26:07.584Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T03:29:37.693Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "deposito",
+    "data": "2026-07-10T03:30:53.081Z",
+    "detalhe": "PIX: pay_etcso4l8y8ze4nr7"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T03:35:15.307Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T03:38:02.745Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T03:50:25.091Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T03:59:15.583Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília miranda cruz",
+    "nomeExibicao": "Marília miranda cruz",
+    "valor": 10,
+    "data": "2026-07-10T04:02:22.826Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Tatiana 🌟",
+    "nomeExibicao": "Tatiana 🌟",
+    "valor": 2,
+    "data": "2026-07-10T04:16:51.148Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Tatiana 🌟",
+    "nomeExibicao": "Tatiana 🌟",
+    "valor": 3.5,
+    "data": "2026-07-10T04:17:08.207Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rodrigo ⚡",
+    "nomeExibicao": "Rodrigo ⚡",
+    "valor": 5,
+    "data": "2026-07-10T04:19:31.640Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 2,
+    "data": "2026-07-10T04:23:57.741Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 3.5,
+    "data": "2026-07-10T04:24:47.954Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Tatiana 🌟",
+    "nomeExibicao": "Tatiana 🌟",
+    "valor": 5,
+    "data": "2026-07-10T04:26:53.282Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Juliana 💎",
+    "nomeExibicao": "Juliana 💎",
+    "valor": 2,
+    "data": "2026-07-10T04:40:07.632Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 2,
+    "data": "2026-07-10T04:40:07.635Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 3.5,
+    "data": "2026-07-10T04:40:42.760Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Bruno 🍀",
+    "nomeExibicao": "Bruno 🍀",
+    "valor": 5,
+    "data": "2026-07-10T04:42:18.082Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 2,
+    "data": "2026-07-10T04:43:40.355Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 3.5,
+    "data": "2026-07-10T04:44:42.547Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 5,
+    "data": "2026-07-10T04:46:17.874Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Pedro 🎯",
+    "nomeExibicao": "Pedro 🎯",
+    "valor": 5,
+    "data": "2026-07-10T04:46:17.875Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 2,
+    "data": "2026-07-10T04:47:44.872Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Fernanda 🌷",
+    "nomeExibicao": "Fernanda 🌷",
+    "valor": 3.5,
+    "data": "2026-07-10T04:48:07.972Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 5,
+    "data": "2026-07-10T04:50:25.445Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 2,
+    "data": "2026-07-10T04:51:51.996Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 3.5,
+    "data": "2026-07-10T04:52:18.078Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Pedro 🎯",
+    "nomeExibicao": "Pedro 🎯",
+    "valor": 2,
+    "data": "2026-07-10T04:54:41.045Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Bruno 🍀",
+    "nomeExibicao": "Bruno 🍀",
+    "valor": 3.5,
+    "data": "2026-07-10T04:56:10.295Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 5,
+    "data": "2026-07-10T04:57:48.622Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Fernanda 🌷",
+    "nomeExibicao": "Fernanda 🌷",
+    "valor": 2,
+    "data": "2026-07-10T04:58:58.873Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 2,
+    "data": "2026-07-10T05:01:08.319Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 3.5,
+    "data": "2026-07-10T05:01:49.493Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 2,
+    "data": "2026-07-10T05:03:53.397Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 2,
+    "data": "2026-07-10T05:09:36.753Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Pedro 🎯",
+    "nomeExibicao": "Pedro 🎯",
+    "valor": 3.5,
+    "data": "2026-07-10T05:10:11.836Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 2,
+    "data": "2026-07-10T05:12:21.801Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 3.5,
+    "data": "2026-07-10T05:13:26.981Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Tatiana 🌟",
+    "nomeExibicao": "Tatiana 🌟",
+    "valor": 5,
+    "data": "2026-07-10T05:15:32.374Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 5,
+    "data": "2026-07-10T05:15:32.375Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Juliana 💎",
+    "nomeExibicao": "Juliana 💎",
+    "valor": 2,
+    "data": "2026-07-10T05:17:14.158Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rodrigo ⚡",
+    "nomeExibicao": "Rodrigo ⚡",
+    "valor": 2,
+    "data": "2026-07-10T05:17:14.159Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 3.5,
+    "data": "2026-07-10T05:17:40.220Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 5,
+    "data": "2026-07-10T05:20:06.710Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 2,
+    "data": "2026-07-10T05:22:29.557Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 3.5,
+    "data": "2026-07-10T05:22:55.661Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Juliana 💎",
+    "nomeExibicao": "Juliana 💎",
+    "valor": 2,
+    "data": "2026-07-10T05:24:52.494Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Juliana 💎",
+    "nomeExibicao": "Juliana 💎",
+    "valor": 3.5,
+    "data": "2026-07-10T05:25:48.666Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 3.5,
+    "data": "2026-07-10T05:25:48.669Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rodrigo ⚡",
+    "nomeExibicao": "Rodrigo ⚡",
+    "valor": 2,
+    "data": "2026-07-10T05:28:20.771Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 3.5,
+    "data": "2026-07-10T05:29:04.922Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rodrigo ⚡",
+    "nomeExibicao": "Rodrigo ⚡",
+    "valor": 2,
+    "data": "2026-07-10T05:31:03.913Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rodrigo ⚡",
+    "nomeExibicao": "Rodrigo ⚡",
+    "valor": 3.5,
+    "data": "2026-07-10T05:31:57.105Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rodrigo ⚡",
+    "nomeExibicao": "Rodrigo ⚡",
+    "valor": 5,
+    "data": "2026-07-10T05:33:56.506Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Tatiana 🌟",
+    "nomeExibicao": "Tatiana 🌟",
+    "valor": 2,
+    "data": "2026-07-10T05:35:32.440Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Tatiana 🌟",
+    "nomeExibicao": "Tatiana 🌟",
+    "valor": 3.5,
+    "data": "2026-07-10T05:35:58.527Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 2,
+    "data": "2026-07-10T05:46:22.643Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 2,
+    "data": "2026-07-10T05:49:06.428Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Fernanda 🌷",
+    "nomeExibicao": "Fernanda 🌷",
+    "valor": 3.5,
+    "data": "2026-07-10T05:49:32.503Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Bruno 🍀",
+    "nomeExibicao": "Bruno 🍀",
+    "valor": 2,
+    "data": "2026-07-10T05:57:37.969Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Bruno 🍀",
+    "nomeExibicao": "Bruno 🍀",
+    "valor": 2,
+    "data": "2026-07-10T13:50:30.753Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 3.5,
+    "data": "2026-07-10T13:51:02.853Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 5,
+    "data": "2026-07-10T13:53:20.492Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rodrigo ⚡",
+    "nomeExibicao": "Rodrigo ⚡",
+    "valor": 2,
+    "data": "2026-07-10T14:10:06.357Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 3.5,
+    "data": "2026-07-10T14:11:26.544Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 2,
+    "data": "2026-07-10T14:35:00.943Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 3.5,
+    "data": "2026-07-10T14:36:03.169Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Tatiana 🌟",
+    "nomeExibicao": "Tatiana 🌟",
+    "valor": 5,
+    "data": "2026-07-10T14:38:02.695Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 5,
+    "data": "2026-07-10T14:38:02.696Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 2,
+    "data": "2026-07-10T14:39:30.975Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 2,
+    "data": "2026-07-10T14:42:36.952Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Tatiana 🌟",
+    "nomeExibicao": "Tatiana 🌟",
+    "valor": 3.5,
+    "data": "2026-07-10T14:43:27.091Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rodrigo ⚡",
+    "nomeExibicao": "Rodrigo ⚡",
+    "valor": 2,
+    "data": "2026-07-10T14:47:58.885Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rodrigo ⚡",
+    "nomeExibicao": "Rodrigo ⚡",
+    "valor": 3.5,
+    "data": "2026-07-10T14:48:36.984Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 5,
+    "data": "2026-07-10T14:50:36.282Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Camila 🦋",
+    "nomeExibicao": "Camila 🦋",
+    "valor": 2,
+    "data": "2026-07-10T14:51:43.490Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Juliana 💎",
+    "nomeExibicao": "Juliana 💎",
+    "valor": 3.5,
+    "data": "2026-07-10T14:52:21.601Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Juliana 💎",
+    "nomeExibicao": "Juliana 💎",
+    "valor": 2,
+    "data": "2026-07-10T14:56:26.978Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Fernanda 🌷",
+    "nomeExibicao": "Fernanda 🌷",
+    "valor": 3.5,
+    "data": "2026-07-10T14:57:23.208Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Bruno 🍀",
+    "nomeExibicao": "Bruno 🍀",
+    "valor": 5,
+    "data": "2026-07-10T14:59:10.654Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Pedro 🎯",
+    "nomeExibicao": "Pedro 🎯",
+    "valor": 2,
+    "data": "2026-07-10T15:03:38.859Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 3.5,
+    "data": "2026-07-10T15:04:50.117Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 5,
+    "data": "2026-07-10T15:06:31.600Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 2,
+    "data": "2026-07-10T15:10:40.922Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 3.5,
+    "data": "2026-07-10T15:10:57.971Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 5,
+    "data": "2026-07-10T15:13:36.612Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renata 🌸",
+    "nomeExibicao": "Renata 🌸",
+    "valor": 2,
+    "data": "2026-07-10T15:34:52.500Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Carlos 🍀",
+    "nomeExibicao": "Carlos 🍀",
+    "valor": 3.5,
+    "data": "2026-07-10T15:35:48.712Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Fernanda 🌷",
+    "nomeExibicao": "Fernanda 🌷",
+    "valor": 5,
+    "data": "2026-07-10T15:37:33.127Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Débora Peixoto",
+    "nomeExibicao": "Débora Peixoto",
+    "valor": 2,
+    "data": "2026-07-10T15:38:37.379Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Raquel Monteiro",
+    "nomeExibicao": "Raquel Monteiro",
+    "valor": 3.5,
+    "data": "2026-07-10T15:39:36.488Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Raquel Monteiro",
+    "nomeExibicao": "Raquel Monteiro",
+    "valor": 5,
+    "data": "2026-07-10T15:41:53.813Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renan Antunes",
+    "nomeExibicao": "Renan Antunes",
+    "valor": 2,
+    "data": "2026-07-10T15:44:26.837Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 2,
+    "data": "2026-07-10T15:47:44.241Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 3.5,
+    "data": "2026-07-10T15:48:28.422Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 5,
+    "data": "2026-07-10T15:50:33.686Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rafael Oliveira",
+    "nomeExibicao": "Rafael Oliveira",
+    "valor": 2,
+    "data": "2026-07-10T16:04:29.820Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 3.5,
+    "data": "2026-07-10T16:05:31.916Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 2,
+    "data": "2026-07-10T16:08:08.166Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 3.5,
+    "data": "2026-07-10T16:08:37.268Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Raquel Monteiro",
+    "nomeExibicao": "Raquel Monteiro",
+    "valor": 5,
+    "data": "2026-07-10T16:10:15.644Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Henrique Dias",
+    "nomeExibicao": "Henrique Dias",
+    "valor": 2,
+    "data": "2026-07-10T16:24:59.203Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Débora Peixoto",
+    "nomeExibicao": "Débora Peixoto",
+    "valor": 3.5,
+    "data": "2026-07-10T16:25:28.273Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Larissa Gomes",
+    "nomeExibicao": "Larissa Gomes",
+    "valor": 2,
+    "data": "2026-07-10T16:36:02.068Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Gabriel Costa",
+    "nomeExibicao": "Gabriel Costa",
+    "valor": 2,
+    "data": "2026-07-10T16:40:28.292Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renan Antunes",
+    "nomeExibicao": "Renan Antunes",
+    "valor": 2,
+    "data": "2026-07-10T16:44:33.263Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Larissa Gomes",
+    "nomeExibicao": "Larissa Gomes",
+    "valor": 2,
+    "data": "2026-07-10T16:44:33.265Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Henrique Dias",
+    "nomeExibicao": "Henrique Dias",
+    "valor": 2,
+    "data": "2026-07-10T16:47:13.529Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Gabriel Costa",
+    "nomeExibicao": "Gabriel Costa",
+    "valor": 3.5,
+    "data": "2026-07-10T16:47:48.669Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Débora Peixoto",
+    "nomeExibicao": "Débora Peixoto",
+    "valor": 5,
+    "data": "2026-07-10T16:49:39.027Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Raquel Monteiro",
+    "nomeExibicao": "Raquel Monteiro",
+    "valor": 2,
+    "data": "2026-07-10T16:51:16.406Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Aline 🌺",
+    "nomeExibicao": "Aline 🌺",
+    "valor": 3.5,
+    "data": "2026-07-10T16:52:09.607Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Larissa Gomes",
+    "nomeExibicao": "Larissa Gomes",
+    "valor": 3.5,
+    "data": "2026-07-10T16:52:09.608Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rafael Oliveira",
+    "nomeExibicao": "Rafael Oliveira",
+    "valor": 5,
+    "data": "2026-07-10T16:53:23.857Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Gabriel Costa",
+    "nomeExibicao": "Gabriel Costa",
+    "valor": 2,
+    "data": "2026-07-10T16:54:34.087Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Débora Peixoto",
+    "nomeExibicao": "Débora Peixoto",
+    "valor": 3.5,
+    "data": "2026-07-10T16:55:12.201Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Gabriel Costa",
+    "nomeExibicao": "Gabriel Costa",
+    "valor": 2,
+    "data": "2026-07-10T16:59:29.394Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Gabriel Costa",
+    "nomeExibicao": "Gabriel Costa",
+    "valor": 3.5,
+    "data": "2026-07-10T17:00:13.533Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 2,
+    "data": "2026-07-10T17:01:26.897Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renan Antunes",
+    "nomeExibicao": "Renan Antunes",
+    "valor": 2,
+    "data": "2026-07-10T17:05:28.197Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Raquel Monteiro",
+    "nomeExibicao": "Raquel Monteiro",
+    "valor": 2,
+    "data": "2026-07-10T17:08:37.431Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Bruno Cardoso",
+    "nomeExibicao": "Bruno Cardoso",
+    "valor": 2,
+    "data": "2026-07-10T17:14:57.694Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Raquel Monteiro",
+    "nomeExibicao": "Raquel Monteiro",
+    "valor": 3.5,
+    "data": "2026-07-10T17:16:11.915Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Gabriel Costa",
+    "nomeExibicao": "Gabriel Costa",
+    "valor": 2,
+    "data": "2026-07-10T17:17:47.513Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Gabriel Costa",
+    "nomeExibicao": "Gabriel Costa",
+    "valor": 2,
+    "data": "2026-07-10T17:20:08.149Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rafael Oliveira",
+    "nomeExibicao": "Rafael Oliveira",
+    "valor": 2,
+    "data": "2026-07-10T17:21:40.675Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Raquel Monteiro",
+    "nomeExibicao": "Raquel Monteiro",
+    "valor": 3.5,
+    "data": "2026-07-10T17:22:39.874Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renan Antunes",
+    "nomeExibicao": "Renan Antunes",
+    "valor": 2,
+    "data": "2026-07-10T17:24:06.373Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Juliana Santos",
+    "nomeExibicao": "Juliana Santos",
+    "valor": 2,
+    "data": "2026-07-10T17:25:32.847Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Diego Araujo",
+    "nomeExibicao": "Diego Araujo",
+    "valor": 2,
+    "data": "2026-07-10T17:28:22.492Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Diego Araujo",
+    "nomeExibicao": "Diego Araujo",
+    "valor": 3.5,
+    "data": "2026-07-10T17:29:09.633Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rafael Oliveira",
+    "nomeExibicao": "Rafael Oliveira",
+    "valor": 2,
+    "data": "2026-07-10T17:30:51.220Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 2,
+    "data": "2026-07-10T17:36:16.433Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Otávio Guimarães",
+    "nomeExibicao": "Otávio Guimarães",
+    "valor": 2,
+    "data": "2026-07-10T17:36:16.440Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 3.5,
+    "data": "2026-07-10T17:36:39.516Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 2,
+    "data": "2026-07-10T17:40:42.095Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 3.5,
+    "data": "2026-07-10T17:41:11.203Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 5,
+    "data": "2026-07-10T17:42:55.497Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 2,
+    "data": "2026-07-10T17:45:05.781Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Nicolas Fonseca",
+    "nomeExibicao": "Nicolas Fonseca",
+    "valor": 3.5,
+    "data": "2026-07-10T17:45:58.928Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Vinicius Moreira",
+    "nomeExibicao": "Vinicius Moreira",
+    "valor": 5,
+    "data": "2026-07-10T17:48:04.288Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Larissa Gomes",
+    "nomeExibicao": "Larissa Gomes",
+    "valor": 2,
+    "data": "2026-07-10T17:50:22.055Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Bruno Cardoso",
+    "nomeExibicao": "Bruno Cardoso",
+    "valor": 3.5,
+    "data": "2026-07-10T17:51:06.213Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 2,
+    "data": "2026-07-10T17:53:19.692Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Bruno Cardoso",
+    "nomeExibicao": "Bruno Cardoso",
+    "valor": 3.5,
+    "data": "2026-07-10T17:53:57.821Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Rafael Oliveira",
+    "nomeExibicao": "Rafael Oliveira",
+    "valor": 2,
+    "data": "2026-07-10T17:55:39.415Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Vinicius Moreira",
+    "nomeExibicao": "Vinicius Moreira",
+    "valor": 3.5,
+    "data": "2026-07-10T17:56:02.510Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 2,
+    "data": "2026-07-10T17:58:36.052Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Renan Antunes",
+    "nomeExibicao": "Renan Antunes",
+    "valor": 2,
+    "data": "2026-07-10T17:58:36.057Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Caio Mendes",
+    "nomeExibicao": "Caio Mendes",
+    "valor": 2,
+    "data": "2026-07-10T18:01:48.100Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "saque_pendente",
+    "nome": "Marília",
+    "nomeExibicao": "Marília",
+    "valor": 10,
+    "data": "2026-07-10T18:02:39.190Z",
+    "detalhe": "Saque solicitado - cpf: 82328188672"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Henrique Dias",
+    "nomeExibicao": "Henrique Dias",
+    "valor": 3.5,
+    "data": "2026-07-10T18:02:56.285Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Otávio Guimarães",
+    "nomeExibicao": "Otávio Guimarães",
+    "valor": 5,
+    "data": "2026-07-10T18:04:37.646Z",
+    "detalhe": "Prêmio keno"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Larissa Gomes",
+    "nomeExibicao": "Larissa Gomes",
+    "valor": 2,
+    "data": "2026-07-10T18:05:50.926Z",
+    "detalhe": "Prêmio kuadra"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Henrique Dias",
+    "nomeExibicao": "Henrique Dias",
+    "valor": 3.5,
+    "data": "2026-07-10T18:06:59.192Z",
+    "detalhe": "Prêmio kina"
+  },
+  {
+    "tipo": "premio",
+    "nome": "Henrique Dias",
+    "nomeExibicao": "Henrique Dias",
+    "valor": 5,
+    "data": "2026-07-10T18:08:10.439Z",
+    "detalhe": "Prêmio keno"
+  }
+]
