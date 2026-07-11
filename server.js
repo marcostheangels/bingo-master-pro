@@ -12,13 +12,32 @@ const nodemailer = require('nodemailer');
 const DONO_CPF = '05893761600';
 const ADMIN_EMAIL = 'marcostheangels@gmail.com';
 
-const mailTransporter = nodemailer.createTransport({
-    service: 'gmail',
-    auth: {
-        user: ADMIN_EMAIL,
-        pass: 'gnbdjxgqjttrkgiy'
-    }
-});
+// Tenta usar SendGrid (variável de ambiente SENDGRID_API_KEY).
+// Se não existir, cai no fallback Gmail SMTP.
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY || '';
+
+let mailTransporter = null;
+if (SENDGRID_API_KEY) {
+    mailTransporter = nodemailer.createTransport({
+        host: 'smtp.sendgrid.net',
+        port: 587,
+        secure: false,
+        auth: {
+            user: 'apikey',
+            pass: SENDGRID_API_KEY
+        }
+    });
+    console.log('[EMAIL] Usando SendGrid');
+} else {
+    mailTransporter = nodemailer.createTransport({
+        service: 'gmail',
+        auth: {
+            user: ADMIN_EMAIL,
+            pass: 'gnbdjxgqjttrkgiy'
+        }
+    });
+    console.log('[EMAIL] Usando Gmail SMTP (pode falhar se Render bloquear)');
+}
 
 function enviarEmailNotificacao(assunto, texto) {
     console.log('[EMAIL] Tentando enviar:', assunto);
@@ -1726,7 +1745,6 @@ async function iniciarServidor() {
         console.log(`Servidor rodando em http://localhost:${PORT}`);
         console.log(`WebSocket em ws://localhost:${PORT}`);
         console.log('Bingo Master Pro rodando - Asaas integrado');
-    });
     });
 }
 
