@@ -16,9 +16,20 @@ const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587');
 const SMTP_USER = process.env.SMTP_USER || ADMIN_EMAIL;
 const SMTP_PASS = process.env.SMTP_PASS;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
 let mailTransporter = null;
-if (SENDGRID_API_KEY) {
+let emailFrom = ADMIN_EMAIL;
+if (RESEND_API_KEY) {
+    mailTransporter = nodemailer.createTransport({
+        host: 'smtp.resend.com',
+        port: 587,
+        secure: false,
+        auth: { user: 'resend', pass: RESEND_API_KEY }
+    });
+    emailFrom = 'onboarding@resend.dev';
+    console.log('[EMAIL] Usando Resend (SMTP)');
+} else if (SENDGRID_API_KEY) {
     mailTransporter = nodemailer.createTransport({
         host: 'smtp.sendgrid.net',
         port: 587,
@@ -35,7 +46,7 @@ if (SENDGRID_API_KEY) {
     });
     console.log('[EMAIL] Usando SMTP:', SMTP_HOST);
 } else {
-    console.log('[EMAIL] AVISO: Sem configuração de email (defina SENDGRID_API_KEY ou SMTP_PASS)');
+    console.log('[EMAIL] AVISO: Sem configuração de email (defina RESEND_API_KEY, SENDGRID_API_KEY ou SMTP_PASS)');
 }
 
 function enviarEmailNotificacao(assunto, texto) {
@@ -45,7 +56,7 @@ function enviarEmailNotificacao(assunto, texto) {
     }
     console.log('[EMAIL] Tentando enviar:', assunto);
     mailTransporter.sendMail({
-        from: ADMIN_EMAIL,
+        from: emailFrom,
         to: ADMIN_EMAIL,
         subject: assunto,
         text: texto
