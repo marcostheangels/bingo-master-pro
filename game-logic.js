@@ -2571,10 +2571,25 @@ async function confirmarRecargaSimulada(data) {
     document.getElementById('pixStatus').style.color = '#10b981';
     document.getElementById('pixLoader').style.display = 'none';
 
-    const fichas = Math.round(data.valor * 1000);
-    const bonus = Math.round(fichas * 0.10); // 🎁 Bônus de 10% sobre o depósito
-    const totalFichas = fichas + bonus;
-    myChips += totalFichas;
+    // Chamar servidor para adicionar fichas + bonus (se primeiro depósito)
+    const serverRes = await fetch(API_BASE + '/api/confirmar-recarga', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: myName, valor: data.valor, paymentId: data.paymentId })
+    }).catch(() => null);
+
+    let fichasAdicionadas = Math.round(data.valor * 1000);
+    let bonusConcedido = 0;
+    let primeiroDeposito = false;
+
+    if (serverRes && serverRes.ok) {
+        const serverData = await serverRes.json();
+        fichasAdicionadas = serverData.fichas || fichasAdicionadas;
+        bonusConcedido = serverData.bonusConcedido || 0;
+        primeiroDeposito = serverData.primeiroDeposito || false;
+    }
+
+    myChips += fichasAdicionadas;
     saveChips(myName, myChips);
     updateChipsDisplay();
 
@@ -2583,10 +2598,14 @@ async function confirmarRecargaSimulada(data) {
         if (hostPlayer) hostPlayer.chips = myChips;
         sendToGuest({ type: 'gameState', players: allPlayers, drawnBalls, currentPhaseIndex });
     } else {
-        sendToHost({ type: 'recargaFeita', nome: myName, fichas: totalFichas });
+        sendToHost({ type: 'recargaFeita', nome: myName, fichas: fichasAdicionadas });
     }
 
-    showToast(`💰 Depósito de ${fichas.toLocaleString('pt-BR')} fichas + 🎁 Bônus de ${bonus.toLocaleString('pt-BR')} fichas (10%) confirmado!`, 'success', 7000);
+    const baseFichas = Math.round(data.valor * 1000);
+    const msg = primeiroDeposito && bonusConcedido > 0
+        ? `💰 Depósito confirmado! + ${fichasAdicionadas.toLocaleString('pt-BR')} fichas (🎁 Bônus 1º deps: +${bonusConcedido.toLocaleString('pt-BR')})`
+        : `💰 Depósito de ${fichasAdicionadas.toLocaleString('pt-BR')} fichas confirmado!`;
+    showToast(msg, 'success', 7000);
     setTimeout(() => fecharModal('modalPix'), 2000);
 }
 
@@ -2595,10 +2614,25 @@ async function processarConfirmacaoPix(statusData, paymentId) {
     document.getElementById('pixStatus').style.color = '#10b981';
     document.getElementById('pixLoader').style.display = 'none';
 
-    const fichas = statusData.fichas || Math.round(statusData.valor * 1000);
-    const bonus = Math.round(fichas * 0.10); // 🎁 Bônus de 10% sobre o depósito
-    const totalFichas = fichas + bonus;
-    myChips += totalFichas;
+    // Chamar servidor para adicionar fichas + bonus (se primeiro depósito)
+    const serverRes = await fetch(API_BASE + '/api/confirmar-recarga', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome: myName, valor: statusData.valor, paymentId })
+    }).catch(() => null);
+
+    let fichasAdicionadas = statusData.fichas || Math.round(statusData.valor * 1000);
+    let bonusConcedido = 0;
+    let primeiroDeposito = false;
+
+    if (serverRes && serverRes.ok) {
+        const serverData = await serverRes.json();
+        fichasAdicionadas = serverData.fichas || fichasAdicionadas;
+        bonusConcedido = serverData.bonusConcedido || 0;
+        primeiroDeposito = serverData.primeiroDeposito || false;
+    }
+
+    myChips += fichasAdicionadas;
     saveChips(myName, myChips);
     updateChipsDisplay();
 
@@ -2607,16 +2641,14 @@ async function processarConfirmacaoPix(statusData, paymentId) {
         if (hostPlayer) hostPlayer.chips = myChips;
         sendToGuest({ type: 'gameState', players: allPlayers, drawnBalls, currentPhaseIndex });
     } else {
-        sendToHost({ type: 'recargaFeita', nome: myName, fichas: totalFichas });
+        sendToHost({ type: 'recargaFeita', nome: myName, fichas: fichasAdicionadas });
     }
 
-    await fetch(API_BASE + '/api/confirmar-recarga', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ paymentId })
-    });
-
-    showToast(`💰 Depósito de ${fichas.toLocaleString('pt-BR')} fichas + 🎁 Bônus de ${bonus.toLocaleString('pt-BR')} fichas (10%) confirmado!`, 'success', 7000);
+    const baseFichas = Math.round(statusData.valor * 1000);
+    const msg = primeiroDeposito && bonusConcedido > 0
+        ? `💰 Depósito confirmado! + ${fichasAdicionadas.toLocaleString('pt-BR')} fichas (🎁 Bônus 1º deps: +${bonusConcedido.toLocaleString('pt-BR')})`
+        : `💰 Depósito de ${fichasAdicionadas.toLocaleString('pt-BR')} fichas confirmado!`;
+    showToast(msg, 'success', 7000);
     setTimeout(() => fecharModal('modalPix'), 2000);
 }
 
@@ -2625,10 +2657,25 @@ async function verificarRecargas() {
         const res = await fetch(API_BASE + '/api/recargas-pendentes/' + encodeURIComponent(myName));
         const recargas = await res.json();
         for (const r of recargas) {
-            const fichas = r.fichas;
-            const bonus = Math.round(fichas * 0.10); // 🎁 Bônus de 10% sobre o depósito
-            const totalFichas = fichas + bonus;
-            myChips += totalFichas;
+            // Chamar servidor para adicionar fichas + bonus (se primeiro depósito)
+            const serverRes = await fetch(API_BASE + '/api/confirmar-recarga', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nome: myName, valor: r.valor || (r.fichas / 1000), paymentId: r.paymentId })
+            }).catch(() => null);
+
+            let fichasAdicionadas = r.fichas;
+            let bonusConcedido = 0;
+            let primeiroDeposito = false;
+
+            if (serverRes && serverRes.ok) {
+                const serverData = await serverRes.json();
+                fichasAdicionadas = serverData.fichas || fichasAdicionadas;
+                bonusConcedido = serverData.bonusConcedido || 0;
+                primeiroDeposito = serverData.primeiroDeposito || false;
+            }
+
+            myChips += fichasAdicionadas;
             saveChips(myName, myChips);
             updateChipsDisplay();
 
@@ -2646,7 +2693,10 @@ async function verificarRecargas() {
                 body: JSON.stringify({ paymentId: r.paymentId })
             });
 
-            showToast(`💰 Depósito de ${fichas.toLocaleString('pt-BR')} fichas + 🎁 Bônus de ${bonus.toLocaleString('pt-BR')} fichas (10%) confirmado!`, 'success', 7000);
+            const msg = primeiroDeposito && bonusConcedido > 0
+                ? `💰 Depósito verificado: +${fichasAdicionadas.toLocaleString('pt-BR')} fichas (🎁 Bônus 1º deps: +${bonusConcedido.toLocaleString('pt-BR')})`
+                : `💰 Depósito de ${fichasAdicionadas.toLocaleString('pt-BR')} fichas confirmado!`;
+            showToast(msg, 'success', 7000);
         }
     } catch (e) {
         console.warn('Erro ao verificar recargas:', e);

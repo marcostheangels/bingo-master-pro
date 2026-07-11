@@ -14,6 +14,7 @@ let historicoCache = [];
 let adminCreditsCache = {};
 let botFichasCache = {};
 let roomsStateCache = {};
+let bonusPrimeiroDepositoCache = {}; // nomeLowercase -> true (já recebeu bônus)
 
 async function init(connectionString) {
     pool = new Pool({
@@ -379,6 +380,13 @@ function syncAdminCreditsStore() {
     syncAdminCreditos().catch(e => console.error('[DB] syncAdminCreditos failed:', e.message));
 }
 
+// Bonus Primeiro Depósito (in-memory, uma vez por usuário)
+function getBonusPrimeiroDeposito() { return bonusPrimeiroDepositoCache; }
+function setBonusPrimeiroDepositoJaUsado(nome) {
+    const key = (nome || '').toLowerCase().trim();
+    bonusPrimeiroDepositoCache[key] = true;
+}
+
 // Bot Fichas
 function getBotFichas() { return botFichasCache; }
 function setBotFichas(store) {
@@ -537,5 +545,7 @@ module.exports = {
     loadModoTeste,
     saveModoTeste,
     loadRoomState,
-    saveRoomState
+    saveRoomState,
+    getBonusPrimeiroDeposito,
+    setBonusPrimeiroDepositoJaUsado
 };

@@ -1673,15 +1673,28 @@ app.post('/api/confirmar-recarga', (req, res) => {
     try {
         const { nome, valor, paymentId } = req.body;
         const fichas = Math.round(valor * 1000);
+
+        // Bonus de 10% apenas no primeiro depósito (uma vez por usuário)
+        const bonusStore = db.getBonusPrimeiroDeposito();
+        const keyNome = (nome || '').toLowerCase().trim();
+        const jaTemBonus = !!bonusStore[keyNome];
+        const bonus = jaTemBonus ? 0 : Math.round(fichas * 0.10);
+        const totalFichas = fichas + bonus;
+
         const c = getChips(nome);
-        setChips(nome, c.chips + fichas, c.winnings);
+        setChips(nome, c.chips + totalFichas, c.winnings);
+
+        // Marcar que este usuário já recebeu bônus de primeiro depósito
+        if (!jaTemBonus) {
+            db.setBonusPrimeiroDepositoJaUsado(nome);
+        }
 
         gameRooms.forEach(room => {
-            const player = Array.from(room.players.values()).find(p => 
+            const player = Array.from(room.players.values()).find(p =>
                 !p.isBot && (p.name || '').toLowerCase().trim() === (nome || '').toLowerCase().trim()
             );
             if (player) {
-                player.chips = c.chips + fichas;
+                player.chips = c.chips + totalFichas;
                 broadcast(room, {
                     type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
                     currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive,
@@ -1699,7 +1712,7 @@ app.post('/api/confirmar-recarga', (req, res) => {
         });
         db.setTransacoes(transacoes);
 
-        res.json({ success: true });
+        res.json({ success: true, fichas: totalFichas, bonusConcedido: bonus, primeiroDeposito: !jaTemBonus });
     } catch (err) {
         res.status(500).json({ error: 'Erro ao confirmar recarga.' });
     }
