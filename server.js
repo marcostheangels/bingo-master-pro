@@ -26,7 +26,7 @@ process.on('unhandledRejection', (reason) => {
 // ===================== CONFIGURAÇÃO DE EMAIL (SMTP / NODEMAILER) =====================
 let transporter = null;
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '465', 10);
 const SMTP_USER = process.env.SMTP_USER || ADMIN_EMAIL;
 const SMTP_PASS = process.env.SMTP_PASS;
 
