@@ -1746,10 +1746,12 @@ async function findOrCreateAsaasCustomer(nome, cpf, email) {
             asaasCustomerCache.set(cpf, search.data[0].id);
             return search.data[0].id;
         }
-        const customer = await asaasRequest('POST', '/customers', {
-            name: nome,
-            cpfCnpj: cpf,
-            email: email || `${cpf}@email.com`
+        // ✅ REPLACES O SEU BLOCO POR ESTE:
+const customer = await asaasRequest('POST', '/customers', {
+    name: nome,
+    cpfCnpj: cpf,
+    email: email // Deixe APENAS a variável email aqui!
+});
         });
         if (customer && customer.id) {
             asaasCustomerCache.set(cpf, customer.id);

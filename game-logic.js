@@ -4,6 +4,7 @@ window.API_BASE = (window.location.hostname === 'localhost' || window.location.h
 const INITIAL_CHIPS = 0;
 let minhaSessaoToken = localStorage.getItem('bingo_session_token') || '';
 let meuCpf = (localStorage.getItem('bingo_meu_cpf') || '').padStart(11, '0').slice(0, 11);
+let meuEmail = localStorage.getItem('bingo_meu_email') || ''; // 👈 Adicione esta linha
 
 function mascaraCPF(input) {
     let v = input.value.replace(/\D/g, '').slice(0, 11);
@@ -73,12 +74,19 @@ async function registrar() {
             errEl.textContent = data.error || 'Erro ao cadastrar.';
             return;
         }
+        
+        // Atualização das variáveis globais
         minhaSessaoToken = data.sessionToken;
         meuCpf = data.cpf;
+        meuEmail = data.email || email; // 🌟 Define a variável global do e-mail
+        myName = data.nome;
+
+        // Salvando no armazenamento local (localStorage)
         localStorage.setItem('bingo_session_token', data.sessionToken);
         localStorage.setItem('bingo_meu_cpf', data.cpf);
+        localStorage.setItem('bingo_meu_email', meuEmail); // 🌟 Salva o e-mail para persistência
         localStorage.setItem('bingo_last_name', data.nome);
-        myName = data.nome;
+        
         showToast('Cadastro realizado com sucesso!', 'success');
         conectarAposAuth();
     } catch (e) {
@@ -2498,11 +2506,17 @@ async function gerarPix() {
     document.getElementById('pixLoader').style.display = 'block';
 
     try {
-        const res = await fetch(API_BASE + '/api/criar-pix', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ valor, nome: myName, cpf: meuCpf, email: myName.replace(/\s+/g, '.').toLowerCase() + '@email.com' })
-        });
+        // ✅ CÓDIGO CORRIGIDO:
+const res = await fetch(API_BASE + '/api/criar-pix', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ 
+        valor, 
+        nome: myName, 
+        cpf: meuCpf, 
+        email: meuEmail // 👈 Mudamos aqui para enviar o e-mail de verdade!
+    })
+});
 
         if (!res.ok) {
             const err = await res.json();
@@ -2595,7 +2609,13 @@ function copiarPix() {
 async function confirmarRecargaSimulada(data) {
     document.getElementById('pixStatus').textContent = '✅ Pagamento confirmado!';
     document.getElementById('pixStatus').style.color = '#10b981';
-    document.getElementById('pixLoader').style.display = 'none';
+    document.getElementById('pixLoader').style.display = 'none'; // 👈 Faltava fechar aqui
+    
+    // Opcional: Adicione aqui a chamada para atualizar o saldo do jogador localmente
+    if (data && data.valor) {
+        showToast(`Recarga simulada de R$ ${data.valor} com sucesso!`, 'success');
+    }
+}
 
     // Chamar servidor para adicionar fichas + bonus (se primeiro depósito)
     const serverRes = await fetch(API_BASE + '/api/confirmar-recarga', {
