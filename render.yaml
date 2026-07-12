@@ -26,3 +26,5 @@ services:
         value: marcostheangels@gmail.com
       - key: SMTP_PASS
         sync: false
+      - key: RESEND_API_KEY
+        sync: false

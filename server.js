@@ -23,42 +23,54 @@ process.on('unhandledRejection', (reason) => {
     console.error('[UNHANDLED REJECTION]', reason?.message || reason);
 });
 
-// ===================== CONFIGURAÇÃO DE EMAIL (SMTP / NODEMAILER) =====================
-let transporter = null;
+// ===================== CONFIGURAÇÃO DE EMAIL (RESEND API + SMTP FALLBACK) =====================
+const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '465', 10);
 const SMTP_USER = process.env.SMTP_USER || ADMIN_EMAIL;
 const SMTP_PASS = process.env.SMTP_PASS;
+let transporter = null;
 
 if (SMTP_PASS && nodemailer) {
     try {
         transporter = nodemailer.createTransport({
-            host: SMTP_HOST,
-            port: SMTP_PORT,
-            secure: SMTP_PORT === 465,
-            auth: { user: SMTP_USER, pass: SMTP_PASS },
-            family: 4
+            host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_PORT === 465,
+            auth: { user: SMTP_USER, pass: SMTP_PASS }, family: 4
         });
         console.log('[EMAIL] Transportador SMTP configurado:', SMTP_USER);
-    } catch (e) {
-        console.log('[EMAIL] Erro ao configurar transportador:', e.message);
-    }
-} else {
-    console.log('[EMAIL] AVISO: SMTP_PASS não definida. Emails não serão enviados.');
+    } catch (e) { console.log('[EMAIL] Erro SMTP:', e.message); }
 }
 
 async function enviarEmailNotificacao(assunto, texto) {
+    if (RESEND_API_KEY) {
+        try {
+            console.log('[EMAIL] Enviando via Resend:', assunto, 'para', ADMIN_EMAIL);
+            const res = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    from: 'Bingo Master Pro <onboarding@resend.dev>',
+                    to: [ADMIN_EMAIL],
+                    subject: assunto,
+                    html: texto.replace(/\n/g, '<br>')
+                })
+            });
+            if (!res.ok) throw new Error('Resend: ' + res.status + ' ' + (await res.text()).slice(0, 200));
+            const data = await res.json();
+            console.log('[EMAIL] Enviado via Resend! ID:', data.id);
+            return;
+        } catch (e) {
+            console.error('[EMAIL] Resend falhou:', e.message);
+        }
+    }
     if (!transporter) {
-        throw new Error('Transportador SMTP não configurado. Verifique SMTP_PASS nas variáveis de ambiente.');
+        throw new Error('Nenhum método de email configurado (adicione RESEND_API_KEY ou SMTP_PASS).');
     }
     console.log('[EMAIL] Enviando via SMTP:', assunto, 'para', ADMIN_EMAIL);
     try {
         const info = await transporter.sendMail({
-            from: `"Bingo Master Pro" <${SMTP_USER}>`,
-            to: ADMIN_EMAIL,
-            subject: assunto,
-            text: texto,
-            html: texto.replace(/\n/g, '<br>')
+            from: `"Bingo Master Pro" <${SMTP_USER}>`, to: ADMIN_EMAIL,
+            subject: assunto, text: texto, html: texto.replace(/\n/g, '<br>')
         });
         console.log('[EMAIL] Enviado! ID:', info.messageId);
     } catch (err) {
