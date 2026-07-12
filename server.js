@@ -36,7 +36,8 @@ if (SMTP_PASS && nodemailer) {
             host: SMTP_HOST,
             port: SMTP_PORT,
             secure: SMTP_PORT === 465,
-            auth: { user: SMTP_USER, pass: SMTP_PASS }
+            auth: { user: SMTP_USER, pass: SMTP_PASS },
+            family: 4
         });
         console.log('[EMAIL] Transportador SMTP configurado:', SMTP_USER);
     } catch (e) {
