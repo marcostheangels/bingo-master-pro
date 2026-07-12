@@ -1,13 +1,21 @@
 const nodemailer = require('nodemailer');
+const dns = require('dns'); // 🌟 Adicione essa linha aqui
 
 // Teste automático para saber se o servidor está lendo o seu arquivo .env
 console.log("\n[DIAGNÓSTICO] O e-mail remetente foi lendo corretamente?", process.env.EMAIL_REMETENTE ? "✅ SIM" : "❌ NÃO (Falta o dotenv no topo do server.js)");
 
 const transportador = nodemailer.createTransport({
     service: 'gmail',
+    host: 'smtp.gmail.com', // 🌟 Garante o host correto
+    port: 465,              // 🌟 Porta segura padrão para conexão direta
+    secure: true,           // 🌟 Ativa o SSL para a porta 465
     auth: {
         user: process.env.EMAIL_REMETENTE,
         pass: process.env.EMAIL_SENHA_APP
+    },
+    // 🔥 A MÁGICA ESTÁ AQUI: Força o Node.js a usar apenas IPv4 (ignora o IPv6 que dá erro)
+    dnsLookup: (hostname, options, callback) => {
+        dns.lookup(hostname, { family: 4 }, callback);
     }
 });
 
