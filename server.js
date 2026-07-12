@@ -1746,13 +1746,13 @@ async function findOrCreateAsaasCustomer(nome, cpf, email) {
             asaasCustomerCache.set(cpf, search.data[0].id);
             return search.data[0].id;
         }
-        // ✅ REPLACES O SEU BLOCO POR ESTE:
-const customer = await asaasRequest('POST', '/customers', {
-    name: nome,
-    cpfCnpj: cpf,
-    email: email // Deixe APENAS a variável email aqui!
-});
-        });
+
+        const customer = await asaasRequest('POST', '/customers', {
+            name: nome,
+            cpfCnpj: cpf,
+            email: email 
+        }); // 👈 Aqui fecha o objeto corretamente. O outro "});" que estava embaixo foi removido!
+
         if (customer && customer.id) {
             asaasCustomerCache.set(cpf, customer.id);
             return customer.id;
