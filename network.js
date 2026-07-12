@@ -314,11 +314,11 @@ function handleSocketMessage(raw) {
             updatePlayerListUI();
             goToScreen('screenGame');
             const hostMsg = document.getElementById('hostOnlyMsg');
-            const adminUI = document.getElementById('adminPanelTop');
             if (hostMsg) hostMsg.style.display = 'block';
-            if (adminUI && isMarcosName(myName)) {
-                adminUI.style.display = 'block';
-                setTimeout(() => { adminAbrirAba('tabSaques'); carregarModoTeste(); carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); }, 300);
+            if (isMarcosName(myName)) {
+                const btn = document.getElementById('btnAdminOpen');
+                if (btn) btn.style.display = '';
+                setTimeout(() => { carregarModoTeste(); carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); }, 300);
             }
             document.getElementById('btnSacar').style.display = '';
             document.getElementById('btnDeposit').style.display = '';
@@ -344,9 +344,9 @@ function handleSocketMessage(raw) {
                 if (btnDeposit) btnDeposit.style.display = '';
             }, 50);
             if (souDono) {
-                const adminUI = document.getElementById('adminPanelTop');
-                if (adminUI) adminUI.style.display = 'block';
-                setTimeout(() => { adminAbrirAba('tabSaques'); carregarModoTeste(); carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); }, 300);
+                const btn = document.getElementById('btnAdminOpen');
+                if (btn) btn.style.display = '';
+                setTimeout(() => { carregarModoTeste(); carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); }, 300);
             }
         }
 
@@ -359,7 +359,7 @@ function handleSocketMessage(raw) {
             setNullableStyle('readySection', 'display', 'none');
             setNullableStyle('buySection', 'display', 'none');
             setNullableStyle('hostOnlyMsg', 'display', 'none');
-            setNullableStyle('adminPanelTop', 'display', 'none');
+            setNullableStyle('btnAdminOpen', 'display', 'none');
             if (typeof setStatusMessage === 'function') {
                 setStatusMessage('Modo espectador - Apenas observando', 'info');
             }

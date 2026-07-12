@@ -367,6 +367,17 @@ function addBotsToGame() {
     if (typeof updatePlayerListUI === 'function') updatePlayerListUI();
 }
 
+function abrirAdminScreen() {
+    goToScreen('screenAdmin');
+    adminAbrirAba('tabSaques');
+    carregarModoTeste();
+    carregarAdminUsuariosComSaldo();
+    carregarUsuariosParaExclusao();
+}
+function fecharAdminScreen() {
+    goToScreen('screenGame');
+}
+
 function goToScreen(screenId) {
     document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
     const screen = document.getElementById(screenId);
@@ -382,13 +393,12 @@ function goToScreen(screenId) {
         loadWinnings();
         updateChipsDisplay();
         
-        // Painel admin no topo - só para o dono.
-        // No modo servidor-autoritativo isHost é sempre false; o dono é definido por souDono (vem do servidor).
-        const adminTop = document.getElementById('adminPanelTop');
+        // Botão admin no topo - só para o dono.
+        const adminBtn = document.getElementById('btnAdminOpen');
         const isMarcos = typeof isMarcosName === 'function' && isMarcosName(myName);
         const ehDono = isMarcos || (typeof souDono !== 'undefined' && souDono);
         const ehEspectador = typeof myRole !== 'undefined' && myRole === 'spectator';
-        if (adminTop) adminTop.style.display = (!ehEspectador && (isHost || ehDono)) ? 'block' : 'none';
+        if (adminBtn) adminBtn.style.display = (!ehEspectador && (isHost || ehDono)) ? '' : 'none';
         
         if (ehEspectador && typeof hideBotoesFinanceiros === 'function') {
             hideBotoesFinanceiros();
@@ -2841,7 +2851,7 @@ goToScreen = function(screenId) {
         if (isHost && !gameActive && !gameEnded) {
             setTimeout(iniciarAutoStart, 2000);
         }
-    } else {
+    } else if (screenId !== 'screenAdmin') {
         pararAutoStart();
     }
 };

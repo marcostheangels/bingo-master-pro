@@ -123,114 +123,8 @@
     <div class="screen" id="screenGame">
         <div class="game-wrapper">
 
-            <!-- Painel Admin (Dono) - só aparece para Marcos -->
-            <div class="admin-panel" id="adminPanelTop" style="display: none;">
-                <div class="admin-panel-content">
-                    <h3>⚙️ Painel do Dono</h3>
-
-                    <!-- Fichas -->
-                    <div class="admin-controls">
-                        <h4>💰 Gerenciar Fichas</h4>
-                        <label for="adminPlayerSelect">Jogador:</label>
-                        <div style="display:flex;gap:8px;align-items:center">
-                            <select id="adminPlayerSelect" class="input-field" style="flex:1"></select>
-                            <button class="btn btn-refresh" onclick="carregarAdminUsuariosComSaldo()" style="padding:8px 12px" title="Recarregar lista de usuários">🔄</button>
-                        </div>
-                        <label for="adminChipAmount">Fichas:</label>
-                        <input type="number" id="adminChipAmount" class="input-field" value="5000">
-                        <div class="btn-row">
-                            <button class="btn btn-add" onclick="executeAdminAction('add')">➕ Adicionar</button>
-                            <button class="btn btn-remove" onclick="executeAdminAction('remove')">➖ Retirar</button>
-                        </div>
-                    </div>
-
-                    <!-- Saldo do Jogador Selecionado -->
-                    <div class="admin-controls" style="border:1px solid #3b82f6;background:rgba(59,130,246,0.05)">
-                        <h4 style="color:#3b82f6">💳 Saldo do Jogador Selecionado</h4>
-                        <div id="adminPlayerBalance" style="font-size:0.85em;color:#a0a0b0">
-                            Selecione um jogador acima para ver os detalhes.
-                        </div>
-                        <button class="btn btn-refresh" onclick="atualizarSaldoJogadorSelecionado()" style="margin-top:8px">🔄 Atualizar Saldo</button>
-                    </div>
-
-                    <!-- Excluir Jogador -->
-                    <div class="admin-controls" style="border:1px solid #ef4444;background:rgba(239,68,68,0.05)">
-                        <h4 style="color:#ef4444">🗑️ Excluir Jogador Permanentemente</h4>
-                        <p style="color:#ef4444;font-size:0.78em;margin:4px 0 8px">⚠️ Ação irreversível. O jogador, suas cartelas, histórico e saldo serão removidos.</p>
-                        <label for="deletePlayerSelect">Selecione o jogador:</label>
-                        <div style="display:flex;gap:8px;align-items:center">
-                            <select id="deletePlayerSelect" class="input-field" style="flex:1"></select>
-                            <button class="btn btn-remove" onclick="carregarUsuariosParaExclusao()" style="padding:8px 12px" title="Recarregar lista de usuários">🔄</button>
-                        </div>
-                        <button class="btn btn-remove" onclick="confirmarExclusaoJogador()" style="margin-top:8px;width:100%">🗑️ Excluir Jogador Selecionado</button>
-                    </div>
-
-                    <!-- Modo Teste -->
-                    <div class="admin-controls" style="border:1px dashed #fbbf24">
-                        <h4>🧪 Modo Teste — Saque de Créditos</h4>
-                        <p style="color:#fbbf24;font-size:0.78em;margin:4px 0 8px">Quando LIGADO: todo saldo pode ser sacado (modo teste). Quando DESLIGADO: apenas ganhos (Kuadra/Kina/Keno) podem ser sacados. Créditos admin, bônus e depósitos NÃO podem ser sacados.</p>
-                        <div class="btn-row">
-                            <button class="btn btn-success" id="btnModoTeste" onclick="alternarModoTeste()">🔄 Carregando…</button>
-                        </div>
-                    </div>
-
-                    <!-- Abas de Navegação -->
-                    <div class="admin-tabs">
-                        <button class="admin-tab active" data-tab="tabSaques" onclick="adminAbrirAba('tabSaques')">💵 Saques Pendentes</button>
-                        <button class="admin-tab" data-tab="tabUsuarios" onclick="adminAbrirAba('tabUsuarios')">📋 Usuários</button>
-                        <button class="admin-tab" data-tab="tabHistorico" onclick="adminAbrirAba('tabHistorico')">📜 Histórico</button>
-                        <button class="admin-tab" data-tab="tabTransacoes" onclick="adminAbrirAba('tabTransacoes')">💳 Transações</button>
-                    </div>
-
-                    <!-- Conteúdo das Abas -->
-                    <div class="admin-tab-content" id="tabSaques">
-                        <h4>💵 Saques Pendentes</h4>
-                        <div id="adminSaquesList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
-                        <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
-                            <button class="btn btn-refresh" onclick="carregarSaquesAdmin()">🔄 Atualizar</button>
-                            <button class="btn btn-primary" onclick="testarEmailAdmin()" style="font-size:0.82em;padding:4px 12px">✉️ Testar Email</button>
-                        </div>
-                    </div>
-
-                    <div class="admin-tab-content" id="tabUsuarios" style="display:none">
-                        <h4>📋 Usuários Cadastrados</h4>
-                        <div id="adminCadastrosList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
-                        <button class="btn btn-refresh" onclick="carregarCadastrosAdmin()" style="margin-top:8px">🔄 Atualizar</button>
-                    </div>
-
-                    <div class="admin-tab-content" id="tabHistorico" style="display:none">
-                        <h4>📜 Histórico de Sorteios</h4>
-                        <div class="admin-filtros">
-                            <label>De:</label>
-                            <input type="date" id="filtroHistDe" class="input-field input-field-sm">
-                            <label>Até:</label>
-                            <input type="date" id="filtroHistAte" class="input-field input-field-sm">
-                            <div class="btn-row">
-                                <button class="btn btn-refresh" onclick="carregarHistoricoAdmin()">🔍 Filtrar</button>
-                                <button class="btn btn-download" onclick="baixarHistoricoCSV()">⬇️ CSV</button>
-                                <button class="btn btn-download" onclick="baixarHistoricoJSON()">⬇️ JSON</button>
-                            </div>
-                        </div>
-                        <div id="adminHistoricoList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
-                    </div>
-
-                    <div class="admin-tab-content" id="tabTransacoes" style="display:none">
-                        <h4>💳 Transações dos Jogadores</h4>
-                        <div class="admin-filtros">
-                            <label>De:</label>
-                            <input type="date" id="filtroTransDe" class="input-field input-field-sm">
-                            <label>Até:</label>
-                            <input type="date" id="filtroTransAte" class="input-field input-field-sm">
-                            <div class="btn-row">
-                                <button class="btn btn-refresh" onclick="carregarTransacoesAdmin()">🔍 Filtrar</button>
-                                <button class="btn btn-download" onclick="baixarTransacoesCSV()">⬇️ CSV</button>
-                                <button class="btn btn-download" onclick="baixarTransacoesJSON()">⬇️ JSON</button>
-                            </div>
-                        </div>
-                        <div id="adminTransacoesList"><p style="color:#a0a0b0;font-size:0.82em">Carregando...</p></div>
-                    </div>
-                </div>
-            </div>
+            <!-- Botão Admin (substitui o painel interno) -->
+            <button class="btn-admin-open" id="btnAdminOpen" style="display:none" onclick="abrirAdminScreen()">⚙️ Admin</button>
 
             <!-- Top Bar -->
             <div class="top-bar">
@@ -332,6 +226,153 @@
         </div>
     </div>
 
+    <!-- ===== ADMIN SCREEN ===== -->
+    <div class="screen" id="screenAdmin" style="display:none">
+        <div class="admin-screen-wrapper">
+            <div class="admin-panel-content" style="width:100%;max-width:900px;margin:0 auto">
+
+                <div class="admin-header">
+                    <h3>⚙️ Painel do Dono</h3>
+                    <button class="admin-close" onclick="fecharAdminScreen()">✖</button>
+                </div>
+
+                <!-- Grid de Seções -->
+                <div class="admin-grid">
+
+                    <!-- Card: Gerenciar Fichas -->
+                    <div class="admin-card-section">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">💰</span>
+                            <span class="admin-card-title">Gerenciar Fichas</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <label class="admin-label">Jogador:</label>
+                            <div class="admin-input-row">
+                                <select id="adminPlayerSelect" class="input-field"></select>
+                                <button class="btn btn-sm btn-refresh" onclick="carregarAdminUsuariosComSaldo()" title="Recarregar">🔄</button>
+                            </div>
+                            <label class="admin-label">Valor (fichas):</label>
+                            <input type="number" id="adminChipAmount" class="input-field" value="5000">
+                            <div class="admin-btn-row">
+                                <button class="btn btn-sm btn-add" onclick="executeAdminAction('add')">➕ Adicionar</button>
+                                <button class="btn btn-sm btn-remove" onclick="executeAdminAction('remove')">➖ Retirar</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Saldo do Jogador -->
+                    <div class="admin-card-section card-blue">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">💳</span>
+                            <span class="admin-card-title">Saldo do Jogador</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <div id="adminPlayerBalance" class="admin-saldo-display">
+                                Selecione um jogador acima.
+                            </div>
+                            <button class="btn btn-sm btn-refresh" onclick="atualizarSaldoJogadorSelecionado()" style="margin-top:6px">🔄 Atualizar</button>
+                        </div>
+                    </div>
+
+                    <!-- Card: Modo Teste -->
+                    <div class="admin-card-section card-yellow">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">🧪</span>
+                            <span class="admin-card-title">Modo Teste</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <p class="admin-info-text">Quando LIGADO: todo saldo pode ser sacado. Quando DESLIGADO: só ganhos em jogos.</p>
+                            <button class="btn btn-sm btn-success" id="btnModoTeste" onclick="alternarModoTeste()" style="width:100%">🔄 Carregando…</button>
+                        </div>
+                    </div>
+
+                    <!-- Card: Excluir Jogador -->
+                    <div class="admin-card-section card-red">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">🗑️</span>
+                            <span class="admin-card-title">Excluir Jogador</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <p class="admin-warning-text">⚠️ Ação irreversível!</p>
+                            <div class="admin-input-row">
+                                <select id="deletePlayerSelect" class="input-field"></select>
+                                <button class="btn btn-sm btn-remove" onclick="carregarUsuariosParaExclusao()" title="Recarregar">🔄</button>
+                            </div>
+                            <button class="btn btn-sm btn-remove" onclick="confirmarExclusaoJogador()" style="width:100%;margin-top:4px">🗑️ Excluir Selecionado</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Abas de Navegação -->
+                <div class="admin-tabs">
+                    <button class="admin-tab active" data-tab="tabSaques" onclick="adminAbrirAba('tabSaques')">💵 Saques Pendentes</button>
+                    <button class="admin-tab" data-tab="tabUsuarios" onclick="adminAbrirAba('tabUsuarios')">📋 Usuários</button>
+                    <button class="admin-tab" data-tab="tabHistorico" onclick="adminAbrirAba('tabHistorico')">📜 Histórico</button>
+                    <button class="admin-tab" data-tab="tabTransacoes" onclick="adminAbrirAba('tabTransacoes')">💳 Transações</button>
+                </div>
+
+                <!-- Conteúdo das Abas -->
+                <div class="admin-tab-content" id="tabSaques">
+                    <div class="admin-tab-header">
+                        <h4>💵 Saques Pendentes</h4>
+                        <div class="admin-tab-actions">
+                            <button class="btn btn-sm btn-refresh" onclick="carregarSaquesAdmin()">🔄</button>
+                            <button class="btn btn-sm btn-primary" onclick="testarEmailAdmin()">✉️ Email</button>
+                        </div>
+                    </div>
+                    <div id="adminSaquesList"><p class="admin-empty">Nenhum saque pendente.</p></div>
+                </div>
+
+                <div class="admin-tab-content" id="tabUsuarios" style="display:none">
+                    <div class="admin-tab-header">
+                        <h4>📋 Usuários</h4>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarCadastrosAdmin()">🔄</button>
+                    </div>
+                    <div id="adminCadastrosList"><p class="admin-empty">Carregando...</p></div>
+                </div>
+
+                <div class="admin-tab-content" id="tabHistorico" style="display:none">
+                    <div class="admin-tab-header">
+                        <h4>📜 Histórico de Sorteios</h4>
+                    </div>
+                    <div class="admin-filtros">
+                        <label>De:</label>
+                        <input type="date" id="filtroHistDe" class="input-field input-field-sm">
+                        <label>Até:</label>
+                        <input type="date" id="filtroHistAte" class="input-field input-field-sm">
+                        <button class="btn btn-sm btn-refresh" onclick="carregarHistoricoAdmin()">🔍</button>
+                        <button class="btn btn-sm btn-download" onclick="baixarHistoricoCSV()">CSV</button>
+                        <button class="btn btn-sm btn-download" onclick="baixarHistoricoJSON()">JSON</button>
+                    </div>
+                    <div id="adminHistoricoList"><p class="admin-empty">Nenhum sorteio encontrado.</p></div>
+                </div>
+
+                <div class="admin-tab-content" id="tabTransacoes" style="display:none">
+                    <div class="admin-tab-header">
+                        <h4>💳 Transações</h4>
+                    </div>
+                    <div class="admin-filtros">
+                        <label>De:</label>
+                        <input type="date" id="filtroTransDe" class="input-field input-field-sm">
+                        <label>Até:</label>
+                        <input type="date" id="filtroTransAte" class="input-field input-field-sm">
+                        <button class="btn btn-sm btn-refresh" onclick="carregarTransacoesAdmin()">🔍</button>
+                        <button class="btn btn-sm btn-download" onclick="baixarTransacoesCSV()">CSV</button>
+                        <button class="btn btn-sm btn-download" onclick="baixarTransacoesJSON()">JSON</button>
+                    </div>
+                    <div id="adminTransacoesList"><p class="admin-empty">Nenhuma transação encontrada.</p></div>
+                </div>
+
+                <!-- Botão Voltar -->
+                <div style="text-align:center;margin-top:20px">
+                    <button class="btn btn-primary" onclick="fecharAdminScreen()">⬅️ Voltar ao Jogo</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
     <!-- ===== COUNTDOWN OVERLAY ===== -->
     <div class="countdown-overlay" id="countdownOverlay">
         <div class="countdown-content">
@@ -379,8 +420,8 @@
             <h2>💵 Solicitar Saque</h2>
             <div class="regra-deposito">
                 ⚠️ <strong>Saque mínimo: R$ 10,00.</strong><br>
-                Só pode sacar valores <strong>ganhos</strong> nas fases Kuadra, Kina ou Keno.
-                O valor que você <strong>depositou</strong>, <strong>créditos admin</strong> e <strong>bônus</strong> não podem ser sacados (a menos que modo teste esteja ativo).
+                Apenas <strong>Ganhos em Jogo (Kuadra, Kina, Keno) podem ser sacados.</strong><br>
+                Depósitos, Bônus e Créditos Admin <span style="color:#ef4444;font-weight:700;font-size:1.05em">NÃO PODEM SER SACADOS</span> (exceto em modo teste).<br>
                 Saldo sacável: <strong id="saqueSaldo">R$ 0,00</strong>
             </div>
             <div class="saque-form">

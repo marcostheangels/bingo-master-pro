@@ -268,90 +268,230 @@ body {
 }
 
 /* Admin Panel */
-.admin-panel { margin-bottom: 0; }
+/* ===================== ADMIN PANEL NOVO ===================== */
+.admin-panel {
+    margin-bottom: 0;
+}
 
 .admin-panel .admin-panel-content {
-    background: linear-gradient(135deg, rgba(251, 191, 36, 0.08), rgba(249, 115, 22, 0.06));
+    background: linear-gradient(135deg, rgba(251, 191, 36, 0.05), rgba(249, 115, 22, 0.03));
     border-radius: 16px;
-    padding: 18px 24px;
-    border: 1px solid rgba(251, 191, 36, 0.15);
-    text-align: center;
-    max-height: 70vh;
+    padding: 16px 20px;
+    border: 1px solid rgba(251, 191, 36, 0.12);
+    max-height: 72vh;
     overflow-y: auto;
 }
 
-.admin-panel h3 {
+.admin-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 14px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(251, 191, 36, 0.12);
+}
+.admin-header h3 {
     color: #ffff00;
-    margin-bottom: 12px;
     font-size: 1.05em;
     letter-spacing: 0.5px;
+    margin: 0;
+}
+.admin-close {
+    background: rgba(255,255,255,0.06);
+    border: none;
+    color: rgba(255,255,255,0.5);
+    font-size: 1.1em;
+    cursor: pointer;
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+.admin-close:hover {
+    background: rgba(239,68,68,0.2);
+    color: #ef4444;
 }
 
-.admin-panel .admin-controls {
-    display: flex;
-    align-items: flex-end;
-    gap: 12px;
-    flex-wrap: wrap;
-    justify-content: center;
+/* Grid de Cartões */
+.admin-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 16px;
 }
 
-.admin-panel .admin-controls label {
-    font-size: 0.9em;
-    color: rgba(255,255,255,0.8);
-    display: block;
+/* Cartão Individual */
+.admin-card-section {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid rgba(255,255,255,0.06);
+    border-radius: 12px;
+    overflow: hidden;
     text-align: left;
-    margin-bottom: 4px;
+}
+.admin-card-section.card-blue {
+    border-color: rgba(59,130,246,0.25);
+    background: rgba(59,130,246,0.06);
+}
+.admin-card-section.card-yellow {
+    border-color: rgba(251,191,36,0.25);
+    background: rgba(251,191,36,0.06);
+}
+.admin-card-section.card-red {
+    border-color: rgba(239,68,68,0.25);
+    background: rgba(239,68,68,0.06);
 }
 
-.admin-panel .admin-controls > div {
+.admin-card-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px 6px;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+}
+.admin-card-icon {
+    font-size: 1.1em;
+}
+.admin-card-title {
+    font-size: 0.82em;
+    font-weight: 700;
+    color: rgba(255,255,255,0.9);
+    letter-spacing: 0.3px;
+}
+.card-blue .admin-card-title { color: #60a5fa; }
+.card-yellow .admin-card-title { color: #fbbf24; }
+.card-red .admin-card-title { color: #ef4444; }
+
+.admin-card-body {
+    padding: 8px 12px 12px;
+}
+
+.admin-label {
+    display: block;
+    font-size: 0.75em;
+    color: rgba(255,255,255,0.6);
+    margin-bottom: 3px;
+    margin-top: 6px;
+    font-weight: 600;
+}
+.admin-label:first-child { margin-top: 0; }
+
+.admin-input-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+.admin-input-row .input-field {
     flex: 1;
-    min-width: 160px;
-}
-
-.admin-panel .admin-controls select,
-.admin-panel .admin-controls input {
-    padding: 10px 14px;
-    font-size: 0.95em;
+    padding: 7px 10px;
+    font-size: 0.82em;
     background: rgba(0,0,0,0.3);
     color: #ffffff;
     border: 1px solid rgba(255,255,255,0.08);
-    border-radius: 10px;
-    width: 100%;
+    border-radius: 8px;
     outline: none;
-    margin-bottom: 0;
+    min-width: 0;
 }
-.admin-panel .admin-controls select:focus,
-.admin-panel .admin-controls input:focus { border-color: rgba(251, 191, 36, 0.4); }
+.admin-input-row .input-field:focus {
+    border-color: rgba(251, 191, 36, 0.4);
+}
 
-.admin-panel .admin-controls .btn-row {
+.admin-btn-row {
     display: flex;
-    gap: 8px;
-    flex: 0 0 auto;
-    min-width: auto;
-    align-self: flex-end;
+    gap: 6px;
+    margin-top: 8px;
 }
-.admin-panel .admin-controls .btn-row .btn {
-    padding: 10px 20px;
-    font-size: 0.95em;
-    white-space: nowrap;
+.admin-btn-row .btn {
+    flex: 1;
+    padding: 7px 10px;
+    font-size: 0.78em;
+}
+
+/* Botão Admin (na tela de jogo) */
+.btn-admin-open {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    z-index: 100;
+    background: linear-gradient(135deg, #fbbf24, #f59e0b);
+    color: #000;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 16px;
+    font-size: 0.82em;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(251,191,36,0.4);
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+.btn-admin-open:hover {
+    transform: scale(1.05);
+    box-shadow: 0 4px 14px rgba(251,191,36,0.6);
+}
+
+/* Tela Admin separada */
+.admin-screen-wrapper {
+    width: 100%;
+    min-height: 100vh;
+    background: rgba(0,0,0,0.95);
+    padding: 20px 16px;
+    overflow-y: auto;
+}
+.admin-screen-wrapper .admin-panel-content {
+    padding: 0;
+    max-width: 750px;
+    margin: 0 auto;
+    background: transparent;
+    border: none;
+    max-height: none;
+}
+
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 0.75em;
+}
+
+.admin-saldo-display {
+    font-size: 0.8em;
+    color: #a0a0b0;
+    line-height: 1.5;
+}
+
+.admin-info-text {
+    font-size: 0.72em;
+    color: rgba(251,191,36,0.8);
+    margin: 2px 0 8px;
+    line-height: 1.4;
+}
+
+.admin-warning-text {
+    font-size: 0.72em;
+    color: rgba(239,68,68,0.8);
+    margin: 2px 0 6px;
+    font-weight: 600;
+}
+
+.admin-empty {
+    color: #6b6599;
+    font-size: 0.82em;
+    padding: 8px 0;
+    text-align: center;
 }
 
 /* Admin Tabs */
 .admin-tabs {
     display: flex;
     gap: 4px;
-    margin: 16px 0 8px;
+    margin: 4px 0 8px;
     flex-wrap: wrap;
     justify-content: center;
 }
 .admin-tab {
-    padding: 8px 14px;
-    border-radius: 10px;
-    border: 1px solid rgba(255,255,255,0.08);
+    padding: 7px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.06);
     background: rgba(255,255,255,0.03);
-    color: rgba(255,255,255,0.7);
+    color: rgba(255,255,255,0.6);
     cursor: pointer;
-    font-size: 0.78em;
+    font-size: 0.75em;
     font-weight: 600;
     font-family: 'Poppins', sans-serif;
     transition: all 0.2s;
@@ -362,32 +502,43 @@ body {
     color: #fff;
 }
 .admin-tab.active {
-    background: rgba(251,191,36,0.15);
-    border-color: rgba(251,191,36,0.3);
-    color: #ffff00;
+    background: rgba(251,191,36,0.12);
+    border-color: rgba(251,191,36,0.25);
+    color: #fbbf24;
 }
 
 /* Admin Tab Content */
 .admin-tab-content {
     text-align: left;
-    margin-top: 8px;
+    margin-top: 6px;
 }
-.admin-tab-content h4 {
-    color: #ffff00;
-    font-size: 0.88em;
+
+.admin-tab-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     margin-bottom: 8px;
+}
+.admin-tab-header h4 {
+    color: #ffff00;
+    font-size: 0.85em;
+    margin: 0;
+}
+.admin-tab-actions {
+    display: flex;
+    gap: 4px;
 }
 
 /* Admin Filters */
 .admin-filtros {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     flex-wrap: wrap;
-    margin-bottom: 10px;
-    padding: 10px;
+    margin-bottom: 8px;
+    padding: 8px 10px;
     background: rgba(0,0,0,0.15);
-    border-radius: 10px;
+    border-radius: 8px;
 }
 .admin-filtros label {
     font-size: 0.78em;
@@ -411,15 +562,16 @@ body {
     font-size: 0.75em;
 }
 
-/* Admin Cards */
+/* Admin Cards (dynamic user list) */
 .admin-card {
-    background: rgb(0,3,152);
-    border: 1px solid rgba(255,255,0,0.3);
-    border-radius: 6px;
-    padding: 8px;
-    margin: 6px 0;
-    font-size: 0.76em;
+    background: rgba(0,3,152,0.5);
+    border: 1px solid rgba(255,255,0,0.15);
+    border-radius: 8px;
+    padding: 8px 10px;
+    margin: 5px 0;
+    font-size: 0.74em;
     text-align: left;
+    line-height: 1.5;
 }
 
 /* Top Bar */
@@ -1610,6 +1762,7 @@ body {
     .cards-grid { grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); }
     .card-cell { font-size: 0.92em; min-height: 34px; }
     .admin-panel .admin-panel-content { max-width: 100%; }
+    .admin-grid { grid-template-columns: 1fr; }
 }
 
 /* === RESPONSIVE - MOBILE (below 768px) === */
@@ -1633,10 +1786,7 @@ body {
     .btn-deposit, .btn-withdraw, .btn-logout { padding: 6px 12px; font-size: 0.85em; }
     .user-avatar { width: 32px; height: 32px; font-size: 0.9em; }
 
-    .admin-panel .admin-panel-content { padding: 14px; }
-    .admin-panel .admin-controls { flex-direction: column; align-items: center; }
-    .admin-panel .admin-controls > div { min-width: 100%; }
-    .admin-panel .admin-controls .btn-row { flex-direction: row; justify-content: center; }
+    .admin-panel .admin-panel-content { padding: 12px; }
 
     .ball-section { padding: 16px; border-radius: 16px; align-items: center; }
     .ball-area { flex-direction: column; align-items: center; gap: 12px; }
@@ -1732,8 +1882,10 @@ body {
     .card-cell { font-size: 1.2em; min-height: 40px; padding: 0; }
     .jackpot-ball { width: 30px; height: 30px; font-size: 0.8em; }
 
-    .admin-panel .admin-controls .btn-row { flex-direction: column; }
-    .admin-panel .admin-controls .btn-row .btn { width: 100%; }
+    .admin-panel .admin-panel-content { padding: 10px; }
+    .admin-grid { gap: 8px; }
+    .admin-btn-row { flex-direction: column; }
+    .admin-btn-row .btn { width: 100%; }
 
     .top-bar { padding: 6px 8px; gap: 4px; }
     .connection-info { font-size: 0.85em; }
@@ -1757,7 +1909,7 @@ body {
 /* === TOUCH DEVICES === */
 @media (pointer: coarse) {
     .btn, .mode-btn, .card-cell, .buy-options .btn,
-    .host-controls-panel button, .admin-panel .btn-row .btn { min-height: 44px; touch-action: manipulation; }
+    .host-controls-panel button, .admin-panel .btn-sm { min-height: 44px; touch-action: manipulation; }
     .input-field { min-height: 44px; font-size: 16px; }
     .close-card-item { min-height: 44px; }
 }
