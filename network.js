@@ -974,6 +974,19 @@ function testarEmailAdmin() {
         .catch(() => showToast('Erro de conexao ao testar email.', 'error', 6000));
 }
 
+function testarAsaasAdmin() {
+    fetch(API_BASE + '/api/admin/testar-asaas')
+        .then(r => r.json())
+        .then(r => {
+            if (r.success) {
+                showToast('✅ Asaas: ' + r.message, 'success', 8000);
+            } else {
+                showToast('❌ Asaas: ' + r.message, 'error', 10000);
+            }
+        })
+        .catch(() => showToast('Erro de conexao ao testar Asaas.', 'error', 6000));
+}
+
 function updatePlayerListUI() {
     const list = document.getElementById('playerListUI');
     const isMarcos = souDono;

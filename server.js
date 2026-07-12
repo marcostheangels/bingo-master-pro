@@ -5,46 +5,51 @@ const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
 const http = require('http');
+const https = require('https');
 const WebSocket = require('ws');
 const engine = require('./engine');
 const db = require('./db');
+const nodemailer = require('nodemailer');
 
 const DONO_CPF = '05893761600';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'marcostheangels@gmail.com';
-const RESEND_API_KEY = process.env.RESEND_API_KEY;
 
-// ===================== CONFIGURAÇÃO DE EMAIL (RESEND API HTTP) =====================
+// ===================== CONFIGURAÇÃO DE EMAIL (SMTP / NODEMAILER) =====================
+let transporter = null;
+const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
+const SMTP_USER = process.env.SMTP_USER || ADMIN_EMAIL;
+const SMTP_PASS = process.env.SMTP_PASS;
+
+if (SMTP_PASS) {
+    transporter = nodemailer.createTransport({
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        auth: { user: SMTP_USER, pass: SMTP_PASS }
+    });
+    console.log('[EMAIL] Transportador SMTP configurado:', SMTP_USER);
+} else {
+    console.log('[EMAIL] AVISO: SMTP_PASS não definida. Emails não serão enviados.');
+}
+
 async function enviarEmailNotificacao(assunto, texto) {
-    if (!RESEND_API_KEY) {
-        console.log('[EMAIL] AVISO: RESEND_API_KEY não definida no painel do Render. Pulando envio:', assunto);
+    if (!transporter) {
+        console.log('[EMAIL] Transportador não configurado. Pulando envio:', assunto);
         return;
     }
-    console.log('[EMAIL] Tentando enviar via Resend API (HTTP):', assunto);
+    console.log('[EMAIL] Enviando via SMTP:', assunto, 'para', ADMIN_EMAIL);
     try {
-        const htmlTexto = texto.replace(/\n/g, '<br>');
-        
-        const response = await fetch('https://api.resend.com/emails', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${RESEND_API_KEY}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({
-                from: 'Bingo Master Pro <onboarding@resend.dev>',
-                to: [ADMIN_EMAIL],
-                subject: assunto,
-                html: `<div style="font-family: sans-serif; line-height: 1.6; color: #2c3e50;">${htmlTexto}</div>`
-            })
+        const info = await transporter.sendMail({
+            from: `"Bingo Master Pro" <${SMTP_USER}>`,
+            to: ADMIN_EMAIL,
+            subject: assunto,
+            text: texto,
+            html: texto.replace(/\n/g, '<br>')
         });
-
-        const data = await response.json();
-        if (response.ok) {
-            console.log('[EMAIL] Notificação enviada com sucesso via Resend HTTP! ID:', data.id);
-        } else {
-            console.error('[EMAIL] Erro retornado pela API do Resend:', data);
-        }
+        console.log('[EMAIL] Enviado! ID:', info.messageId);
     } catch (err) {
-        console.error('[EMAIL] Erro de conexão ao tentar chamar a API do Resend:', err.message);
+        console.error('[EMAIL] Erro ao enviar:', err.message);
     }
 }
 
@@ -1039,7 +1044,6 @@ app.post('/api/login', (req, res) => {
 });
 
 // ===================== APIs =====================
-const https = require('https');
 
 // Validar sessão
 app.post('/api/validar-sessao', (req, res) => {
@@ -1374,22 +1378,26 @@ app.post('/api/admin/enviar-pix', async (req, res) => {
         let saqueExistente = saques.find(s => s.status === 'pendente' && s.nome === para && s.valor === valor);
         
         let asaasTransferId = null;
-        if (ASAAS_API_KEY && chavePix && valor > 0) {
-            try {
-                const pixKeyTypeMap = { 'cpf': 'CPF', 'email': 'EMAIL', 'telefone': 'PHONE', 'aleatoria': 'RANDOM' };
-                const transfer = await asaasRequest('POST', '/transfers', {
-                    value: valor,
-                    pixAddressKey: chavePix,
-                    pixAddressKeyType: pixKeyTypeMap[tipoChave] || 'CPF'
-                });
-                if (transfer && transfer.id) {
-                    asaasTransferId = transfer.id;
-                    console.log('[ASAAS] Transferencia PIX criada:', transfer.id, 'Status:', transfer.status);
-                } else {
-                    console.error('[ASAAS] Erro ao criar transferencia:', JSON.stringify(transfer));
+        if (chavePix && valor > 0) {
+            if (!ASAAS_API_KEY) {
+                console.log('[ASAAS] AVISO: ASAAS_API_KEY não definida no painel do Render. PIX automático não enviado.');
+            } else {
+                try {
+                    const pixKeyTypeMap = { 'cpf': 'CPF', 'email': 'EMAIL', 'telefone': 'PHONE', 'aleatoria': 'RANDOM' };
+                    const transfer = await asaasRequest('POST', '/transfers', {
+                        value: valor,
+                        pixAddressKey: chavePix,
+                        pixAddressKeyType: pixKeyTypeMap[tipoChave] || 'CPF'
+                    });
+                    if (transfer && transfer.id) {
+                        asaasTransferId = transfer.id;
+                        console.log('[ASAAS] Transferencia PIX criada:', transfer.id, 'Status:', transfer.status);
+                    } else {
+                        console.error('[ASAAS] Erro ao criar transferencia:', JSON.stringify(transfer));
+                    }
+                } catch (e) {
+                    console.error('[ASAAS] Erro ao enviar PIX:', e.message);
                 }
-            } catch (e) {
-                console.error('[ASAAS] Erro ao enviar PIX:', e.message);
             }
         }
 
@@ -1566,6 +1574,22 @@ app.post('/api/admin/testar-email', (req, res) => {
         res.json({ success: true, message: 'Email de teste enviado para ' + ADMIN_EMAIL });
     } catch (err) {
         res.status(500).json({ error: 'Erro ao enviar email de teste: ' + err.message });
+    }
+});
+
+app.get('/api/admin/testar-asaas', async (req, res) => {
+    try {
+        if (!ASAAS_API_KEY) {
+            return res.json({ success: false, message: 'ASAAS_API_KEY não configurada nas variáveis de ambiente do Render.' });
+        }
+        const search = await asaasRequest('GET', '/finance/balance');
+        if (search && search.balance !== undefined) {
+            res.json({ success: true, message: 'Conectado! Saldo Asaas: R$ ' + (search.balance / 100).toFixed(2) });
+        } else {
+            res.json({ success: false, message: 'Resposta inesperada: ' + JSON.stringify(search).slice(0, 200) });
+        }
+    } catch (err) {
+        res.json({ success: false, message: 'Erro: ' + err.message });
     }
 });
 
