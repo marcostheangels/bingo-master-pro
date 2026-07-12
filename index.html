@@ -121,108 +121,99 @@
 
     <!-- ===== GAME SCREEN ===== -->
     <div class="screen" id="screenGame">
-        <div class="game-wrapper">
+        <div class="game-wrapper game-wrapper-mobile">
 
-            <!-- Botão Admin (substitui o painel interno) -->
+            <!-- Botão Admin -->
             <button class="btn-admin-open" id="btnAdminOpen" style="display:none" onclick="abrirAdminScreen()">⚙️ Admin</button>
 
             <!-- Top Bar -->
             <div class="top-bar">
                 <div class="connection-info" id="connectionInfo">
                     <span class="conn-dot" id="connDot"></span>
-                    <span id="connStatus">Conectado ao Bingo</span>
+                    <span id="connStatus">Conectado</span>
                 </div>
                 <div class="user-info">
                     <div class="user-avatar" id="avatarIcon">B</div>
                     <span class="user-name" id="labelMyName">Jogador</span>
-                    <span class="user-chips" id="labelMyChips">💰 0  🏆 0</span>
+                    <span class="user-chips" id="labelMyChips">💰 0 🏆 0</span>
                     <button class="btn-deposit" onclick="abrirModalDeposito()">💰 Depositar</button>
                     <button class="btn-withdraw" id="btnSacar" onclick="abrirModalSaque()" style="display:none">💵 Sacar</button>
                     <button class="btn-logout" onclick="sairDaConta()">🚪 Sair</button>
                 </div>
             </div>
 
-            <!-- Game Body -->
-            <div class="game-body">
-
-                <!-- MAIN COLUMN -->
-                <div class="game-main">
-
-                    <!-- Ball Section -->
-                    <div class="ball-section">
-                        <div class="ball-area">
-                            <div class="current-ball">
-                                <p class="label">Última Bola</p>
-                                <div class="ball-display" id="mainBall">-</div>
-                            </div>
-                            <div class="drawn-grid" id="drawnGrid"></div>
-                        </div>
-
-                        <div class="ball-actions">
-                            <div class="buy-options" id="buySection">
-                                <span class="buy-label">Comprar Cartelas (R$0,15 cada — max. 15):</span>
-                                <button class="btn btn-primary" onclick="buyBingoCards(1)">1 (R$0,15)</button>
-                                <button class="btn btn-primary" onclick="buyBingoCards(5)">5 (R$0,75)</button>
-                                <button class="btn btn-primary" onclick="buyBingoCards(10)">10 (R$1,50)</button>
-                                <button class="btn btn-primary" onclick="buyBingoCards(15)">15 (R$2,25)</button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Players Panel -->
-                    <div class="players-panel" id="playersPanel">
-                        <h3>👥 Jogadores na Sala</h3>
-                        <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores assistindo ao vivo</div>
-                        <ul class="player-list" id="playerListUI"></ul>
-                    </div>
-
-                </div>
-
-                <!-- SIDEBAR -->
-                <div class="game-sidebar">
-
-                    <!-- Phases / Prizes -->
-                    <div class="sidebar-card">
-                        <h3>🏆 Premios da Rodada</h3>
-                        <div class="phases-bar" id="phasesStatus">
-                            <div class="phase-item" id="phase_kuadra">Kuadra: <span class="prize">💰 R$ 3,00</span></div>
-                            <div class="phase-item" id="phase_kina">Kina: <span class="prize">💰 R$ 5,00</span></div>
-                            <div class="phase-item" id="phase_keno">Bingo: <span class="prize">💰 R$ 7,00</span></div>
-                        </div>
-                    </div>
-
-                    <!-- Close Cards -->
-                    <div class="missing-numbers-panel" id="missingNumbersPanel">
-                        <h3>📊 <span id="missingTitle">Cartelas faltando 1 bola</span></h3>
-                        <div class="missing-numbers-list" id="missingNumbersList">
-                            <p style="color:#6b6599;font-size:0.82em">Nenhum jogo ativo no momento.</p>
-                        </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <!-- Jackpot (perto das cartelas) -->
+            <!-- Jackpot -->
             <div class="jackpot-panel">
                 <div class="jackpot-label">🎰 Jackpot Acumulado</div>
                 <div class="jackpot-value" id="jackpotDisplay">R$ 1.000,00</div>
                 <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÉ 37 BOLAS E LEVE O JACKPOT DE R$ 1.000,00!</div>
                 <div class="round-number" id="currentRoundNumber">Nenhum sorteio ainda</div>
             </div>
-
             <div class="jackpot-balls-panel" id="jackpotBallsPanel" style="display:none;">
                 <div class="jackpot-balls-label">Bolas para o Jackpot:</div>
                 <div class="jackpot-balls-grid" id="jackpotBallsGrid"></div>
             </div>
 
-            <!-- My Cards Section (full width) -->
-            <div class="my-cards-section">
-                <h3>📋 Minhas Cartelas</h3>
-                <div class="cards-grid" id="myCardsGrid"></div>
-            </div>
+            <!-- Game Body -->
+            <div class="game-body">
 
-            <!-- Game Log -->
-            <div class="game-log" id="gameLog"></div>
+                <!-- Ball Section -->
+                <div class="ball-section">
+                    <div class="ball-area">
+                        <div class="current-ball">
+                            <p class="label">Última Bola</p>
+                            <div class="ball-display" id="mainBall">-</div>
+                        </div>
+                        <div class="drawn-grid" id="drawnGrid"></div>
+                    </div>
+
+                    <div class="ball-actions">
+                        <div class="buy-options" id="buySection">
+                            <span class="buy-label">Comprar (R$0,15)</span>
+                            <button class="btn btn-primary" onclick="buyBingoCards(1)">1</button>
+                            <button class="btn btn-primary" onclick="buyBingoCards(5)">5</button>
+                            <button class="btn btn-primary" onclick="buyBingoCards(10)">10</button>
+                            <button class="btn btn-primary" onclick="buyBingoCards(15)">15</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Premios strip -->
+                <div class="prizes-strip">
+                    <div class="phase-item phase-item-mini" id="phase_kuadra"><span class="phase-label">Kuadra</span> <span class="prize">💰 R$ 3</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_kina"><span class="phase-label">Kina</span> <span class="prize">💰 R$ 5</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_keno"><span class="phase-label">Bingo</span> <span class="prize">💰 R$ 7</span></div>
+                </div>
+
+                <!-- Players Panel -->
+                <div class="players-panel" id="playersPanel">
+                    <h3 onclick="this.closest('.players-panel').classList.toggle('collapsed')">👥 Jogadores <span class="toggle-icon">▼</span></h3>
+                    <div class="players-panel-body">
+                        <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
+                        <ul class="player-list" id="playerListUI"></ul>
+                    </div>
+                </div>
+
+                <!-- Missing / Close Numbers -->
+                <div class="missing-numbers-panel" id="missingNumbersPanel">
+                    <h3 onclick="this.closest('.missing-numbers-panel').classList.toggle('collapsed')">📊 <span id="missingTitle">Cartelas próximas</span> <span class="toggle-icon">▼</span></h3>
+                    <div class="missing-numbers-body">
+                        <div class="missing-numbers-list" id="missingNumbersList">
+                            <p style="color:#6b6599;font-size:0.82em">Nenhum jogo ativo no momento.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- My Cards -->
+                <div class="my-cards-section">
+                    <h3>📋 Minhas Cartelas</h3>
+                    <div class="cards-grid" id="myCardsGrid"></div>
+                </div>
+
+                <!-- Game Log -->
+                <div class="game-log" id="gameLog"></div>
+
+            </div>
         </div>
     </div>
 
