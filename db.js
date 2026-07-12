@@ -274,10 +274,7 @@ async function syncSaques() {
         }
     } catch (e) { console.error('[DB] syncSaques error:', e.message); }
 }
-    } catch (e) { console.error('[DB] syncSaques error:', e.message); }
-}
-
-async function syncTransacoes() {
+    async function syncTransacoes() {
     if (!pool) return;
     try {
         for (const t of transacoesCache) {
