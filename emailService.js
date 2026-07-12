@@ -1,6 +1,8 @@
 const nodemailer = require('nodemailer');
 
-// Configura o transportador usando as credenciais do seu .env
+// Teste automático para saber se o servidor está lendo o seu arquivo .env
+console.log("\n[DIAGNÓSTICO] O e-mail remetente foi lendo corretamente?", process.env.EMAIL_REMETENTE ? "✅ SIM" : "❌ NÃO (Falta o dotenv no topo do server.js)");
+
 const transportador = nodemailer.createTransport({
     service: 'gmail',
     auth: {
@@ -9,11 +11,6 @@ const transportador = nodemailer.createTransport({
     }
 });
 
-/**
- * Envia um e-mail de notificação de novo cadastro para o administrador
- * @param {string} nomeUsuario - Nome da pessoa que se cadastrou
- * @param {string} emailUsuario - E-mail que a pessoa usou no cadastro
- */
 async function alertarNovoCadastro(nomeUsuario, emailUsuario) {
     const opcoesEmail = {
         from: `"Bingo Master Pro" <${process.env.EMAIL_REMETENTE}>`,
@@ -34,9 +31,11 @@ async function alertarNovoCadastro(nomeUsuario, emailUsuario) {
 
     try {
         await transportador.sendMail(opcoesEmail);
-        console.log(`[E-mail] Alerta de cadastro de ${nomeUsuario} enviado com sucesso!`);
+        console.log(`\n=== ✅ E-MAIL ENVIADO COM SUCESSO PARA O ADMIN ===\n`);
     } catch (erro) {
-        console.error('[E-mail] Erro crítico ao enviar e-mail de alerta:', erro);
+        console.error('\n=== ❌ ERRO CRÍTICO NO ENVIO DE E-MAIL ===');
+        console.error('O Gmail respondeu o seguinte problema:', erro.message);
+        console.error('=============================================\n');
     }
 }
 

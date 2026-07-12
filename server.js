@@ -4,6 +4,7 @@ const cors = require('cors');
 const path = require('path');
 const fs = require('fs');
 const crypto = require('crypto');
+const { alertarNovoCadastro } = require('./emailService'); // 🌟 O nosso import fixo aqui no topo!
 const http = require('http');
 const https = require('https');
 const WebSocket = require('ws');
@@ -1042,18 +1043,17 @@ app.post('/api/register', async (req, res) => {
         usuarios.push(novoUsuario);
         salvarUsuarios(usuarios);
 
-        // 🌟 PASSO 5: Envia o e-mail de notificação para o administrador
-        try {
-            const { alertarNovoCadastro } = require('./emailService');
-            await alertarNovoCadastro(nomeCompleto, email);
-            console.log(`[EMAIL] Notificação de novo cadastro enviada para o admin.`);
-        } catch (emailErr) {
-            // Se o e-mail falhar, o cadastro do jogador NÃO é cancelado (segurança)
-            console.error('[EMAIL ERROR] Falha ao enviar e-mail de alerta:', emailErr.message);
-        }
-
-        console.log(`[REGISTER] ${nomeCompleto} (${novoUsuario.cpfFormatado}) - Conta criada`);
+        // 1️⃣ RESPONDE O JOGADOR IMEDIATAMENTE (Entra na tela sem travar!)
         res.json({ success: true, sessionToken: novoUsuario.sessionToken, cpf, nome: nomeCompleto });
+        console.log(`[REGISTER] ${nomeCompleto} (${novoUsuario.cpfFormatado}) - Conta criada`);
+
+        // 2️⃣ DISPARA O E-MAIL EM SEGUNDO PLANO
+        setImmediate(() => {
+            alertarNovoCadastro(nomeCompleto, email).catch(err => {
+                console.error('Erro na fila de execução do e-mail:', err.message);
+            });
+        });
+
     } catch (err) {
         res.status(500).json({ error: 'Erro interno no servidor.' });
     }
