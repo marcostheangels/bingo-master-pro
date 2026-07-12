@@ -1,14 +1,15 @@
 const nodemailer = require('nodemailer');
-const dns = require('dns'); // 🌟 Adicione essa linha aqui
+const dns = require('dns');
 
-// Teste automático para saber se o servidor está lendo o seu arquivo .env
-console.log("\n[DIAGNÓSTICO] O e-mail remetente foi lendo corretamente?", process.env.EMAIL_REMETENTE ? "✅ SIM" : "❌ NÃO (Falta o dotenv no topo do server.js)");
-
+// Agora estamos lendo exatamente os nomes das chaves que estão no seu Render
 const transportador = nodemailer.createTransport({
-    service: 'gmail',
-    host: 'smtp.gmail.com', // 🌟 Garante o host correto
-    port: 587,              // 🌟 Porta segura padrão para conexão direta
-    secure: false,
+    host: 'smtp.gmail.com',
+    port: 587,
+    secure: false, 
+    auth: {
+        user: process.env.SMTP_USER, // Mudamos para SMTP_USER
+        pass: process.env.SMTP_PASS  // Mudamos para SMTP_PASS
+    },
     tls: {
         ciphers: 'SSLv3',   // Ajuda a negociar a criptografia com o Gmail
         rejectUnauthorized: false // Evita falhas de certificado comuns em nuvem
@@ -25,8 +26,8 @@ const transportador = nodemailer.createTransport({
 
 async function alertarNovoCadastro(nomeUsuario, emailUsuario) {
     const opcoesEmail = {
-        from: `"Bingo Master Pro" <${process.env.EMAIL_REMETENTE}>`,
-        to: process.env.EMAIL_DESTINO, 
+        from: `"Bingo Master Pro" <${process.env.SMTP_USER}>`,
+        to: process.env.ADMIN_EMAIL || process.env.SMTP_USER, // Usa o e-mail de admin ou o próprio usuário
         subject: '🔔 Novo Usuário Cadastrado no Bingo Master!',
         html: `
             <div style="font-family: Arial, sans-serif; padding: 20px; border: 1px solid #ddd; border-radius: 8px; max-width: 500px;">
