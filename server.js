@@ -116,10 +116,6 @@ function formatarCPF(cpf) {
     return n.replace(/^(\d{3})(\d{3})(\d{3})(\d{2})$/, '$1.$2.$3-$4');
 }
 
-// ===================== WEBSOCKET =====================
-const server = http.createServer(app);
-const wss = new WebSocket.Server({ server });
-
 // ===================== JOGO AUTORITATIVO (SERVIDOR) =====================
 const DEFAULT_ROOM = 'bingo-master-pro-marcos';
 const DRAW_SPEED = 3000;
