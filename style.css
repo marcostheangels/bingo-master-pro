@@ -1151,7 +1151,7 @@ body.admin-mode .admin-screen-wrapper * {
     100% { transform: scale(1); }
 }
 
-/* === TABLET & DESKTOP (768px+) === */
+/* === TABLET (768px+) === */
 @media (min-width: 768px) {
     .game-wrapper-mobile { padding: 16px; gap: 14px; }
 
@@ -1161,15 +1161,23 @@ body.admin-mode .admin-screen-wrapper * {
     .user-name { font-size: 0.95em; }
     .user-chips { font-size: 0.9em; }
 
+    .jackpot-panel { padding: 16px 20px; border-radius: 16px; }
+    .jackpot-value { font-size: 1.7em; }
+
+    /* Grid layout: left column (ball, cards, log) + right sidebar (prizes, players, missing) */
     .game-body {
         display: grid;
         grid-template-columns: 1fr 300px;
+        grid-template-rows: auto auto 1fr;
         gap: 14px;
     }
+    .ball-section { grid-column: 1; grid-row: 1; }
+    .my-cards-section { grid-column: 1; grid-row: 2; }
+    .game-log { grid-column: 1; grid-row: 3; }
 
-    /* Jackpot stays above game-body on desktop too */
-    .jackpot-panel { padding: 16px 20px; border-radius: 16px; }
-    .jackpot-value { font-size: 1.7em; }
+    .prizes-strip { grid-column: 2; grid-row: 1; flex-direction: column; }
+    .players-panel { grid-column: 2; grid-row: 2; }
+    .missing-numbers-panel { grid-column: 2; grid-row: 3; }
 
     .ball-section { padding: 16px; border-radius: 16px; }
     .ball-display { width: 90px; height: 90px; font-size: 2em; }
@@ -1180,7 +1188,7 @@ body.admin-mode .admin-screen-wrapper * {
     .buy-options .btn { min-width: 80px; padding: 10px 14px; font-size: 0.88em; }
 
     .prizes-strip { gap: 8px; }
-    .phase-item-mini { padding: 10px 12px; font-size: 0.85em; }
+    .phase-item-mini { padding: 10px 12px; font-size: 0.85em; flex-direction: row; justify-content: space-between; }
 
     .players-panel { padding: 12px 16px; }
     .players-panel h3 { font-size: 0.88em; cursor: default; }
@@ -1221,6 +1229,8 @@ body.admin-mode .admin-screen-wrapper * {
 
     .cards-grid { grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); }
     .card-cell { font-size: 0.95em; min-height: 38px; }
+
+    .phase-item-mini { padding: 12px 16px; font-size: 0.9em; }
 }
 
 /* === Host Controls (admin) === */
@@ -1785,12 +1795,18 @@ body.admin-mode .admin-screen-wrapper * {
 
 /* === LANDSCAPE MOBILE === */
 @media (max-width: 768px) and (orientation: landscape) {
-    .game-body { display: grid; grid-template-columns: 1fr 280px; gap: 10px; }
-    .ball-display { width: 65px; height: 65px; font-size: 1.5em; }
-    .cards-grid { grid-template-columns: repeat(2, 1fr); }
+    .game-body { display: grid; grid-template-columns: 1fr 260px; gap: 10px; align-items: start; }
+    .ball-section { grid-column: 1; grid-row: 1; }
+    .my-cards-section { grid-column: 1; grid-row: 2; }
+    .game-log { grid-column: 1; grid-row: 3; }
+    .prizes-strip { grid-column: 2; grid-row: 1; flex-direction: column; }
+    .players-panel { grid-column: 2; grid-row: 2; }
+    .missing-numbers-panel { grid-column: 2; grid-row: 3; }
+    .ball-display { width: 60px; height: 60px; font-size: 1.4em; }
+    .cards-grid { grid-template-columns: repeat(2, 1fr); gap: 6px; }
     .card-cell { font-size: 0.8em; min-height: 30px; }
     .game-log { max-height: 60px; }
-    .phase-item-mini { padding: 6px 8px; font-size: 0.7em; }
+    .phase-item-mini { padding: 6px 8px; font-size: 0.68em; flex-direction: row; justify-content: space-between; }
 }
 
 /* === TOUCH DEVICES === */
