@@ -1449,7 +1449,7 @@ app.post('/api/admin/saque-pago', (req, res) => {
     }
 });
 
-app.post('/api/solicitar-saque', (req, res) => {
+app.post('/api/solicitar-saque', async (req, res) => {
     try {
         const { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
         console.log('[SAQUE DEBUG] Recebido:', { nome, valor, chavePix, tipoChave, hasToken: !!sessionToken });
@@ -1534,7 +1534,14 @@ app.post('/api/solicitar-saque', (req, res) => {
             setChips(nome, novoChips, novoWinnings);
         }
 
-        // Sincroniza com o jogador na sala (se estiver conectado)
+        // Notifica admin por email
+        const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        await enviarEmailNotificacao(
+            `💸 Novo Saque Solicitado - R$ ${valor.toFixed(2)}`,
+            `Jogador: ${nome}\nValor: R$ ${valor.toFixed(2)}\nChave PIX: ${chavePix} (${tipoChave || 'cpf'})\nData: ${hora}`
+        );
+
+        // Sincroniza com o jogador na sala (se estiver conectado) + broadcast
         gameRooms.forEach(room => {
             for (const p of room.players.values()) {
                 if (p.name.toLowerCase().trim() === nome.toLowerCase().trim()) {
@@ -1564,10 +1571,9 @@ app.post('/api/solicitar-saque', (req, res) => {
 });
 
 // Rota de teste para verificar email (admin)
-app.post('/api/admin/testar-email', (req, res) => {
+app.post('/api/admin/testar-email', async (req, res) => {
     try {
-        const { destinatario } = req.body;
-        enviarEmailNotificacao(
+        await enviarEmailNotificacao(
             '🔧 Teste de Email - Bingo Master Pro',
             `Este é um email de teste.\n\nSe você está recebendo esta mensagem, a configuração de email está funcionando corretamente!\n\nData: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`
         );
@@ -1584,7 +1590,7 @@ app.get('/api/admin/testar-asaas', async (req, res) => {
         }
         const search = await asaasRequest('GET', '/finance/balance');
         if (search && search.balance !== undefined) {
-            res.json({ success: true, message: 'Conectado! Saldo Asaas: R$ ' + (search.balance / 100).toFixed(2) });
+            res.json({ success: true, message: 'Conectado! Saldo Asaas: R$ ' + Number(search.balance).toFixed(2) });
         } else {
             res.json({ success: false, message: 'Resposta inesperada: ' + JSON.stringify(search).slice(0, 200) });
         }
