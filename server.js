@@ -10,6 +10,16 @@ const https = require('https');
 const WebSocket = require('ws');
 const engine = require('./engine');
 const db = require('./db');
+const engine = require('./engine');
+const { alertarNovoCadastro } = require('./emailService');
+let nodemailer = null;
+try { nodemailer = require('nodemailer'); } catch (e) { console.log('[EMAIL] nodemailer não disponível.'); }
+
+const app = express();
+const server = http.createServer(app);
+const wss = new WebSocket.Server({ server });
+const PORT = process.env.PORT || 3000;
+const engine = require('./engine');
 let nodemailer = null;
 try { nodemailer = require('nodemailer'); } catch (e) { console.log('[EMAIL] nodemailer não disponível.'); }
 
@@ -127,8 +137,7 @@ const wss = new WebSocket.Server({ server });
 const DEFAULT_ROOM = 'bingo-master-pro-marcos';
 const DRAW_SPEED = 3000;
 const AUTO_START_INTERVAL = 150;
-
-let fichasStore = {};
+let fichasStore = {};//
 function loadFichas() {
     return db.getFichasStore();
 }
@@ -572,8 +581,8 @@ function loadRoomSnapshot(room) {
         if (!snap) return;
         room.drawnBalls = snap.drawnBalls || [];
         room.currentPhaseIndex = snap.currentPhaseIndex || 0;
-        room.gameActive = false;
-        room.gameEnded = false;
+        room.gameActive = snap.gameActive === true;
+        room.gameEnded = snap.gameEnded === true;
         room.currentRound = snap.currentRound || 0;
         room.jackpot = snap.jackpot || engine.JACKPOT_REWARD;
         if (Array.isArray(snap.players)) {

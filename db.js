@@ -28,6 +28,7 @@ async function init(connectionString) {
 
     await createTables();
     await loadCache();
+    loadBonusCache();
 
     console.log('[DB] PostgreSQL inicializado com ' + usuariosCache.length + ' usuarios, ' + Object.keys(fichasCache).length + ' fichas, ' + saquesCache.length + ' saques, ' + transacoesCache.length + ' transacoes, ' + recargasCache.length + ' recargas, ' + historicoCache.length + ' historicos');
     return true;
@@ -226,11 +227,18 @@ async function loadCache() {
 async function syncUsuarios() {
     if (!pool) return;
     try {
-        await pool.query('DELETE FROM usuarios');
         for (const u of usuariosCache) {
             await pool.query(
                 `INSERT INTO usuarios ("nomeCompleto", "cpf", "cpfFormatado", "email", "senha", "chavePix", "sessionToken", "data")
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+                ON CONFLICT ("cpf") DO UPDATE SET
+                    "nomeCompleto"=EXCLUDED."nomeCompleto",
+                    "cpfFormatado"=EXCLUDED."cpfFormatado",
+                    "email"=EXCLUDED."email",
+                    "senha"=EXCLUDED."senha",
+                    "chavePix"=EXCLUDED."chavePix",
+                    "sessionToken"=EXCLUDED."sessionToken",
+                    "data"=EXCLUDED."data"`,
                 [u.nomeCompleto, u.cpf, u.cpfFormatado || null, u.email, u.senha, u.chavePix || null, u.sessionToken || null, u.data || null]
             );
         }
@@ -252,27 +260,33 @@ async function syncFichas() {
 async function syncSaques() {
     if (!pool) return;
     try {
-        await pool.query('DELETE FROM saques');
         for (const s of saquesCache) {
             const pid = s.paymentId !== null && s.paymentId !== undefined ? String(s.paymentId) : null;
             await pool.query(
                 `INSERT INTO saques ("id", "nome", "valor", "chavePix", "tipoChave", "status", "data", "paymentId", "dataPagamento", "qrCode")
-                 VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)`,
-                [s.id, s.nome || null, s.valor || null, s.chavePix || null, s.tipoChave || null, s.status || 'pendente',
-                 s.data || null, pid, s.dataPagamento || null, s.qrCode || null]
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10)
+                ON CONFLICT ("id") DO UPDATE SET
+                    "nome"=EXCLUDED."nome", "valor"=EXCLUDED."valor", "chavePix"=EXCLUDED."chavePix",
+                    "tipoChave"=EXCLUDED."tipoChave", "status"=EXCLUDED."status", "data"=EXCLUDED."data",
+                    "paymentId"=EXCLUDED."paymentId", "dataPagamento"=EXCLUDED."dataPagamento", "qrCode"=EXCLUDED."qrCode"`,
+                [s.id, s.nome || null, s.valor || null, s.chavePix || null, s.tipoChave || null, s.status || 'pendente', s.data || null, pid, s.dataPagamento || null, s.qrCode || null]
             );
         }
+    } catch (e) { console.error('[DB] syncSaques error:', e.message); }
+}
     } catch (e) { console.error('[DB] syncSaques error:', e.message); }
 }
 
 async function syncTransacoes() {
     if (!pool) return;
     try {
-        await pool.query('DELETE FROM transacoes');
         for (const t of transacoesCache) {
+            const tid = t.id != null ? Number(t.id) : null;
             await pool.query(
-                `INSERT INTO transacoes ("tipo", "nome", "nomeExibicao", "valor", "detalhe", "data") VALUES ($1,$2,$3,$4,$5,$6)`,
-                [t.tipo, t.nome || null, t.nomeExibicao || null, t.valor || 0, t.detalhe || null, t.data || null]
+                `INSERT INTO transacoes ("id", "tipo", "nome", "nomeExibicao", "valor", "detalhe", "data")
+                VALUES ($1,$2,$3,$4,$5,$6,$7)
+                ON CONFLICT ("id") DO NOTHING`,
+                [tid, t.tipo, t.nome || null, t.nomeExibicao || null, t.valor || 0, t.detalhe || null, t.data || null]
             );
         }
     } catch (e) { console.error('[DB] syncTransacoes error:', e.message); }
