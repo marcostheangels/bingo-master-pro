@@ -2844,14 +2844,21 @@ updateChipsDisplay = function() {
 const _origGoToScreen = goToScreen;
 goToScreen = function(screenId) {
     _origGoToScreen(screenId);
-    if (screenId === 'screenGame') {
+    const overlay = document.getElementById('countdownOverlay');
+    if (screenId === 'screenAdmin') {
+        document.body.classList.add('admin-mode');
+        if (overlay) overlay.classList.remove('visible');
+        pararAutoStart();
+    } else if (screenId === 'screenGame') {
+        document.body.classList.remove('admin-mode');
         initDrawnGrid();
         syncDrawnGrid();
         setTimeout(verificarRecargas, 1000);
         if (isHost && !gameActive && !gameEnded) {
             setTimeout(iniciarAutoStart, 2000);
         }
-    } else if (screenId !== 'screenAdmin') {
+    } else {
+        document.body.classList.remove('admin-mode');
         pararAutoStart();
     }
 };

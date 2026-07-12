@@ -537,7 +537,8 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
             if (typeof renderMyCards === 'function') renderMyCards();
             if (typeof updateJackpotPanel === 'function') updateJackpotPanel();
             if (typeof renderMissingNumbersPanel === 'function') renderMissingNumbersPanel();
-            goToScreen('screenGame');
+            const adminActive = document.getElementById('screenAdmin')?.classList.contains('active');
+            if (!adminActive) goToScreen('screenGame');
             return;
         }
 
