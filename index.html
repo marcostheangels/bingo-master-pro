@@ -168,7 +168,7 @@
                     <!-- Modo Teste -->
                     <div class="admin-controls" style="border:1px dashed #fbbf24">
                         <h4>🧪 Modo Teste — Saque de Créditos</h4>
-                        <p style="color:#fbbf24;font-size:0.78em;margin:4px 0 8px">Quando ligado, créditos adicionados podem ser sacados.</p>
+                        <p style="color:#fbbf24;font-size:0.78em;margin:4px 0 8px">Quando LIGADO: todo saldo pode ser sacado (modo teste). Quando DESLIGADO: apenas ganhos (Kuadra/Kina/Keno) podem ser sacados. Créditos admin, bônus e depósitos NÃO podem ser sacados.</p>
                         <div class="btn-row">
                             <button class="btn btn-success" id="btnModoTeste" onclick="alternarModoTeste()">🔄 Carregando…</button>
                         </div>
@@ -380,7 +380,7 @@
             <div class="regra-deposito">
                 ⚠️ <strong>Saque mínimo: R$ 10,00.</strong><br>
                 Só pode sacar valores <strong>ganhos</strong> nas fases Kuadra, Kina ou Keno.
-                O valor que você <strong>depositou</strong> não pode ser sacado.
+                O valor que você <strong>depositou</strong>, <strong>créditos admin</strong> e <strong>bônus</strong> não podem ser sacados (a menos que modo teste esteja ativo).
                 Saldo sacável: <strong id="saqueSaldo">R$ 0,00</strong>
             </div>
             <div class="saque-form">

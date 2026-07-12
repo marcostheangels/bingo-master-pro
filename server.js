@@ -940,7 +940,7 @@ wss.on('connection', (ws) => {
             const isAuth = !!ws.cpf;
             const finalRole = role === 'spectator' ? 'spectator' : (isAuth ? 'guest' : 'spectator');
             ws.role = finalRole;
-            ws.send(JSON.stringify({ type: 'connected', role: finalRole, roomId, id: clientId, dono: isAuth ? dono : false }));
+            ws.send(JSON.stringify({ type: 'connected', role: finalRole, roomId, id: clientId, dono: isAuth ? dono : false, modoTeste: modoTesteSaque }));
             sendGameState(room, ws);
             console.log(`Jogador ${name} conectado na sala ${roomId} como ${finalRole}${dono ? ' (DONO)' : ''}`);
             broadcastSpectatorCount(room);
@@ -1103,11 +1103,14 @@ app.get('/api/admin/usuarios', (req, res) => {
 // Admin - Listar usuários com saldo (para painel de gerenciamento de créditos)
 app.get('/api/admin/usuarios-com-saldo', (req, res) => {
     try {
+        const bonusGivenStore = db.getBonusGivenStore();
         const usuarios = carregarUsuarios();
         const usuariosComSaldo = usuarios.map(u => {
             const key = (u.nomeCompleto || '').toLowerCase().trim();
             const fichas = fichasStore[key] || { chips: engine.INITIAL_CHIPS, winnings: 0 };
             const adminCreditos = adminCreditsStore[key] || 0;
+            const bonusGiven = bonusGivenStore[key] || 0;
+            const depositos = Math.max(0, fichas.chips - fichas.winnings - adminCreditos - bonusGiven);
             return {
                 cpf: u.cpf,
                 cpfFormatado: u.cpfFormatado,
@@ -1119,6 +1122,8 @@ app.get('/api/admin/usuarios-com-saldo', (req, res) => {
                 chips: fichas.chips,
                 winnings: fichas.winnings,
                 adminCreditos: adminCreditos,
+                bonusGiven: bonusGiven,
+                depositos: depositos,
                 isBot: false
             };
         });
@@ -1140,6 +1145,8 @@ app.get('/api/admin/usuarios-com-saldo', (req, res) => {
             const key = 'bot-' + name.toLowerCase().replace(/\s+/g, '-');
             const fichas = fichasStore[key] || { chips: engine.BOT_INITIAL_CHIPS, winnings: 0 };
             const adminCreditos = adminCreditsStore[key] || 0;
+            const bonusGiven = bonusGivenStore[key] || 0;
+            const depositos = Math.max(0, fichas.chips - fichas.winnings - adminCreditos - bonusGiven);
             usuariosComSaldo.push({
                 cpf: null,
                 cpfFormatado: 'BOT',
@@ -1151,6 +1158,8 @@ app.get('/api/admin/usuarios-com-saldo', (req, res) => {
                 chips: fichas.chips,
                 winnings: fichas.winnings,
                 adminCreditos: adminCreditos,
+                bonusGiven: bonusGiven,
+                depositos: depositos,
                 isBot: true
             });
         });
@@ -1186,7 +1195,10 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
         fichasStore[key].chips += parseInt(bonus);
         await db.setFichasStore(fichasStore);
 
-        db.setBonusPrimeiroDepositoJaUsado(usuario.nomeCompleto);
+        // Track bonus given separately (not sacável em modo normal)
+        const bonusGivenStore = db.getBonusGivenStore();
+        bonusGivenStore[key] = (bonusGivenStore[key] || 0) + parseInt(bonus);
+        db.setBonusGivenStore(bonusGivenStore);
 
         console.log(`[BONUS] ${bonus} fichas concedidas para ${usuario.nomeCompleto} via painel admin`);
         res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips });
@@ -1451,15 +1463,26 @@ app.post('/api/solicitar-saque', (req, res) => {
         const fichasNecessarias = valor * 1000;
         const c = getChips(nome);
         const adminCred = getAdminCreditos(nome);
-        console.log('[SAQUE DEBUG] Balances:', { winnings: c.winnings, adminCred, saldoSacavel: c.winnings + adminCred, fichasNecessarias });
-        console.log('[SAQUE DEBUG] Balances:', { winnings: c.winnings, adminCred, saldoSacavel: c.winnings + adminCred, fichasNecessarias: valor * 1000 });
         
-        const saldoSacavel = c.winnings + adminCred;
+        // MODO TESTE: tudo é sacável | MODO NORMAL: só ganhos (winnings) são sacáveis
+        let saldoSacavel;
+        if (modoTesteSaque) {
+            saldoSacavel = c.chips;
+            console.log('[SAQUE DEBUG] MODO TESTE LIGADO - saldo sacável = chips total');
+        } else {
+            saldoSacavel = c.winnings;
+            console.log('[SAQUE DEBUG] MODO TESTE DESLIGADO - saldo sacável = winnings apenas');
+        }
+        console.log('[SAQUE DEBUG] Balances:', { chips: c.chips, winnings: c.winnings, adminCred, saldoSacavel, fichasNecessarias });
         
         if (saldoSacavel < fichasNecessarias) {
-            return res.status(400).json({ 
-                error: 'Saldo sacável insuficiente. Só é permitido sacar ganhos (Kuadra/Kina/Keno) e créditos do admin. Depósitos não são sacáveis.' 
-            });
+            let mensagemErro;
+            if (modoTesteSaque) {
+                mensagemErro = 'Saldo insuficiente.';
+            } else {
+                mensagemErro = 'Saldo sacável insuficiente. Só é permitido sacar ganhos (Kuadra/Kina/Keno). Créditos do admin e bônus não são sacáveis. Depósitos não são sacáveis.';
+            }
+            return res.status(400).json({ error: mensagemErro });
         }
 
         const saques = db.getSaques();
@@ -1486,16 +1509,20 @@ app.post('/api/solicitar-saque', (req, res) => {
         });
         db.setTransacoes(transacoes);
 
-        let restante = fichasNecessarias;
-        const usaGanhos = Math.min(c.winnings, restante);
-        restante -= usaGanhos;
-        const novosGanhos = c.winnings - usaGanhos;
-        
-        const usaCreditos = Math.min(adminCred, restante);
-        const novosAdminCred = adminCred - usaCreditos;
-        
-        setAdminCreditos(nome, novosAdminCred);
-        setChips(nome, c.chips - fichasNecessarias, novosGanhos);
+        // Dedução do saldo
+        if (modoTesteSaque) {
+            // MODO TESTE: deduz de winnings primeiro, depois adminCred, depois chips
+            let restante = fichasNecessarias;
+            const usaGanhos = Math.min(c.winnings, restante);
+            restante -= usaGanhos;
+            const usaCreditos = Math.min(adminCred, restante);
+            restante -= usaCreditos;
+            setAdminCreditos(nome, adminCred - usaCreditos);
+            setChips(nome, c.chips - fichasNecessarias, c.winnings - usaGanhos);
+        } else {
+            // MODO NORMAL: deduz apenas dos winnings (ganhos)
+            setChips(nome, c.chips - fichasNecessarias, c.winnings - fichasNecessarias);
+        }
 
         const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
         console.log('[SAQUE] Enviando email de notificação...');
@@ -1560,6 +1587,7 @@ function saveAdminCreditos() {
 }
 
 let adminCreditsStore = {};
+let bonusGivenStore = {};
 let modoTesteSaque = false;
 
 function getAdminCreditos(nome) {
@@ -1889,6 +1917,7 @@ async function iniciarServidor() {
 
     fichasStore = db.getFichasStore();
     adminCreditsStore = db.getAdminCreditsStore();
+    bonusGivenStore = db.getBonusGivenStore();
     modoTesteSaque = await db.loadModoTeste();
 
     server.listen(PORT, () => {

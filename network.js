@@ -7,7 +7,7 @@ const WS_SERVER_URL = IS_LOCAL
 
 let socket = null;
 let souDono = false;
-let modoTesteSaque = false; // MODO TESTE: permite sacar créditos adicionados pelo admin (somente admin habilita)
+let modoTesteSaque = false; // MODO TESTE: LIGADO=todo saldo é sacável | DESLIGADO=só ganhos em jogos
 let socketReady = false;
 let myId = '';
 let myRole = '';
@@ -295,8 +295,17 @@ function handleSocketMessage(raw) {
         return;
     }
 
-    if (message.type === 'connected') {
-        if (message.role === 'host' && myRole === 'host') {
+        if (message.type === 'connected') {
+            // Sync modoTesteSaque from server
+            if (message.modoTeste !== undefined) {
+                modoTesteSaque = !!message.modoTeste;
+            }
+            fetch(API_BASE + '/api/admin/modo-teste')
+                .then(r => r.json())
+                .then(d => { modoTesteSaque = !!(d && d.ligado); })
+                .catch(() => {});
+
+            if (message.role === 'host' && myRole === 'host') {
             myId = 'host';
             myRoomId = message.roomId || myRoomId;
             if (!allPlayers || allPlayers.length === 0) {
@@ -795,22 +804,34 @@ function atualizarSaldoJogadorSelecionado() {
 function mostrarSaldoJogador(data) {
     const chipsReais = (data.chips / 1000).toFixed(2).replace('.', ',');
     const winningsReais = (data.winnings / 1000).toFixed(2).replace('.', ',');
-    const adminCreditsReais = ((data.adminCreditos || 0) / 1000).toFixed(2).replace('.', ',');
-    const saqueDisponivel = ((data.winnings + (data.adminCreditos || 0)) / 1000).toFixed(2).replace('.', ',');
+    const adminCredRaw = data.adminCreditos || data.adminCredits || 0;
+    const adminCreditsReais = (adminCredRaw / 1000).toFixed(2).replace('.', ',');
+    const bonusGivenReais = ((data.bonusGiven || 0) / 1000).toFixed(2).replace('.', ',');
+    const depositosReais = ((data.depositos || 0) / 1000).toFixed(2).replace('.', ',');
+    
+    let saqueDisponivel;
+    if (typeof modoTesteSaque !== 'undefined' && modoTesteSaque) {
+        saqueDisponivel = chipsReais;
+    } else {
+        saqueDisponivel = winningsReais;
+    }
     
     const balanceDiv = document.getElementById('adminPlayerBalance');
     if (!balanceDiv) return;
     
     balanceDiv.innerHTML = `
         <div style="margin:4px 0"><strong>${data.nomeCompleto || data.name}</strong></div>
-        <div style="margin:2px 0">💰 Saldo fichas: <strong>R$ ${chipsReais}</strong></div>
-        <div style="margin:2px 0">🏆 Ganhos (sacável normal): <strong>R$ ${winningsReais}</strong></div>
+        <div style="margin:2px 0">💰 Saldo total: <strong>R$ ${chipsReais}</strong></div>
+        <div style="margin:2px 0">💰 Depósitos: <strong>R$ ${depositosReais}</strong></div>
+        <div style="margin:2px 0">🏆 Ganhos (Kuadra/Kina/Keno): <strong>R$ ${winningsReais}</strong></div>
         <div style="margin:2px 0">🎁 Créditos admin: <strong>R$ ${adminCreditsReais}</strong></div>
+        <div style="margin:2px 0">🎁 Bônus admin: <strong>R$ ${bonusGivenReais}</strong></div>
         <div style="margin:6px 0;padding:6px;background:rgba(59,130,246,0.1);border-radius:4px;border:1px solid rgba(59,130,246,0.3)">
             💸 Saldo sacável: <strong>R$ ${saqueDisponivel}</strong>
+            ${(typeof modoTesteSaque !== 'undefined' && modoTesteSaque) ? ' 🧪 MODO TESTE' : ' (apenas ganhos)'}
         </div>
         <div style="font-size:0.75em;color:#6b6599;margin-top:4px">
-            Mínimo saque: R$ 10,00 | Fichas depositadas não são sacáveis | Ganhos + Créditos admin são sacáveis
+            Mínimo saque: R$ 10,00 | ${(typeof modoTesteSaque !== 'undefined' && modoTesteSaque) ? 'MODO TESTE: todo saldo é sacável' : 'Apenas ganhos em jogos são sacáveis. Depósitos, créditos admin e bônus não são sacáveis.'}
         </div>
     `;
 }
@@ -1106,7 +1127,8 @@ function carregarAdminUsuariosComSaldo() {
                 const saldo = (u.chips / 1000).toFixed(2).replace('.', ',');
                 const ganhos = (u.winnings / 1000).toFixed(2).replace('.', ',');
                 const credAdmin = (u.adminCreditos / 1000).toFixed(2).replace('.', ',');
-                option.textContent = `${prefix}${u.nomeCompleto} (Saldo: R$ ${saldo} | Ganhos: R$ ${ganhos} | Créd. Admin: R$ ${credAdmin})`;
+                const bonusG = ((u.bonusGiven || 0) / 1000).toFixed(2).replace('.', ',');
+                option.textContent = `${prefix}${u.nomeCompleto} (Saldo: R$ ${saldo} | Ganhos: R$ ${ganhos} | Créd.Admin: R$ ${credAdmin} | Bônus: R$ ${bonusG})`;
                 select.appendChild(option);
             });
 

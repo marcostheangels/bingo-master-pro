@@ -15,6 +15,7 @@ let adminCreditsCache = {};
 let botFichasCache = {};
 let roomsStateCache = {};
 let bonusPrimeiroDepositoCache = {}; // nomeLowercase -> true (já recebeu bônus)
+let bonusGivenCache = {}; // nomeLowercase -> valor em fichas (bônus dado via admin painel)
 
 async function init(connectionString) {
     pool = new Pool({
@@ -122,6 +123,12 @@ async function createTables() {
         )
     `);
     await pool.query(`
+        CREATE TABLE IF NOT EXISTS bonus_given (
+            "nome" TEXT PRIMARY KEY,
+            "valor" BIGINT NOT NULL DEFAULT 0
+        )
+    `);
+    await pool.query(`
         CREATE TABLE IF NOT EXISTS rooms_state (
             "id" TEXT PRIMARY KEY,
             "state" JSONB NOT NULL DEFAULT '{}'
@@ -199,6 +206,14 @@ async function loadCache() {
         }
     } catch (e) { roomsStateCache = {}; }
 
+    try {
+        const r = await pool.query('SELECT * FROM bonus_given');
+        bonusGivenCache = {};
+        for (const row of r.rows) {
+            bonusGivenCache[row.nome] = Number(row.valor);
+        }
+    } catch (e) { bonusGivenCache = {}; }
+
     console.log('[DB] Cache loaded:', {
         usuarios: usuariosCache.length,
         fichas: Object.keys(fichasCache).length,
@@ -208,7 +223,8 @@ async function loadCache() {
         historico: historicoCache.length,
         admin_creditos: Object.keys(adminCreditsCache).length,
         bot_fichas: Object.keys(botFichasCache).length,
-        rooms_state: Object.keys(roomsStateCache).length
+        rooms_state: Object.keys(roomsStateCache).length,
+        bonus_given: Object.keys(bonusGivenCache).length
     });
 }
 
@@ -308,6 +324,18 @@ async function syncAdminCreditos() {
     } catch (e) { console.error('[DB] syncAdminCreditos error:', e.message); }
 }
 
+async function syncBonusGiven() {
+    if (!pool) return;
+    try {
+        for (const [nome, valor] of Object.entries(bonusGivenCache)) {
+            await pool.query(
+                `INSERT INTO bonus_given ("nome", "valor") VALUES ($1,$2) ON CONFLICT ("nome") DO UPDATE SET "valor"=EXCLUDED."valor"`,
+                [nome, Math.round(valor)]
+            );
+        }
+    } catch (e) { console.error('[DB] syncBonusGiven error:', e.message); }
+}
+
 async function syncBotFichas() {
     if (!pool) return;
     try {
@@ -403,6 +431,16 @@ function loadBonusCache() {
             console.log('[DB] Bonus cache carregado:', Object.keys(bonusPrimeiroDepositoCache).length, 'usuários');
         } catch (e) { console.error('[DB] Erro ao carregar bonus cache:', e.message); }
     }
+}
+
+// Bonus Given (admin usuarios tab)
+function getBonusGivenStore() { return bonusGivenCache; }
+function setBonusGivenStore(store) {
+    bonusGivenCache = store;
+    syncBonusGiven().catch(e => console.error('[DB] syncBonusGiven failed:', e.message));
+}
+function syncBonusGivenStore() {
+    syncBonusGiven().catch(e => console.error('[DB] syncBonusGiven failed:', e.message));
 }
 
 // Bot Fichas
@@ -560,6 +598,9 @@ module.exports = {
     syncAdminCreditsStore,
     getBotFichas,
     setBotFichas,
+    getBonusGivenStore,
+    setBonusGivenStore,
+    syncBonusGivenStore,
     loadModoTeste,
     saveModoTeste,
     loadRoomState,
