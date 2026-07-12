@@ -769,7 +769,7 @@ function showPhaseCelebration(phaseKey, results) {
         }, i * (isMobile ? 60 : 100));
     }
 
-    setTimeout(() => closePhaseBanner(null, overlay), 8000);
+    setTimeout(() => closePhaseBanner(null, overlay), 4000);
 }
 
 function closePhaseBanner(btn, overlay) {
@@ -829,7 +829,7 @@ function showJackpotCelebration(results) {
         }, i * 80);
     }
 
-    setTimeout(closeJackpotBanner, 11000);
+    setTimeout(closeJackpotBanner, 4000);
 }
 
 function closeJackpotBanner() {

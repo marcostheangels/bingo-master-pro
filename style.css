@@ -437,10 +437,7 @@ body.admin-mode * {
     animation-play-state: paused !important;
     transition: none !important;
 }
-body.admin-mode .admin-screen-wrapper * {
-    animation-play-state: running !important;
-    transition: none !important;
-}
+
 
 /* Tela Admin separada */
 .admin-screen-wrapper {

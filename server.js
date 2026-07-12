@@ -222,7 +222,7 @@ function iniciarAutoStartServer(room) {
     if (room.gameActive || room.gameEnded) return;
     broadcast(room, { type: 'preparingNewRound', seconds: 50 });
     addLog(room, '⏳ Novo sorteio em 50 segundos. Compre suas cartelas!');
-    room.autoStartSeconds = 50;
+    room.autoStartSeconds = 60;
     console.log(`[AUTOSTART] Iniciando contagem de ${room.autoStartSeconds}s para sala ${room.id}`);
     room.autoStartTimer = setInterval(() => {
         room.autoStartSeconds--;
