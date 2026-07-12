@@ -7,8 +7,12 @@ console.log("\n[DIAGNÓSTICO] O e-mail remetente foi lendo corretamente?", proce
 const transportador = nodemailer.createTransport({
     service: 'gmail',
     host: 'smtp.gmail.com', // 🌟 Garante o host correto
-    port: 465,              // 🌟 Porta segura padrão para conexão direta
-    secure: true,           // 🌟 Ativa o SSL para a porta 465
+    port: 587,              // 🌟 Porta segura padrão para conexão direta
+    secure: false,
+    tls: {
+        ciphers: 'SSLv3',   // Ajuda a negociar a criptografia com o Gmail
+        rejectUnauthorized: false // Evita falhas de certificado comuns em nuvem
+    },           // 🌟 Ativa o SSL para a porta 465
     auth: {
         user: process.env.EMAIL_REMETENTE,
         pass: process.env.EMAIL_SENHA_APP
