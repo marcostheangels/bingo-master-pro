@@ -1010,7 +1010,8 @@ wss.on('connection', (ws) => {
     });
 });
 
-app.post('/api/register', (req, res) => {
+// Alteramos para "async (req, res)" para o servidor conseguir enviar o e-mail sem travar o jogo
+app.post('/api/register', async (req, res) => {
     try {
         let { nomeCompleto, cpf, email, senha, chavePix } = req.body;
         if (!nomeCompleto || !cpf || !email || !senha || !chavePix) {
@@ -1040,6 +1041,16 @@ app.post('/api/register', (req, res) => {
         };
         usuarios.push(novoUsuario);
         salvarUsuarios(usuarios);
+
+        // 🌟 PASSO 5: Envia o e-mail de notificação para o administrador
+        try {
+            const { alertarNovoCadastro } = require('./emailService');
+            await alertarNovoCadastro(nomeCompleto, email);
+            console.log(`[EMAIL] Notificação de novo cadastro enviada para o admin.`);
+        } catch (emailErr) {
+            // Se o e-mail falhar, o cadastro do jogador NÃO é cancelado (segurança)
+            console.error('[EMAIL ERROR] Falha ao enviar e-mail de alerta:', emailErr.message);
+        }
 
         console.log(`[REGISTER] ${nomeCompleto} (${novoUsuario.cpfFormatado}) - Conta criada`);
         res.json({ success: true, sessionToken: novoUsuario.sessionToken, cpf, nome: nomeCompleto });
