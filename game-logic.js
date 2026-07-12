@@ -2618,6 +2618,7 @@ async function confirmarRecargaSimulada(data) {
 }
 
     // Chamar servidor para adicionar fichas + bonus (se primeiro depósito)
+    async function confirmarRecargaSimulada(data) {
     const serverRes = await fetch(API_BASE + '/api/confirmar-recarga', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
