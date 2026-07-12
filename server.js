@@ -48,8 +48,7 @@ if (SMTP_PASS && nodemailer) {
 
 async function enviarEmailNotificacao(assunto, texto) {
     if (!transporter) {
-        console.log('[EMAIL] Transportador não configurado. Pulando envio:', assunto);
-        return;
+        throw new Error('Transportador SMTP não configurado. Verifique SMTP_PASS nas variáveis de ambiente.');
     }
     console.log('[EMAIL] Enviando via SMTP:', assunto, 'para', ADMIN_EMAIL);
     try {
