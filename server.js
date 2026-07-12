@@ -1958,6 +1958,23 @@ app.post('/api/salvar-historico', (req, res) => {
     }
 });
 
+// ===================== ASAAS WEBHOOK =====================
+app.post('/api/asaas/webhook', express.json({ type: 'application/json' }), (req, res) => {
+    try {
+        const event = req.body;
+        console.log('[ASAAS WEBHOOK] Evento recebido:', event.event, JSON.stringify(event).slice(0, 500));
+        res.sendStatus(200);
+    } catch (err) {
+        console.error('[ASAAS WEBHOOK] Erro:', err.message);
+        res.sendStatus(200);
+    }
+});
+
+app.get('/api/asaas/webhook-url', (req, res) => {
+    const baseUrl = req.protocol + '://' + req.get('host');
+    res.json({ url: baseUrl + '/api/asaas/webhook' });
+});
+
 async function iniciarServidor() {
     const dbUrl = process.env.DATABASE_URL;
     if (!dbUrl) {

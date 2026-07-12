@@ -987,6 +987,21 @@ function testarAsaasAdmin() {
         .catch(() => showToast('Erro de conexao ao testar Asaas.', 'error', 6000));
 }
 
+function mostrarWebhookUrl() {
+    fetch(API_BASE + '/api/asaas/webhook-url')
+        .then(r => r.json())
+        .then(r => {
+            if (r.url) {
+                navigator.clipboard.writeText(r.url).then(() => {
+                    showToast('🔗 URL do webhook copiada: ' + r.url, 'success', 8000);
+                }).catch(() => {
+                    showToast('🔗 URL do webhook: ' + r.url, 'info', 10000);
+                });
+            }
+        })
+        .catch(() => showToast('Erro ao obter URL do webhook.', 'error', 6000));
+}
+
 function updatePlayerListUI() {
     const list = document.getElementById('playerListUI');
     const isMarcos = souDono;
