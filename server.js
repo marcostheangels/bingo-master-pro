@@ -15,6 +15,14 @@ try { nodemailer = require('nodemailer'); } catch (e) { console.log('[EMAIL] nod
 const DONO_CPF = '05893761600';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'marcostheangels@gmail.com';
 
+// ===================== GLOBAL ERROR HANDLERS =====================
+process.on('uncaughtException', (err) => {
+    console.error('[UNCAUGHT EXCEPTION]', err.message, err.stack);
+});
+process.on('unhandledRejection', (reason) => {
+    console.error('[UNHANDLED REJECTION]', reason?.message || reason);
+});
+
 // ===================== CONFIGURAÇÃO DE EMAIL (SMTP / NODEMAILER) =====================
 let transporter = null;
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
@@ -641,6 +649,7 @@ function creditarFichas(nome, fichas) {
 }
 
 function handleAction(ws, room, action, payload) {
+    try {
     console.log('[ACTION]', { action, payload, clientId: ws.clientId, roomId: room.id });
     const clientId = ws.clientId;
     let player = room.players.get(clientId);
@@ -833,6 +842,9 @@ function handleAction(ws, room, action, payload) {
             iniciarNovaRodada(room);
         }
         return;
+    }
+    } catch (err) {
+        console.error('[ACTION ERRO]', err.message, err.stack);
     }
 }
 
