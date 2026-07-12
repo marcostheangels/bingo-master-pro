@@ -62,6 +62,7 @@ async function enviarEmailNotificacao(assunto, texto) {
         console.log('[EMAIL] Enviado! ID:', info.messageId);
     } catch (err) {
         console.error('[EMAIL] Erro ao enviar:', err.message);
+        throw err;
     }
 }
 
