@@ -1464,11 +1464,11 @@ app.post('/api/solicitar-saque', (req, res) => {
         const c = getChips(nome);
         const adminCred = getAdminCreditos(nome);
         
-        // MODO TESTE: tudo é sacável | MODO NORMAL: só ganhos (winnings) são sacáveis
+        // MODO TESTE: só créditos admin são sacáveis | MODO NORMAL: só ganhos (winnings)
         let saldoSacavel;
         if (modoTesteSaque) {
-            saldoSacavel = c.chips;
-            console.log('[SAQUE DEBUG] MODO TESTE LIGADO - saldo sacável = chips total');
+            saldoSacavel = adminCred;
+            console.log('[SAQUE DEBUG] MODO TESTE LIGADO - saldo sacável = adminCredits apenas');
         } else {
             saldoSacavel = c.winnings;
             console.log('[SAQUE DEBUG] MODO TESTE DESLIGADO - saldo sacável = winnings apenas');
@@ -1478,9 +1478,9 @@ app.post('/api/solicitar-saque', (req, res) => {
         if (saldoSacavel < fichasNecessarias) {
             let mensagemErro;
             if (modoTesteSaque) {
-                mensagemErro = 'Saldo insuficiente.';
+                mensagemErro = 'Créditos admin insuficientes para saque.';
             } else {
-                mensagemErro = 'Saldo sacável insuficiente. Só é permitido sacar ganhos (Kuadra/Kina/Keno). Créditos do admin e bônus não são sacáveis. Depósitos não são sacáveis.';
+                mensagemErro = 'Saldo sacável insuficiente. Só é permitido sacar ganhos (Kuadra/Kina/Keno).';
             }
             return res.status(400).json({ error: mensagemErro });
         }
@@ -1512,17 +1512,14 @@ app.post('/api/solicitar-saque', (req, res) => {
         // Dedução do saldo + sincronização com jogadores em memória
         let novoChips, novoWinnings, novoAdminCred;
         if (modoTesteSaque) {
-            let restante = fichasNecessarias;
-            const usaGanhos = Math.min(c.winnings, restante);
-            restante -= usaGanhos;
-            const usaCreditos = Math.min(adminCred, restante);
-            restante -= usaCreditos;
-            novoAdminCred = adminCred - usaCreditos;
+            // MODO TESTE: deduz apenas dos adminCredits
+            novoAdminCred = adminCred - fichasNecessarias;
             novoChips = c.chips - fichasNecessarias;
-            novoWinnings = c.winnings - usaGanhos;
+            novoWinnings = c.winnings;
             setAdminCreditos(nome, novoAdminCred);
             setChips(nome, novoChips, novoWinnings);
         } else {
+            // MODO NORMAL: deduz apenas dos winnings (ganhos)
             novoChips = c.chips - fichasNecessarias;
             novoWinnings = c.winnings - fichasNecessarias;
             novoAdminCred = adminCred;

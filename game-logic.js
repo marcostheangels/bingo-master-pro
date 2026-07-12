@@ -868,8 +868,8 @@ function updateChipsDisplay() {
     let sacavel = myWinnings;
     let nota = '';
     if (typeof modoTesteSaque !== 'undefined' && modoTesteSaque) {
-        sacavel = myChips;
-        nota = ' 🧪 MODO TESTE';
+        sacavel = myAdminCredits;
+        nota = ' 🧪 MODO TESTE (créditos admin)';
     }
     const sacavelReais = (sacavel / 1000).toFixed(2).replace('.', ',');
     label.innerHTML = `R$ ${saldoReais} <span style="font-size:0.75em;color:#10b981;margin-left:4px">(Sacável: R$ ${sacavelReais}${nota})</span>`;
@@ -2740,11 +2740,14 @@ function abrirModalSaque() {
         .finally(() => {
             let saldoSacavel = myWinnings;
             let nota = '';
+            const regraEl = document.getElementById('saqueRegra');
             if (modoTesteSaque) {
-                saldoSacavel = myChips;
-                nota = ' 🧪 MODO TESTE: todo saldo disponível para saque';
+                saldoSacavel = myAdminCredits;
+                nota = ' 🧪 MODO TESTE: apenas créditos admin disponíveis para saque';
+                if (regraEl) regraEl.innerHTML = '<strong>Créditos Admin</strong> podem ser sacados (Modo Teste).';
             } else {
                 nota = ' (apenas ganhos em jogos - Kuadra/Kina/Keno)';
+                if (regraEl) regraEl.innerHTML = 'Apenas <strong>Ganhos em Jogo (Kuadra, Kina, Keno)</strong> podem ser sacados.';
             }
             document.getElementById('saqueSaldo').textContent = 'R$ ' + (saldoSacavel / 1000).toFixed(2).replace('.', ',') + nota;
             document.getElementById('saqueValor').value = 10;
@@ -2764,7 +2767,7 @@ async function solicitarSaque() {
     }
 
     const fichasNecessarias = valor * 1000;
-    const saldoDisponivel = modoTesteSaque ? myChips : myWinnings;
+    const saldoDisponivel = modoTesteSaque ? myAdminCredits : myWinnings;
     if (saldoDisponivel < fichasNecessarias) {
         showToast('Saldo sacável insuficiente. Saldo sacável: R$ ' + (saldoDisponivel / 1000).toFixed(2).replace('.', ','), 'warning', 5000);
         return;
@@ -2793,14 +2796,8 @@ async function solicitarSaque() {
 
         if (data.success) {
             if (modoTesteSaque) {
-                // MODO TESTE: deduz de winnings primeiro, depois adminCred, depois saldo
-                const usaGanhos = Math.min(myWinnings, fichasNecessarias);
-                myWinnings -= usaGanhos;
-                const restante = fichasNecessarias - usaGanhos;
-                const usaCreditos = Math.min(myAdminCredits, restante);
-                myAdminCredits -= usaCreditos;
+                myAdminCredits -= fichasNecessarias;
             } else {
-                // MODO NORMAL: deduz apenas dos winnings (ganhos)
                 myWinnings -= fichasNecessarias;
             }
             myChips = Math.max(0, myChips - fichasNecessarias);
@@ -2809,7 +2806,7 @@ async function solicitarSaque() {
             if (typeof saveChips === 'function') saveChips(myName, myChips);
             if (typeof updateChipsDisplay === 'function') updateChipsDisplay();
             document.getElementById('saqueMsg').innerHTML = '<p class="saque-sucesso">✅ Solicitação enviada! O administrador processará em breve.</p>';
-            const saldoRestante = modoTesteSaque ? myChips : myWinnings;
+            const saldoRestante = modoTesteSaque ? myAdminCredits : myWinnings;
             document.getElementById('saqueSaldo').textContent = 'R$ ' + (saldoRestante / 1000).toFixed(2).replace('.', ',');
 
             // Notifica host se for guest

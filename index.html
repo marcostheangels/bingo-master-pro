@@ -281,7 +281,7 @@
                             <span class="admin-card-title">Modo Teste</span>
                         </div>
                         <div class="admin-card-body">
-                            <p class="admin-info-text">Quando LIGADO: todo saldo pode ser sacado. Quando DESLIGADO: só ganhos em jogos.</p>
+                            <p class="admin-info-text">Quando LIGADO: apenas créditos admin podem ser sacados. Quando DESLIGADO: só ganhos em jogos.</p>
                             <button class="btn btn-sm btn-success" id="btnModoTeste" onclick="alternarModoTeste()" style="width:100%">🔄 Carregando…</button>
                         </div>
                     </div>
@@ -420,8 +420,8 @@
             <h2>💵 Solicitar Saque</h2>
             <div class="regra-deposito">
                 ⚠️ <strong>Saque mínimo: R$ 10,00.</strong><br>
-                Apenas <strong>Ganhos em Jogo (Kuadra, Kina, Keno) podem ser sacados.</strong><br>
-                Depósitos, Bônus e Créditos Admin <span style="color:#ef4444;font-weight:700;font-size:1.05em">NÃO PODEM SER SACADOS</span>.<br>
+                <span id="saqueRegra">Apenas <strong>Ganhos em Jogo (Kuadra, Kina, Keno)</strong> podem ser sacados.</span><br>
+                Depósitos e Bônus <span style="color:#ef4444;font-weight:700;font-size:1.05em">NÃO PODEM SER SACADOS</span>.<br>
                 Saldo sacável: <strong id="saqueSaldo">R$ 0,00</strong>
             </div>
             <div class="saque-form">

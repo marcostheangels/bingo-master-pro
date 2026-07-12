@@ -812,7 +812,7 @@ function mostrarSaldoJogador(data) {
     
     let saqueDisponivel;
     if (typeof modoTesteSaque !== 'undefined' && modoTesteSaque) {
-        saqueDisponivel = chipsReais;
+        saqueDisponivel = adminCreditsReais;
     } else {
         saqueDisponivel = winningsReais;
     }
@@ -829,10 +829,10 @@ function mostrarSaldoJogador(data) {
         <div style="margin:2px 0">🎁 Bônus admin: <strong>R$ ${bonusGivenReais}</strong></div>
         <div style="margin:6px 0;padding:6px;background:rgba(59,130,246,0.1);border-radius:4px;border:1px solid rgba(59,130,246,0.3)">
             💸 Saldo sacável: <strong>R$ ${saqueDisponivel}</strong>
-            ${(typeof modoTesteSaque !== 'undefined' && modoTesteSaque) ? ' 🧪 MODO TESTE' : ' (apenas ganhos)'}
+            ${(typeof modoTesteSaque !== 'undefined' && modoTesteSaque) ? ' 🧪 MODO TESTE (créditos admin)' : ' (apenas ganhos)'}
         </div>
         <div style="font-size:0.75em;color:#6b6599;margin-top:4px">
-            Mínimo saque: R$ 10,00 | ${(typeof modoTesteSaque !== 'undefined' && modoTesteSaque) ? 'MODO TESTE: todo saldo é sacável' : 'Apenas ganhos em jogos são sacáveis. Depósitos, créditos admin e bônus não são sacáveis.'}
+            Mínimo saque: R$ 10,00 | ${(typeof modoTesteSaque !== 'undefined' && modoTesteSaque) ? 'Apenas créditos admin são sacáveis no modo teste. Depósitos e ganhos não são.' : 'Apenas ganhos em jogos são sacáveis. Depósitos, créditos admin e bônus não são.'}
         </div>
     `;
 }

@@ -431,10 +431,14 @@ body {
 body.admin-mode .countdown-overlay,
 body.admin-mode .countdown-overlay.visible,
 body.admin-mode .winner-banner-overlay,
+body.admin-mode .winner-banner-overlay *,
 body.admin-mode .keno-ranking-overlay,
-body.admin-mode .keno-ranking-overlay.visible {
-    opacity: 0 !important;
-    pointer-events: none !important;
+body.admin-mode .keno-ranking-overlay.visible,
+body.admin-mode .keno-ranking-overlay *,
+body.admin-mode .phaseParticle,
+body.admin-mode .jackpotCoin,
+body.admin-mode .jackpotSpark {
+    display: none !important;
 }
 body.admin-mode * {
     animation-play-state: paused !important;
