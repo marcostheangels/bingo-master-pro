@@ -34,14 +34,6 @@ async function init(connectionString) {
 }
 
 async function createTables() {
-    // Drop ALL existing tables to ensure clean schema (data will be migrated from JSON)
-    await pool.query(`DROP TABLE IF EXISTS
-        usuarios, fichas, saques, transacoes, recargas, historico,
-        admin_creditos, bot_fichas, modo_teste, rooms_state,
-        admin_logs, auditoria, creditos, recargas_old, saques_old, tokens
-    CASCADE`);
-    console.log('[DB] Existing tables dropped, creating new ones...');
-
     await pool.query(`
         CREATE TABLE IF NOT EXISTS usuarios (
             "nomeCompleto" TEXT NOT NULL,
@@ -134,6 +126,7 @@ async function createTables() {
             "state" JSONB NOT NULL DEFAULT '{}'
         )
     `);
+    console.log('[DB] Tables ensured (created if not existing).');
 }
 
 async function loadCache() {
