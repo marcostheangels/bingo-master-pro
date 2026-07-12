@@ -2751,7 +2751,12 @@ function abrirModalSaque() {
             }
             document.getElementById('saqueSaldo').textContent = 'R$ ' + (saldoSacavel / 1000).toFixed(2).replace('.', ',') + nota;
             document.getElementById('saqueValor').value = 10;
-            document.getElementById('saqueMsg').innerHTML = '';
+            const msgEl = document.getElementById('saqueMsg');
+            if (saldoSacavel < 10000) {
+                msgEl.innerHTML = '<p class="saque-erro" style="color:#ef4444;font-size:0.85em">⚠️ Saldo sacável insuficiente. Saldo sacável: R$ ' + (saldoSacavel / 1000).toFixed(2).replace('.', ',') + '</p>';
+            } else {
+                msgEl.innerHTML = '';
+            }
             document.getElementById('modalSaque').style.display = 'flex';
         });
 }
@@ -2769,6 +2774,8 @@ async function solicitarSaque() {
     const fichasNecessarias = valor * 1000;
     const saldoDisponivel = modoTesteSaque ? myAdminCredits : myWinnings;
     if (saldoDisponivel < fichasNecessarias) {
+        const msgEl = document.getElementById('saqueMsg');
+        if (msgEl) msgEl.innerHTML = '<p class="saque-erro" style="color:#ef4444;font-size:0.9em">⚠️ Saldo sacável insuficiente. Saldo sacável: R$ ' + (saldoDisponivel / 1000).toFixed(2).replace('.', ',') + '</p>';
         showToast('Saldo sacável insuficiente. Saldo sacável: R$ ' + (saldoDisponivel / 1000).toFixed(2).replace('.', ','), 'warning', 5000);
         return;
     }
