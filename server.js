@@ -1509,29 +1509,43 @@ app.post('/api/solicitar-saque', (req, res) => {
         });
         db.setTransacoes(transacoes);
 
-        // Dedução do saldo
+        // Dedução do saldo + sincronização com jogadores em memória
+        let novoChips, novoWinnings, novoAdminCred;
         if (modoTesteSaque) {
-            // MODO TESTE: deduz de winnings primeiro, depois adminCred, depois chips
             let restante = fichasNecessarias;
             const usaGanhos = Math.min(c.winnings, restante);
             restante -= usaGanhos;
             const usaCreditos = Math.min(adminCred, restante);
             restante -= usaCreditos;
-            setAdminCreditos(nome, adminCred - usaCreditos);
-            setChips(nome, c.chips - fichasNecessarias, c.winnings - usaGanhos);
+            novoAdminCred = adminCred - usaCreditos;
+            novoChips = c.chips - fichasNecessarias;
+            novoWinnings = c.winnings - usaGanhos;
+            setAdminCreditos(nome, novoAdminCred);
+            setChips(nome, novoChips, novoWinnings);
         } else {
-            // MODO NORMAL: deduz apenas dos winnings (ganhos)
-            setChips(nome, c.chips - fichasNecessarias, c.winnings - fichasNecessarias);
+            novoChips = c.chips - fichasNecessarias;
+            novoWinnings = c.winnings - fichasNecessarias;
+            novoAdminCred = adminCred;
+            setChips(nome, novoChips, novoWinnings);
         }
 
-        const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-        console.log('[SAQUE] Enviando email de notificação...');
-        enviarEmailNotificacao(
-            `💸 Novo Saque Solicitado - R$ ${valor.toFixed(2)}`,
-            `Jogador: ${nome}\nValor: R$ ${valor.toFixed(2)}\nChave PIX: ${chavePix} (${tipoChave || 'cpf'})\nData: ${hora}`
-        );
-        const notif = JSON.stringify({ type: 'relay', from: 'host', id: 'server', name: 'Servidor', data: { type: 'saqueNotificacao', nome, valor } });
+        // Sincroniza com o jogador na sala (se estiver conectado)
         gameRooms.forEach(room => {
+            for (const p of room.players.values()) {
+                if (p.name.toLowerCase().trim() === nome.toLowerCase().trim()) {
+                    p.chips = novoChips;
+                    p.winnings = Math.max(0, novoWinnings);
+                    p.adminCredits = Math.max(0, novoAdminCred);
+                    break;
+                }
+            }
+            // Broadcast gameState atualizado para manter saldos em tempo real
+            broadcast(room, {
+                type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
+                currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive, gameEnded: room.gameEnded,
+                currentRound: room.currentRound, jackpot: room.jackpot, autoStartSeconds: room.autoStartSeconds
+            });
+            const notif = JSON.stringify({ type: 'relay', from: 'host', id: 'server', name: 'Servidor', data: { type: 'saqueNotificacao', nome, valor } });
             room.clients.forEach(ws => {
                 if (ws.readyState === WebSocket.OPEN) ws.send(notif);
             });

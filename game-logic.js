@@ -2270,6 +2270,9 @@ function showKenoRanking() {
         const el = document.getElementById('kenoRankingOverlay');
         if (el) el.classList.add('visible');
     });
+
+    // Auto-fechar ranking em 5 segundos
+    setTimeout(fecharKenoRanking, 5000);
 }
 function fecharKenoRanking() {
     const el = document.getElementById('kenoRankingOverlay');
@@ -2731,9 +2734,7 @@ function abrirModalSaque() {
     fetch(API_BASE + '/api/admin/modo-teste')
         .then(r => r.json())
         .then(d => {
-            if (typeof modoTesteSaque !== 'undefined') {
-                modoTesteSaque = !!(d && d.ligado);
-            }
+            modoTesteSaque = !!(d && d.ligado);
         })
         .catch(() => {})
         .finally(() => {
