@@ -9,7 +9,8 @@ const https = require('https');
 const WebSocket = require('ws');
 const engine = require('./engine');
 const db = require('./db');
-const nodemailer = require('nodemailer');
+let nodemailer = null;
+try { nodemailer = require('nodemailer'); } catch (e) { console.log('[EMAIL] nodemailer não disponível.'); }
 
 const DONO_CPF = '05893761600';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'marcostheangels@gmail.com';
@@ -21,14 +22,18 @@ const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
 const SMTP_USER = process.env.SMTP_USER || ADMIN_EMAIL;
 const SMTP_PASS = process.env.SMTP_PASS;
 
-if (SMTP_PASS) {
-    transporter = nodemailer.createTransport({
-        host: SMTP_HOST,
-        port: SMTP_PORT,
-        secure: SMTP_PORT === 465,
-        auth: { user: SMTP_USER, pass: SMTP_PASS }
-    });
-    console.log('[EMAIL] Transportador SMTP configurado:', SMTP_USER);
+if (SMTP_PASS && nodemailer) {
+    try {
+        transporter = nodemailer.createTransport({
+            host: SMTP_HOST,
+            port: SMTP_PORT,
+            secure: SMTP_PORT === 465,
+            auth: { user: SMTP_USER, pass: SMTP_PASS }
+        });
+        console.log('[EMAIL] Transportador SMTP configurado:', SMTP_USER);
+    } catch (e) {
+        console.log('[EMAIL] Erro ao configurar transportador:', e.message);
+    }
 } else {
     console.log('[EMAIL] AVISO: SMTP_PASS não definida. Emails não serão enviados.');
 }
@@ -1449,24 +1454,29 @@ app.post('/api/admin/saque-pago', (req, res) => {
     }
 });
 
-app.post('/api/solicitar-saque', async (req, res) => {
-    try {
-        const { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
-        console.log('[SAQUE DEBUG] Recebido:', { nome, valor, chavePix, tipoChave, hasToken: !!sessionToken });
-        if (!nome || !valor || !chavePix) {
-            return res.status(400).json({ error: 'Parâmetros incompletos.' });
+// Wrapper para capturar erros de async handlers (Express 4 não pega automaticamente)
+const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(err => {
+    console.error('[ERRO] Async handler:', err.message);
+    res.status(500).json({ error: 'Erro interno no servidor.' });
+});
+
+app.post('/api/solicitar-saque', asyncHandler(async (req, res) => {
+    const { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
+    console.log('[SAQUE DEBUG] Recebido:', { nome, valor, chavePix, tipoChave, hasToken: !!sessionToken });
+    if (!nome || !valor || !chavePix) {
+        return res.status(400).json({ error: 'Parâmetros incompletos.' });
+    }
+    if (sessionToken) {
+        const usuarios = carregarUsuarios();
+        const user = usuarios.find(u => u.sessionToken === sessionToken && u.nomeCompleto === nome);
+        console.log('[SAQUE DEBUG] user match:', user ? user.nomeCompleto : 'NÃO ENCONTRADO');
+        if (!user) {
+            return res.status(401).json({ error: 'Sessão inválida. Faça login novamente.' });
         }
-        if (sessionToken) {
-            const usuarios = carregarUsuarios();
-            const user = usuarios.find(u => u.sessionToken === sessionToken && u.nomeCompleto === nome);
-            console.log('[SAQUE DEBUG] user match:', user ? user.nomeCompleto : 'NÃO ENCONTRADO');
-            if (!user) {
-                return res.status(401).json({ error: 'Sessão inválida. Faça login novamente.' });
-            }
-        }
-        if (valor < 10) {
-            return res.status(400).json({ error: 'Valor mínimo para saque: R$ 10,00.' });
-        }
+    }
+    if (valor < 10) {
+        return res.status(400).json({ error: 'Valor mínimo para saque: R$ 10,00.' });
+    }
 
         const fichasNecessarias = valor * 1000;
         const c = getChips(nome);
@@ -1564,11 +1574,8 @@ app.post('/api/solicitar-saque', async (req, res) => {
         });
         console.log(`[SAQUE] ${nome} solicitou saque de R$ ${valor.toFixed(2)} via ${tipoChave || 'cpf'}: ${chavePix}`);
 
-        res.json({ success: true, saqueId: novoSaque.id });
-    } catch (err) {
-        res.status(500).json({ error: 'Erro interno ao solicitar saque.' });
-    }
-});
+    res.json({ success: true, saqueId: novoSaque.id });
+}));
 
 // Rota de teste para verificar email (admin)
 app.post('/api/admin/testar-email', async (req, res) => {
