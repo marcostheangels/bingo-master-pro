@@ -27,6 +27,11 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
+    // Nao interceptar chamadas a API ou WebSocket
+    const url = new URL(event.request.url);
+    if (url.origin !== self.location.origin) return;
+    if (url.pathname.startsWith('/api/')) return;
+
     event.respondWith(
         caches.match(event.request).then((response) => {
             return response || fetch(event.request).catch(() => {
