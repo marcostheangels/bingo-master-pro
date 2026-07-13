@@ -18,6 +18,10 @@ const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
 
+app.get('/', (req, res) => {
+    res.json({ status: 'online', name: 'Bingo Master Pro API', version: '2.0.0' });
+});
+
 const DONO_CPF = '05893761600';
 const ADMIN_EMAIL = process.env.ADMIN_EMAIL || 'marcostheangels@gmail.com';
 
