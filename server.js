@@ -320,66 +320,69 @@ const DRAW_SPEED_MS = 3000;
 
 function agendarProximoDraw(room, delay) {
     if (room.drawTimer) clearTimeout(room.drawTimer);
-    room.drawTimer = setTimeout(() => sortearProximaBola(room), delay || DRAW_SPEED_MS);
+    room.drawTimer = setTimeout(() => {
+        sortearProximaBola(room).catch(e => console.error('[GAME] agendarProximoDraw error:', e.message));
+    }, delay || DRAW_SPEED_MS);
 }
 
 async function sortearProximaBola(room) {
     room.drawTimer = null;
     
-    if (room.drawnBalls.length >= 90) {
-        finalizarRodada(room);
-        return;
-    }
-    
-    // Se a fase atual já foi ganha por alguém, não sortear mais bolas nesta fase
-    const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
-    let jaTemVencedor = false;
-    room.players.forEach(p => {
-        (p.cards || []).forEach(c => {
-            if (c.awards && c.awards[phaseKey]) jaTemVencedor = true;
-        });
-    });
-    if (jaTemVencedor) {
-        room.phasePauseTimer = setTimeout(() => {
-            room.phasePauseTimer = null;
-            avancarParaProximaFase(room);
-        }, 3000);
-        return;
-    }
-    
-    let ball;
-    do { ball = Math.floor(Math.random() * 90) + 1; } while (room.drawnBalls.includes(ball));
-    room.drawnBalls.push(ball);
-    
-    broadcast(room, { type: 'syncBall', ball, drawnBalls: [...room.drawnBalls] });
-    
-    // Broadcast close cards status
-    const playersArr = Array.from(room.players.values());
-    const closeInfo = engine.computeCloseCardsForAllPlayers(playersArr, room.currentPhaseIndex, room.drawnBalls);
-    broadcast(room, { type: 'closeCards', data: closeInfo });
-    
-    // Check winners
-    const winners = engine.checkAwardsForAllPlayers(playersArr, room.currentPhaseIndex, room.drawnBalls);
-    
-    if (winners.length > 0) {
-        const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
-        const totalCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
-        const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, totalCards);
-        
-        // Update persistent chips/winnings
-        for (const r of results) {
-            const player = r.player;
-            if (!player.isBot) {
-                await setChips(player.name, player.chips, player.winnings);
-            }
-            // Register prize transaction
-            const transacoes = db.getTransacoes();
-            transacoes.push({
-                tipo: 'premio', nome: player.name, nomeExibicao: player.name, valor: r.totalReward / 1000,
-                data: new Date().toISOString(), detalhe: `Prêmio ${phaseKey}`
-            });
-            await db.setTransacoes(transacoes);
+    try {
+        if (room.drawnBalls.length >= 90) {
+            await finalizarRodada(room);
+            return;
         }
+        
+        // Se a fase atual já foi ganha por alguém, não sortear mais bolas nesta fase
+        const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
+        let jaTemVencedor = false;
+        room.players.forEach(p => {
+            (p.cards || []).forEach(c => {
+                if (c.awards && c.awards[phaseKey]) jaTemVencedor = true;
+            });
+        });
+        if (jaTemVencedor) {
+            room.phasePauseTimer = setTimeout(() => {
+                room.phasePauseTimer = null;
+                avancarParaProximaFase(room);
+            }, 3000);
+            return;
+        }
+        
+        let ball;
+        do { ball = Math.floor(Math.random() * 90) + 1; } while (room.drawnBalls.includes(ball));
+        room.drawnBalls.push(ball);
+        
+        broadcast(room, { type: 'syncBall', ball, drawnBalls: [...room.drawnBalls] });
+        
+        // Broadcast close cards status
+        const playersArr = Array.from(room.players.values());
+        const closeInfo = engine.computeCloseCardsForAllPlayers(playersArr, room.currentPhaseIndex, room.drawnBalls);
+        broadcast(room, { type: 'closeCards', data: closeInfo });
+        
+        // Check winners
+        const winners = engine.checkAwardsForAllPlayers(playersArr, room.currentPhaseIndex, room.drawnBalls);
+        
+        if (winners.length > 0) {
+            const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
+            const totalCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
+            const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, totalCards);
+            
+            // Update persistent chips/winnings
+            for (const r of results) {
+                const player = r.player;
+                if (!player.isBot) {
+                    try { await setChips(player.name, player.chips, player.winnings); } catch (e) { console.error('[GAME] Erro setChips winner:', e.message); }
+                }
+                // Register prize transaction
+                const transacoes = db.getTransacoes();
+                transacoes.push({
+                    tipo: 'premio', nome: player.name, nomeExibicao: player.name, valor: r.totalReward / 1000,
+                    data: new Date().toISOString(), detalhe: `Prêmio ${phaseKey}`
+                });
+                try { await db.setTransacoes(transacoes); } catch (e) { console.error('[GAME] Erro setTransacoes winner:', e.message); }
+            }
         
         const phaseLabel = engine.PHASES[phaseKey].label;
         results.forEach(r => {
@@ -446,13 +449,17 @@ async function sortearProximaBola(room) {
             avancarParaProximaFase(room);
         } else {
             // All phases done (keno finished) - end round
-            finalizarRodada(room);
+            await finalizarRodada(room);
         }
         return;
     }
     
     sendGameState(room);
     agendarProximoDraw(room);
+    } catch (e) {
+        console.error('[GAME] Erro em sortearProximaBola:', e.message);
+        agendarProximoDraw(room, 1000);
+    }
 }
 
 function avancarParaProximaFase(room) {
