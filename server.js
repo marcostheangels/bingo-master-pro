@@ -12,6 +12,8 @@ let nodemailer = null;
 try { nodemailer = require('nodemailer'); } catch (e) { console.log('[EMAIL] nodemailer não disponível.'); }
 
 const app = express();
+app.use(cors({ origin: true, credentials: true }));
+app.use(express.json());
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
