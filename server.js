@@ -391,19 +391,18 @@ async function sortearProximaBola(room) {
             const totalCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
             const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, totalCards);
             
-            // Update persistent chips/winnings
+            // Update persistent chips/winnings (cache instantâneo, sync em background)
             for (const r of results) {
                 const player = r.player;
                 if (!player.isBot) {
-                    try { await setChips(player.name, player.chips, player.winnings); } catch (e) { console.error('[GAME] Erro setChips winner:', e.message); }
+                    setChips(player.name, player.chips, player.winnings).catch(e => console.error('[GAME] Erro setChips winner:', e.message));
                 }
-                // Register prize transaction
                 const transacoes = db.getTransacoes();
                 transacoes.push({
                     tipo: 'premio', nome: player.name, nomeExibicao: player.name, valor: r.totalReward / 1000,
                     data: new Date().toISOString(), detalhe: `Prêmio ${phaseKey}`
                 });
-                try { await db.setTransacoes(transacoes); } catch (e) { console.error('[GAME] Erro setTransacoes winner:', e.message); }
+                db.setTransacoes(transacoes).catch(e => console.error('[GAME] Erro setTransacoes winner:', e.message));
             }
         
         const phaseLabel = engine.PHASES[phaseKey].label;
