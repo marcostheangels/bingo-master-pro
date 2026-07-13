@@ -174,6 +174,7 @@ function getRoom(roomId) {
             autoStartTimer: null,
             drawTimer: null,
             phasePauseTimer: null,
+            watchdogTimer: null,
             log: []
         };
         loadRoomSnapshot(room);
@@ -313,10 +314,31 @@ function iniciarNovaRodada(room) {
     const playersArr2 = Array.from(room.players.values());
     const closeInfo = engine.computeCloseCardsForAllPlayers(playersArr2, room.currentPhaseIndex, room.drawnBalls);
     broadcast(room, { type: 'closeCards', data: closeInfo });
+    iniciarWatchdog(room);
     agendarProximoDraw(room);
 }
 
 const DRAW_SPEED_MS = 3000;
+const GAME_WATCHDOG_MS = 15000;
+
+function iniciarWatchdog(room) {
+    if (room.watchdogTimer) clearTimeout(room.watchdogTimer);
+    room.watchdogTimer = setTimeout(() => {
+        if (room.gameActive) {
+            console.error('[WATCHDOG] Jogo travado! Resetando sala', room.id);
+            room.gameActive = false;
+            room.gameEnded = true;
+            finalizarRodada(room);
+        }
+    }, GAME_WATCHDOG_MS);
+}
+
+function pararWatchdog(room) {
+    if (room.watchdogTimer) {
+        clearTimeout(room.watchdogTimer);
+        room.watchdogTimer = null;
+    }
+}
 
 function agendarProximoDraw(room, delay) {
     if (room.drawTimer) clearTimeout(room.drawTimer);
@@ -455,9 +477,11 @@ async function sortearProximaBola(room) {
     }
     
     sendGameState(room);
+    iniciarWatchdog(room);
     agendarProximoDraw(room);
     } catch (e) {
-        console.error('[GAME] Erro em sortearProximaBola:', e.message);
+        console.error('[GAME] Erro em sortearProximaBola:', e.message, e.stack);
+        iniciarWatchdog(room);
         agendarProximoDraw(room, 1000);
     }
 }
@@ -502,6 +526,7 @@ async function salvarHistoricoSorteio(room) {
 async function finalizarRodada(room) {
     room.gameActive = false;
     room.gameEnded = true;
+    pararWatchdog(room);
     if (room.drawTimer) { clearTimeout(room.drawTimer); room.drawTimer = null; }
     if (room.phasePauseTimer) { clearTimeout(room.phasePauseTimer); room.phasePauseTimer = null; }
     
