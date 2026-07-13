@@ -314,12 +314,11 @@ function iniciarNovaRodada(room) {
     const playersArr2 = Array.from(room.players.values());
     const closeInfo = engine.computeCloseCardsForAllPlayers(playersArr2, room.currentPhaseIndex, room.drawnBalls);
     broadcast(room, { type: 'closeCards', data: closeInfo });
-    iniciarWatchdog(room);
     agendarProximoDraw(room);
 }
 
 const DRAW_SPEED_MS = 3000;
-const GAME_WATCHDOG_MS = 15000;
+const GAME_WATCHDOG_MS = 60000;
 
 function iniciarWatchdog(room) {
     if (room.watchdogTimer) clearTimeout(room.watchdogTimer);
@@ -349,6 +348,7 @@ function agendarProximoDraw(room, delay) {
 
 async function sortearProximaBola(room) {
     room.drawTimer = null;
+    iniciarWatchdog(room);
     
     try {
         if (room.drawnBalls.length >= 90) {
@@ -477,11 +477,9 @@ async function sortearProximaBola(room) {
     }
     
     sendGameState(room);
-    iniciarWatchdog(room);
     agendarProximoDraw(room);
     } catch (e) {
         console.error('[GAME] Erro em sortearProximaBola:', e.message, e.stack);
-        iniciarWatchdog(room);
         agendarProximoDraw(room, 1000);
     }
 }
