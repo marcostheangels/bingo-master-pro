@@ -177,6 +177,15 @@ function getRoom(roomId) {
             log: []
         };
         loadRoomSnapshot(room);
+        // Se o jogo estava ativo mas os timers morreram (servidor reiniciou), resetar
+        if (room.gameActive && !room.drawTimer) {
+            console.log('[ROOM] Estado fantasma detectado (gameActive sem timer), resetando sala', roomId);
+            room.gameActive = false;
+            room.gameEnded = false;
+            room.drawnBalls = [];
+            room.currentPhaseIndex = 0;
+            room.players.clear();
+        }
         gameRooms.set(roomId, room);
     }
     return gameRooms.get(roomId);
