@@ -1,10 +1,7 @@
 const { Pool } = require('pg');
-const fs = require('fs');
-const path = require('path');
 
 let pool = null;
 
-// In-memory caches (same structure as current JSON files)
 let usuariosCache = [];
 let fichasCache = {};
 let saquesCache = [];
@@ -14,8 +11,8 @@ let historicoCache = [];
 let adminCreditsCache = {};
 let botFichasCache = {};
 let roomsStateCache = {};
-let bonusPrimeiroDepositoCache = {}; // nomeLowercase -> true (já recebeu bônus)
-let bonusGivenCache = {}; // nomeLowercase -> valor em fichas (bônus dado via admin painel)
+let bonusPrimeiroDepositoCache = {};
+let bonusGivenCache = {};
 
 async function init(connectionString) {
     pool = new Pool({
@@ -26,9 +23,13 @@ async function init(connectionString) {
         connectionTimeoutMillis: 10000
     });
 
+    pool.on('error', (err) => {
+        console.error('[DB] Pool error:', err.message);
+    });
+
     await createTables();
     await loadCache();
-    loadBonusCache();
+    await loadBonusCache();
 
     console.log('[DB] PostgreSQL inicializado com ' + usuariosCache.length + ' usuarios, ' + Object.keys(fichasCache).length + ' fichas, ' + saquesCache.length + ' saques, ' + transacoesCache.length + ' transacoes, ' + recargasCache.length + ' recargas, ' + historicoCache.length + ' historicos');
     return true;
@@ -127,6 +128,12 @@ async function createTables() {
             "state" JSONB NOT NULL DEFAULT '{}'
         )
     `);
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS bonus_deposito (
+            "nome" TEXT PRIMARY KEY,
+            "recebeu" BOOLEAN NOT NULL DEFAULT true
+        )
+    `);
     console.log('[DB] Tables ensured (created if not existing).');
 }
 
@@ -134,7 +141,10 @@ async function loadCache() {
     try {
         const r = await pool.query('SELECT * FROM usuarios');
         usuariosCache = r.rows;
-    } catch (e) { usuariosCache = []; }
+    } catch (e) {
+        console.error('[DB] Erro ao carregar usuarios:', e.message);
+        throw e;
+    }
 
     try {
         const r = await pool.query('SELECT * FROM fichas');
@@ -142,7 +152,10 @@ async function loadCache() {
         for (const row of r.rows) {
             fichasCache[row.nome] = { chips: Number(row.chips), winnings: Number(row.winnings) };
         }
-    } catch (e) { fichasCache = {}; }
+    } catch (e) {
+        console.error('[DB] Erro ao carregar fichas:', e.message);
+        throw e;
+    }
 
     try {
         const r = await pool.query('SELECT * FROM saques ORDER BY id');
@@ -152,12 +165,18 @@ async function loadCache() {
             if (obj.qrCode) obj.qrCode = obj.qrCode;
             return obj;
         });
-    } catch (e) { saquesCache = []; }
+    } catch (e) {
+        console.error('[DB] Erro ao carregar saques:', e.message);
+        throw e;
+    }
 
     try {
         const r = await pool.query('SELECT * FROM transacoes ORDER BY id');
         transacoesCache = r.rows;
-    } catch (e) { transacoesCache = []; }
+    } catch (e) {
+        console.error('[DB] Erro ao carregar transacoes:', e.message);
+        throw e;
+    }
 
     try {
         const r = await pool.query('SELECT * FROM recargas');
@@ -166,7 +185,10 @@ async function loadCache() {
             if (obj.paymentId !== null && obj.paymentId !== undefined) obj.paymentId = isNaN(Number(obj.paymentId)) ? obj.paymentId : Number(obj.paymentId);
             return obj;
         });
-    } catch (e) { recargasCache = []; }
+    } catch (e) {
+        console.error('[DB] Erro ao carregar recargas:', e.message);
+        throw e;
+    }
 
     try {
         const r = await pool.query('SELECT * FROM historico ORDER BY numero');
@@ -174,7 +196,10 @@ async function loadCache() {
             ...row,
             vencedores: typeof row.vencedores === 'string' ? JSON.parse(row.vencedores) : row.vencedores
         }));
-    } catch (e) { historicoCache = []; }
+    } catch (e) {
+        console.error('[DB] Erro ao carregar historico:', e.message);
+        throw e;
+    }
 
     try {
         const r = await pool.query('SELECT * FROM admin_creditos');
@@ -182,7 +207,10 @@ async function loadCache() {
         for (const row of r.rows) {
             adminCreditsCache[row.nome] = Number(row.valor);
         }
-    } catch (e) { adminCreditsCache = {}; }
+    } catch (e) {
+        console.error('[DB] Erro ao carregar admin_creditos:', e.message);
+        throw e;
+    }
 
     try {
         const r = await pool.query('SELECT * FROM bot_fichas');
@@ -190,7 +218,10 @@ async function loadCache() {
         for (const row of r.rows) {
             botFichasCache[row.nome] = Number(row.chips);
         }
-    } catch (e) { botFichasCache = {}; }
+    } catch (e) {
+        console.error('[DB] Erro ao carregar bot_fichas:', e.message);
+        throw e;
+    }
 
     try {
         const r = await pool.query('SELECT * FROM rooms_state');
@@ -198,7 +229,10 @@ async function loadCache() {
         for (const row of r.rows) {
             roomsStateCache[row.id] = typeof row.state === 'string' ? JSON.parse(row.state) : row.state;
         }
-    } catch (e) { roomsStateCache = {}; }
+    } catch (e) {
+        console.error('[DB] Erro ao carregar rooms_state:', e.message);
+        throw e;
+    }
 
     try {
         const r = await pool.query('SELECT * FROM bonus_given');
@@ -206,7 +240,10 @@ async function loadCache() {
         for (const row of r.rows) {
             bonusGivenCache[row.nome] = Number(row.valor);
         }
-    } catch (e) { bonusGivenCache = {}; }
+    } catch (e) {
+        console.error('[DB] Erro ao carregar bonus_given:', e.message);
+        throw e;
+    }
 
     console.log('[DB] Cache loaded:', {
         usuarios: usuariosCache.length,
@@ -222,7 +259,22 @@ async function loadCache() {
     });
 }
 
-// ===================== SYNC CACHE TO DB (fire-and-forget) =====================
+async function loadBonusCache() {
+    if (!pool) return;
+    try {
+        const r = await pool.query('SELECT * FROM bonus_deposito');
+        bonusPrimeiroDepositoCache = {};
+        for (const row of r.rows) {
+            bonusPrimeiroDepositoCache[row.nome] = row.recebeu;
+        }
+        console.log('[DB] Bonus cache carregado:', Object.keys(bonusPrimeiroDepositoCache).length, 'usuários');
+    } catch (e) {
+        console.error('[DB] Erro ao carregar bonus_deposito:', e.message);
+        bonusPrimeiroDepositoCache = {};
+    }
+}
+
+// ===================== SYNC CACHE TO DB =====================
 
 async function syncUsuarios() {
     if (!pool) return;
@@ -242,7 +294,7 @@ async function syncUsuarios() {
                 [u.nomeCompleto, u.cpf, u.cpfFormatado || null, u.email, u.senha, u.chavePix || null, u.sessionToken || null, u.data || null]
             );
         }
-    } catch (e) { console.error('[DB] syncUsuarios error:', e.message); }
+    } catch (e) { console.error('[DB] syncUsuarios error:', e.message); throw e; }
 }
 
 async function syncFichas() {
@@ -254,7 +306,7 @@ async function syncFichas() {
                 [nome, Math.round(data.chips), Math.round(data.winnings)]
             );
         }
-    } catch (e) { console.error('[DB] syncFichas error:', e.message); }
+    } catch (e) { console.error('[DB] syncFichas error:', e.message); throw e; }
 }
 
 async function syncSaques() {
@@ -272,9 +324,10 @@ async function syncSaques() {
                 [s.id, s.nome || null, s.valor || null, s.chavePix || null, s.tipoChave || null, s.status || 'pendente', s.data || null, pid, s.dataPagamento || null, s.qrCode || null]
             );
         }
-    } catch (e) { console.error('[DB] syncSaques error:', e.message); }
+    } catch (e) { console.error('[DB] syncSaques error:', e.message); throw e; }
 }
-    async function syncTransacoes() {
+
+async function syncTransacoes() {
     if (!pool) return;
     try {
         for (const t of transacoesCache) {
@@ -286,7 +339,7 @@ async function syncSaques() {
                 [tid, t.tipo, t.nome || null, t.nomeExibicao || null, t.valor || 0, t.detalhe || null, t.data || null]
             );
         }
-    } catch (e) { console.error('[DB] syncTransacoes error:', e.message); }
+    } catch (e) { console.error('[DB] syncTransacoes error:', e.message); throw e; }
 }
 
 async function syncRecargas() {
@@ -300,7 +353,7 @@ async function syncRecargas() {
                 [pid, r.nome || null, r.fichas || 0, r.data || null, r.sincronizado || false]
             );
         }
-    } catch (e) { console.error('[DB] syncRecargas error:', e.message); }
+    } catch (e) { console.error('[DB] syncRecargas error:', e.message); throw e; }
 }
 
 async function syncHistorico() {
@@ -313,7 +366,7 @@ async function syncHistorico() {
                 [h.numero, h.data || null, h.bolasSorteadas || [], h.totalBolas || 0, JSON.stringify(h.vencedores || {})]
             );
         }
-    } catch (e) { console.error('[DB] syncHistorico error:', e.message); }
+    } catch (e) { console.error('[DB] syncHistorico error:', e.message); throw e; }
 }
 
 async function syncAdminCreditos() {
@@ -325,7 +378,7 @@ async function syncAdminCreditos() {
                 [nome, Math.round(valor)]
             );
         }
-    } catch (e) { console.error('[DB] syncAdminCreditos error:', e.message); }
+    } catch (e) { console.error('[DB] syncAdminCreditos error:', e.message); throw e; }
 }
 
 async function syncBonusGiven() {
@@ -337,7 +390,7 @@ async function syncBonusGiven() {
                 [nome, Math.round(valor)]
             );
         }
-    } catch (e) { console.error('[DB] syncBonusGiven error:', e.message); }
+    } catch (e) { console.error('[DB] syncBonusGiven error:', e.message); throw e; }
 }
 
 async function syncBotFichas() {
@@ -349,120 +402,105 @@ async function syncBotFichas() {
                 [nome, Math.round(chips)]
             );
         }
-    } catch (e) { console.error('[DB] syncBotFichas error:', e.message); }
+    } catch (e) { console.error('[DB] syncBotFichas error:', e.message); throw e; }
 }
 
-// ===================== PUBLIC INTERFACE (sync wrappers for server.js) =====================
+async function syncBonusDeposito() {
+    if (!pool) return;
+    try {
+        for (const [nome, recebeu] of Object.entries(bonusPrimeiroDepositoCache)) {
+            await pool.query(
+                `INSERT INTO bonus_deposito ("nome", "recebeu") VALUES ($1,$2) ON CONFLICT ("nome") DO UPDATE SET "recebeu"=EXCLUDED."recebeu"`,
+                [nome, !!recebeu]
+            );
+        }
+    } catch (e) { console.error('[DB] syncBonusDeposito error:', e.message); throw e; }
+}
 
-// Usuarios
+// ===================== PUBLIC INTERFACE =====================
+
 function getUsuarios() { return usuariosCache; }
-function setUsuarios(lista) {
+async function setUsuarios(lista) {
     usuariosCache = lista;
-    syncUsuarios().catch(e => console.error('[DB] syncUsuarios failed:', e.message));
+    await syncUsuarios();
 }
 
-// Fichas
 function getFichasStore() { return fichasCache; }
-function setFichasStore(store) {
+async function setFichasStore(store) {
     fichasCache = store;
-    return syncFichas().catch(e => {
-        console.error('[DB] syncFichas failed:', e.message);
-        throw e;
-    });
+    await syncFichas();
 }
-function syncFichasStore() {
-    syncFichas().catch(e => console.error('[DB] syncFichas failed:', e.message));
+async function syncFichasStore() {
+    await syncFichas();
 }
 
-// Saques
 function getSaques() { return saquesCache; }
-function setSaques(lista) {
+async function setSaques(lista) {
     saquesCache = lista;
-    syncSaques().catch(e => console.error('[DB] syncSaques failed:', e.message));
+    await syncSaques();
 }
-function syncSaquesStore() {
-    syncSaques().catch(e => console.error('[DB] syncSaques failed:', e.message));
+async function syncSaquesStore() {
+    await syncSaques();
 }
 
-// Transacoes
 function getTransacoes() { return transacoesCache; }
-function setTransacoes(lista) {
+async function setTransacoes(lista) {
     transacoesCache = lista;
-    syncTransacoes().catch(e => console.error('[DB] syncTransacoes failed:', e.message));
+    await syncTransacoes();
 }
 
-// Recargas
 function getRecargas() { return recargasCache; }
-function setRecargas(lista) {
+async function setRecargas(lista) {
     recargasCache = lista;
-    syncRecargas().catch(e => console.error('[DB] syncRecargas failed:', e.message));
+    await syncRecargas();
 }
 
-// Historico
 function getHistorico() { return historicoCache; }
-function setHistorico(lista) {
+async function setHistorico(lista) {
     historicoCache = lista;
-    syncHistorico().catch(e => console.error('[DB] syncHistorico failed:', e.message));
+    await syncHistorico();
 }
 
-// Admin Creditos
 function getAdminCreditsStore() { return adminCreditsCache; }
-function setAdminCreditsStore(store) {
+async function setAdminCreditsStore(store) {
     adminCreditsCache = store;
-    syncAdminCreditos().catch(e => console.error('[DB] syncAdminCreditos failed:', e.message));
+    await syncAdminCreditos();
 }
-function syncAdminCreditsStore() {
-    syncAdminCreditos().catch(e => console.error('[DB] syncAdminCreditos failed:', e.message));
+async function syncAdminCreditsStore() {
+    await syncAdminCreditos();
 }
 
-// Bonus Primeiro Depósito (persistente em arquivo, uma vez por usuário)
 function getBonusPrimeiroDeposito() { return bonusPrimeiroDepositoCache; }
-function setBonusPrimeiroDepositoJaUsado(nome) {
+async function setBonusPrimeiroDepositoJaUsado(nome) {
     const key = (nome || '').toLowerCase().trim();
     bonusPrimeiroDepositoCache[key] = true;
-    syncBonusCache();
-}
-function syncBonusCache() {
-    const path = path.join(__dirname, 'bonus_deposito.json');
-    fs.writeFileSync(path, JSON.stringify(bonusPrimeiroDepositoCache, null, 2));
-}
-function loadBonusCache() {
-    const path = path.join(__dirname, 'bonus_deposito.json');
-    if (fs.existsSync(path)) {
-        try {
-            const data = JSON.parse(fs.readFileSync(path, 'utf8'));
-            Object.keys(data).forEach(k => { bonusPrimeiroDepositoCache[k] = data[k]; });
-            console.log('[DB] Bonus cache carregado:', Object.keys(bonusPrimeiroDepositoCache).length, 'usuários');
-        } catch (e) { console.error('[DB] Erro ao carregar bonus cache:', e.message); }
-    }
+    await syncBonusDeposito();
 }
 
-// Bonus Given (admin usuarios tab)
 function getBonusGivenStore() { return bonusGivenCache; }
-function setBonusGivenStore(store) {
+async function setBonusGivenStore(store) {
     bonusGivenCache = store;
-    syncBonusGiven().catch(e => console.error('[DB] syncBonusGiven failed:', e.message));
+    await syncBonusGiven();
 }
-function syncBonusGivenStore() {
-    syncBonusGiven().catch(e => console.error('[DB] syncBonusGiven failed:', e.message));
+async function syncBonusGivenStore() {
+    await syncBonusGiven();
 }
 
-// Bot Fichas
 function getBotFichas() { return botFichasCache; }
-function setBotFichas(store) {
+async function setBotFichas(store) {
     botFichasCache = store;
-    syncBotFichas().catch(e => console.error('[DB] syncBotFichas failed:', e.message));
+    await syncBotFichas();
 }
 
-// Modo Teste
 async function loadModoTeste() {
     if (!pool) return false;
     try {
         const r = await pool.query('SELECT "ligado" FROM modo_teste WHERE "id"=1');
         if (r.rows.length > 0) return r.rows[0].ligado;
         return false;
-    } catch (e) { return false; }
+    } catch (e) { console.error('[DB] loadModoTeste error:', e.message); return false; }
 }
+
 async function saveModoTeste(ligado) {
     if (!pool) return;
     try {
@@ -470,10 +508,10 @@ async function saveModoTeste(ligado) {
     } catch (e) { console.error('[DB] saveModoTeste error:', e.message); }
 }
 
-// Rooms State
 function loadRoomState(roomId) {
     return roomsStateCache[roomId] || null;
 }
+
 function saveRoomState(roomId, state) {
     roomsStateCache[roomId] = state;
     if (!pool) return;
@@ -483,105 +521,12 @@ function saveRoomState(roomId, state) {
     ).catch(e => console.error('[DB] saveRoomState error:', e.message));
 }
 
-// ===================== MIGRATION FROM JSON FILES =====================
-
-async function migrateFromJson() {
-    console.log('[DB] Migrating data from JSON files to PostgreSQL...');
-    const dir = process.cwd();
-
-    // usuarios.json
-    try {
-        const data = JSON.parse(fs.readFileSync(path.join(dir, 'usuarios.json'), 'utf8'));
-        if (Array.isArray(data) && data.length > 0) {
-            usuariosCache = data;
-            await syncUsuarios();
-            console.log('[DB] Migrated ' + data.length + ' usuarios');
-        }
-    } catch (e) { console.log('[DB] usuarios.json: ' + e.message); }
-
-    // fichas.json
-    try {
-        const data = JSON.parse(fs.readFileSync(path.join(dir, 'fichas.json'), 'utf8'));
-        if (typeof data === 'object' && Object.keys(data).length > 0) {
-            fichasCache = data;
-            await syncFichas();
-            console.log('[DB] Migrated ' + Object.keys(data).length + ' fichas entries');
-        }
-    } catch (e) { console.log('[DB] fichas.json: ' + e.message); }
-
-    // saques.json
-    try {
-        const data = JSON.parse(fs.readFileSync(path.join(dir, 'saques.json'), 'utf8'));
-        if (Array.isArray(data) && data.length > 0) {
-            saquesCache = data;
-            await syncSaques();
-            console.log('[DB] Migrated ' + data.length + ' saques');
-        }
-    } catch (e) { console.log('[DB] saques.json: ' + e.message); }
-
-    // transacoes.json
-    try {
-        const data = JSON.parse(fs.readFileSync(path.join(dir, 'transacoes.json'), 'utf8'));
-        if (Array.isArray(data) && data.length > 0) {
-            transacoesCache = data;
-            await syncTransacoes();
-            console.log('[DB] Migrated ' + data.length + ' transacoes');
-        }
-    } catch (e) { console.log('[DB] transacoes.json: ' + e.message); }
-
-    // recargas.json
-    try {
-        const data = JSON.parse(fs.readFileSync(path.join(dir, 'recargas.json'), 'utf8'));
-        if (Array.isArray(data) && data.length > 0) {
-            recargasCache = data;
-            await syncRecargas();
-            console.log('[DB] Migrated ' + data.length + ' recargas');
-        }
-    } catch (e) { console.log('[DB] recargas.json: ' + e.message); }
-
-    // historico.json
-    try {
-        const data = JSON.parse(fs.readFileSync(path.join(dir, 'historico.json'), 'utf8'));
-        if (Array.isArray(data) && data.length > 0) {
-            historicoCache = data;
-            await syncHistorico();
-            console.log('[DB] Migrated ' + data.length + ' historicos');
-        }
-    } catch (e) { console.log('[DB] historico.json: ' + e.message); }
-
-    // admin_creditos.json
-    try {
-        const data = JSON.parse(fs.readFileSync(path.join(dir, 'admin_creditos.json'), 'utf8'));
-        if (typeof data === 'object' && Object.keys(data).length > 0) {
-            adminCreditsCache = data;
-            await syncAdminCreditos();
-            console.log('[DB] Migrated ' + Object.keys(data).length + ' admin_creditos entries');
-        }
-    } catch (e) { console.log('[DB] admin_creditos.json: ' + e.message); }
-
-    // bot_fichas.json
-    try {
-        const data = JSON.parse(fs.readFileSync(path.join(dir, 'bot_fichas.json'), 'utf8'));
-        if (typeof data === 'object' && Object.keys(data).length > 0) {
-            botFichasCache = data;
-            await syncBotFichas();
-            console.log('[DB] Migrated ' + Object.keys(data).length + ' bot_fichas entries');
-        }
-    } catch (e) { console.log('[DB] bot_fichas.json: ' + e.message); }
-
-    console.log('[DB] Migration complete!');
-    return true;
-}
-
-// ===================== CLOSE =====================
-
 async function close() {
     if (pool) await pool.end();
 }
 
 module.exports = {
     init,
-    migrateFromJson,
     close,
     getUsuarios,
     setUsuarios,

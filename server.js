@@ -1,8 +1,6 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const path = require('path');
-const fs = require('fs');
 const crypto = require('crypto');
 const http = require('http');
 const https = require('https');
@@ -89,8 +87,8 @@ async function enviarEmailNotificacao(assunto, texto) {
 function carregarUsuarios() {
     return db.getUsuarios();
 }
-function salvarUsuarios(lista) {
-    db.setUsuarios(lista);
+async function salvarUsuarios(lista) {
+    await db.setUsuarios(lista);
 }
 
 // Sessoes ativas: cpf -> { ws, sessionToken, nome }
@@ -124,8 +122,8 @@ let fichasStore = {};//
 function loadFichas() {
     return db.getFichasStore();
 }
-function saveFichas() {
-    db.syncFichasStore();
+async function saveFichas() {
+    await db.syncFichasStore();
 }
 function getChips(nome) {
     const key = (nome || '').toLowerCase().trim().normalize('NFC');
@@ -139,7 +137,7 @@ function getChips(nome) {
     }
     return { chips: engine.INITIAL_CHIPS, winnings: 0 };
 }
-function setChips(nome, chips, winnings) {
+async function setChips(nome, chips, winnings) {
     const key = (nome || '').toLowerCase().trim().normalize('NFC');
     let targetKey = key;
     for (const k of Object.keys(fichasStore)) {
@@ -149,7 +147,7 @@ function setChips(nome, chips, winnings) {
         }
     }
     fichasStore[targetKey] = { chips: Math.max(0, Math.round(chips)), winnings: Math.round(winnings || 0) };
-    saveFichas();
+    await saveFichas();
 }
 
 const gameRooms = new Map();
@@ -310,7 +308,7 @@ function agendarProximoDraw(room, delay) {
     room.drawTimer = setTimeout(() => sortearProximaBola(room), delay || DRAW_SPEED_MS);
 }
 
-function sortearProximaBola(room) {
+async function sortearProximaBola(room) {
     room.drawTimer = null;
     
     if (room.drawnBalls.length >= 90) {
@@ -354,10 +352,10 @@ function sortearProximaBola(room) {
         const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, totalCards);
         
         // Update persistent chips/winnings
-        results.forEach(r => {
+        for (const r of results) {
             const player = r.player;
             if (!player.isBot) {
-                setChips(player.name, player.chips, player.winnings);
+                await setChips(player.name, player.chips, player.winnings);
             }
             // Register prize transaction
             const transacoes = db.getTransacoes();
@@ -365,8 +363,8 @@ function sortearProximaBola(room) {
                 tipo: 'premio', nome: player.name, nomeExibicao: player.name, valor: r.totalReward / 1000,
                 data: new Date().toISOString(), detalhe: `Prêmio ${phaseKey}`
             });
-            db.setTransacoes(transacoes);
-        });
+            await db.setTransacoes(transacoes);
+        }
         
         const phaseLabel = engine.PHASES[phaseKey].label;
         results.forEach(r => {
@@ -453,7 +451,7 @@ function avancarParaProximaFase(room) {
     }, 8000);
 }
 
-function salvarHistoricoSorteio(room) {
+async function salvarHistoricoSorteio(room) {
     if (room.currentRound === 0) return;
     const vencedores = { kuadra: [], kina: [], keno: [] };
     room.players.forEach(player => {
@@ -475,33 +473,33 @@ function salvarHistoricoSorteio(room) {
     };
     const historico = db.getHistorico();
     historico.push(dados);
-    db.setHistorico(historico);
+    await db.setHistorico(historico);
     addLog(room, `📋 Sorteio #${room.currentRound} salvo no histórico.`);
 }
 
-function finalizarRodada(room) {
+async function finalizarRodada(room) {
     room.gameActive = false;
     room.gameEnded = true;
     if (room.drawTimer) { clearTimeout(room.drawTimer); room.drawTimer = null; }
     if (room.phasePauseTimer) { clearTimeout(room.phasePauseTimer); room.phasePauseTimer = null; }
     
-    salvarHistoricoSorteio(room);
+    await salvarHistoricoSorteio(room);
     sendGameState(room);
     addLog(room, '🏁 Rodada encerrada!');
     broadcast(room, { type: 'notice', text: '🏁 Rodada encerrada! Cartelas serão limpas...', kind: 'info' });
     
     // After 10s, clear cards and restart auto-start
-    setTimeout(() => {
+    setTimeout(async () => {
         if (room.gameActive) return;
         // Clear all cards, refund humans
-        room.players.forEach(p => {
+        for (const p of room.players.values()) {
             const qtd = p.cards ? p.cards.length : 0;
             if (!p.isBot && qtd > 0) {
                 p.chips += qtd * engine.CARD_COST;
-                setChips(p.name, p.chips, p.winnings);
+                await setChips(p.name, p.chips, p.winnings);
             }
             p.cards = [];
-        });
+        }
         room.drawnBalls = [];
         room.currentPhaseIndex = 0;
         room.gameEnded = false;
@@ -630,12 +628,12 @@ function cleanUpBots(room) {
     ensureBots(room, false);
 }
 
-function creditarFichas(nome, fichas) {
+async function creditarFichas(nome, fichas) {
     console.log(`[CREDITO] Adicionando ${fichas} credits para ${nome}`);
     
     const c = getChips(nome);
     const novosFichas = c.chips + Math.round(fichas);
-    setChips(nome, novosFichas, c.winnings);
+    await setChips(nome, novosFichas, c.winnings);
     
     gameRooms.forEach(room => {
         const player = Array.from(room.players.values()).find(p => 
@@ -654,7 +652,7 @@ function creditarFichas(nome, fichas) {
     });
 }
 
-function handleAction(ws, room, action, payload) {
+async function handleAction(ws, room, action, payload) {
     try {
     console.log('[ACTION]', { action, payload, clientId: ws.clientId, roomId: room.id });
     const clientId = ws.clientId;
@@ -779,8 +777,8 @@ function handleAction(ws, room, action, payload) {
         // Persistir
         if (targetName) {
             const adminCreditosFinais = isInRoom ? target.adminCredits : adminCreditsStore[key];
-            setAdminCreditos(targetName, adminCreditosFinais);
-            setChips(targetName, isInRoom ? target.chips : fichas.chips, isInRoom ? target.winnings : (fichasStore[key]?.winnings || 0));
+            await setAdminCreditos(targetName, adminCreditosFinais);
+            await setChips(targetName, isInRoom ? target.chips : fichas.chips, isInRoom ? target.winnings : (fichasStore[key]?.winnings || 0));
         }
         
         broadcast(room, {
@@ -811,7 +809,7 @@ function handleAction(ws, room, action, payload) {
         }
         player.chips -= cost;
         for (let i = 0; i < qty; i++) player.cards.push(engine.generateBingoCardData());
-        setChips(player.name, player.chips, player.winnings);
+        await setChips(player.name, player.chips, player.winnings);
         sendGameState(room, ws);
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buySuccess', qty, chips: player.chips }));
         return;
@@ -820,11 +818,11 @@ function handleAction(ws, room, action, payload) {
     if (action === 'resetGame') {
         if (room.gameActive) return;
         pararAutoStartServer(room);
-        room.players.forEach(p => {
+        for (const p of room.players.values()) {
             const qtd = p.cards ? p.cards.length : 0;
-            if (!p.isBot && qtd > 0) { p.chips += qtd * engine.CARD_COST; setChips(p.name, p.chips, p.winnings); }
+            if (!p.isBot && qtd > 0) { p.chips += qtd * engine.CARD_COST; await setChips(p.name, p.chips, p.winnings); }
             p.cards = [];
-        });
+        }
         room.drawnBalls = [];
         room.currentPhaseIndex = 0;
         room.gameEnded = false;
@@ -860,7 +858,7 @@ wss.on('connection', (ws) => {
     ws.roomId = null;
     ws.cpf = null;
 
-    ws.on('message', (message) => {
+    ws.on('message', async (message) => {
         let data;
         try {
             data = JSON.parse(message);
@@ -980,7 +978,7 @@ wss.on('connection', (ws) => {
             if (!roomId) return;
             const room = gameRooms.get(roomId);
             if (!room) return;
-            handleAction(ws, room, action, payload);
+            await handleAction(ws, room, action, payload);
             return;
         }
     });
@@ -1033,7 +1031,7 @@ app.post('/api/register', async (req, res) => {
             data: new Date().toISOString()
         };
         usuarios.push(novoUsuario);
-        salvarUsuarios(usuarios);
+        await salvarUsuarios(usuarios);
 
         // 1️⃣ RESPONDE O JOGADOR IMEDIATAMENTE (Entra na tela sem travar!)
         res.json({ success: true, sessionToken: novoUsuario.sessionToken, cpf, nome: nomeCompleto });
@@ -1051,7 +1049,7 @@ app.post('/api/register', async (req, res) => {
     }
 });
 
-app.post('/api/login', (req, res) => {
+app.post('/api/login', async (req, res) => {
     try {
         console.log('-> Dados recebidos no login:', req.body);
         let { cpf, senha } = req.body;
@@ -1068,7 +1066,7 @@ app.post('/api/login', (req, res) => {
         }
         const sessionToken = crypto.randomBytes(24).toString('hex');
         user.sessionToken = sessionToken;
-        salvarUsuarios(usuarios);
+        await salvarUsuarios(usuarios);
         console.log(`[LOGIN] ${user.nomeCompleto} (${user.cpfFormatado})`);
         res.json({ success: true, sessionToken, nome: user.nomeCompleto, cpf });
     } catch (err) {
@@ -1235,7 +1233,7 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
         // Track bonus given separately (not sacável em modo normal)
         const bonusGivenStore = db.getBonusGivenStore();
         bonusGivenStore[key] = (bonusGivenStore[key] || 0) + parseInt(bonus);
-        db.setBonusGivenStore(bonusGivenStore);
+        await db.setBonusGivenStore(bonusGivenStore);
 
         console.log(`[BONUS] ${bonus} fichas concedidas para ${usuario.nomeCompleto} via painel admin`);
         res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips });
@@ -1275,7 +1273,7 @@ app.get('/api/admin/usuarios-com-bonus', (req, res) => {
 });
 
 // Admin - Editar senha ou chave PIX (versão simples)
-app.post('/api/admin/usuarios/:cpf/edicao', (req, res) => {
+app.post('/api/admin/usuarios/:cpf/edicao', async (req, res) => {
     try {
         const { cpf } = req.params;
         const { campo, valor } = req.body;
@@ -1294,7 +1292,7 @@ app.post('/api/admin/usuarios/:cpf/edicao', (req, res) => {
             usuario.chavePix = valor;
         }
         
-        salvarUsuarios(usuariosArray);
+        await salvarUsuarios(usuariosArray);
         res.json({ success: true, usuario });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno.' });
@@ -1302,7 +1300,7 @@ app.post('/api/admin/usuarios/:cpf/edicao', (req, res) => {
 });
 
 // Admin - Excluir usuário completamente (todos os dados)
-app.delete('/api/admin/usuario/excluir', (req, res) => {
+app.delete('/api/admin/usuario/excluir', async (req, res) => {
     try {
         const { cpf } = req.body;
         if (!cpf) {
@@ -1310,7 +1308,6 @@ app.delete('/api/admin/usuario/excluir', (req, res) => {
         }
         const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
 
-        // 1. Remover de usuarios.json
         const usuarios = carregarUsuarios();
         const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
         const usuarioIdx = usuariosArray.findIndex(u => String(u.cpf).padStart(11, '0') === cpfLimpo);
@@ -1319,38 +1316,33 @@ app.delete('/api/admin/usuario/excluir', (req, res) => {
         }
         const nomeUsuario = usuariosArray[usuarioIdx].nomeCompleto;
         usuariosArray.splice(usuarioIdx, 1);
-        salvarUsuarios(usuariosArray);
+        await salvarUsuarios(usuariosArray);
 
-        // 2. Remover de fichasStore
         const fichasStore = db.getFichasStore();
         const keyNome = nomeUsuario.toLowerCase().trim();
         const keyBot = 'bot-' + nomeUsuario.toLowerCase().trim().replace(/\s+/g, '-');
         if (fichasStore[keyNome]) delete fichasStore[keyNome];
         if (fichasStore[keyBot]) delete fichasStore[keyBot];
-        db.setFichasStore(fichasStore);
+        await db.setFichasStore(fichasStore);
 
-        // 3. Remover de adminCreditsStore
         const adminCreditsStore = db.getAdminCreditsStore();
         if (adminCreditsStore[keyNome]) delete adminCreditsStore[keyNome];
         if (adminCreditsStore[keyBot]) delete adminCreditsStore[keyBot];
-        db.setAdminCreditsStore(adminCreditsStore);
+        await db.setAdminCreditsStore(adminCreditsStore);
 
-        // 4. Remover saques do usuário
         const saques = db.getSaques();
         const saquesFiltrados = saques.filter(s => (s.nome || '').toLowerCase().trim() !== keyNome);
-        db.setSaques(saquesFiltrados);
+        await db.setSaques(saquesFiltrados);
 
-        // 5. Remover transações do usuário
         const transacoes = db.getTransacoes();
         const transacoesFiltradas = transacoes.filter(t => (t.nome || '').toLowerCase().trim() !== keyNome);
-        db.setTransacoes(transacoesFiltradas);
+        await db.setTransacoes(transacoesFiltradas);
 
-        // 6. Remover recargas do usuário
         const recargas = db.getRecargas();
         const recargasFiltradas = recargas.filter(r => (r.nome || '').toLowerCase().trim() !== keyNome);
-        db.setRecargas(recargasFiltradas);
+        await db.setRecargas(recargasFiltradas);
 
-        // 7. Forçar logout do jogador deletado (se estiver conectado)
+        // Forçar logout do jogador deletado (se estiver conectado)
         try {
             // Tentar via sessoesAtivas (jogador autenticado por CPF)
             let desconectado = false;
@@ -1453,7 +1445,7 @@ app.post('/api/admin/enviar-pix', async (req, res) => {
             saques.push(saqueExistente);
         }
         
-        db.setSaques(saques);
+        await db.setSaques(saques);
         res.json({ success: true, saque: saqueExistente, asaasTransferId });
     } catch (err) {
         console.error('[ASAAS] Erro enviar-pix:', err.message);
@@ -1462,7 +1454,7 @@ app.post('/api/admin/enviar-pix', async (req, res) => {
 });
 
 // Admin - Marcar saque como pago
-app.post('/api/admin/saque-pago', (req, res) => {
+app.post('/api/admin/saque-pago', async (req, res) => {
     try {
         const { saqueId } = req.body;
         const saques = db.getSaques();
@@ -1475,7 +1467,7 @@ app.post('/api/admin/saque-pago', (req, res) => {
         saques[saqueIndex].status = 'pago';
         saques[saqueIndex].dataPagamento = new Date().toISOString();
         
-        db.setSaques(saques);
+        await db.setSaques(saques);
         res.json({ success: true, saque: saques[saqueIndex] });
     } catch (err) {
         res.status(500).json({ error: 'Erro ao marcar saque como pago.' });
@@ -1542,7 +1534,7 @@ app.post('/api/solicitar-saque', asyncHandler(async (req, res) => {
             data: new Date().toISOString()
         };
         saques.push(novoSaque);
-        db.setSaques(saques);
+        await db.setSaques(saques);
 
         const transacoes = db.getTransacoes();
         transacoes.push({
@@ -1553,7 +1545,7 @@ app.post('/api/solicitar-saque', asyncHandler(async (req, res) => {
             data: new Date().toISOString(),
             detalhe: `Saque solicitado - ${tipoChave || 'cpf'}: ${chavePix}`
         });
-        db.setTransacoes(transacoes);
+        await db.setTransacoes(transacoes);
 
         // Dedução do saldo + sincronização com jogadores em memória
         let novoChips, novoWinnings, novoAdminCred;
@@ -1562,14 +1554,14 @@ app.post('/api/solicitar-saque', asyncHandler(async (req, res) => {
             novoAdminCred = adminCred - fichasNecessarias;
             novoChips = c.chips - fichasNecessarias;
             novoWinnings = c.winnings;
-            setAdminCreditos(nome, novoAdminCred);
-            setChips(nome, novoChips, novoWinnings);
+            await setAdminCreditos(nome, novoAdminCred);
+            await setChips(nome, novoChips, novoWinnings);
         } else {
             // MODO NORMAL: deduz apenas dos winnings (ganhos)
             novoChips = c.chips - fichasNecessarias;
             novoWinnings = c.winnings - fichasNecessarias;
             novoAdminCred = adminCred;
-            setChips(nome, novoChips, novoWinnings);
+            await setChips(nome, novoChips, novoWinnings);
         }
 
         // Notifica admin por email
@@ -1658,8 +1650,8 @@ app.post('/api/admin/modo-teste', (req, res) => {
 function loadAdminCreditos() {
     return db.getAdminCreditsStore();
 }
-function saveAdminCreditos() {
-    db.syncAdminCreditsStore();
+async function saveAdminCreditos() {
+    await db.syncAdminCreditsStore();
 }
 
 let adminCreditsStore = {};
@@ -1689,7 +1681,7 @@ function getAdminCreditos(nome) {
     }
     return 0;
 }
-function setAdminCreditos(nome, valor) {
+async function setAdminCreditos(nome, valor) {
     const key = (nome || '').toLowerCase().trim().normalize('NFC');
     let targetKey = key;
     for (const k of Object.keys(adminCreditsStore)) {
@@ -1699,7 +1691,7 @@ function setAdminCreditos(nome, valor) {
         }
     }
     adminCreditsStore[targetKey] = Math.max(0, Math.round(valor));
-    saveAdminCreditos();
+    await saveAdminCreditos();
 }
 
 // ===================== ASAAS INTEGRATION =====================
@@ -1861,7 +1853,7 @@ app.get('/api/status-pix/:paymentId', async (req, res) => {
 });
 
 // Confirmar recarga (após PIX aprovado)
-app.post('/api/confirmar-recarga', (req, res) => {
+app.post('/api/confirmar-recarga', async (req, res) => {
     try {
         const { nome, valor, paymentId } = req.body;
         const fichas = Math.round(valor * 1000);
@@ -1874,11 +1866,11 @@ app.post('/api/confirmar-recarga', (req, res) => {
         const totalFichas = fichas + bonus;
 
         const c = getChips(nome);
-        setChips(nome, c.chips + totalFichas, c.winnings);
+        await setChips(nome, c.chips + totalFichas, c.winnings);
 
         // Marcar que este usuário já recebeu bônus de primeiro depósito
         if (!jaTemBonus) {
-            db.setBonusPrimeiroDepositoJaUsado(nome);
+            await db.setBonusPrimeiroDepositoJaUsado(nome);
         }
 
         gameRooms.forEach(room => {
@@ -1902,7 +1894,7 @@ app.post('/api/confirmar-recarga', (req, res) => {
             data: new Date().toISOString(),
             detalhe: paymentId ? `PIX: ${paymentId}` : 'Depósito manual'
         });
-        db.setTransacoes(transacoes);
+        await db.setTransacoes(transacoes);
 
         res.json({ success: true, fichas: totalFichas, bonusConcedido: bonus, primeiroDeposito: !jaTemBonus });
     } catch (err) {
@@ -1925,7 +1917,7 @@ app.get('/api/admin/historico', (req, res) => {
 });
 
 // Registrar premio (transacao)
-app.post('/api/registrar-premio', (req, res) => {
+app.post('/api/registrar-premio', async (req, res) => {
     try {
         const { nome, valor, fase } = req.body;
         if (!nome || !valor) return res.json({ success: true });
@@ -1935,28 +1927,28 @@ app.post('/api/registrar-premio', (req, res) => {
             data: new Date().toISOString(),
             detalhe: `Prêmio ${fase || ''}`
         });
-        db.setTransacoes(transacoes);
+        await db.setTransacoes(transacoes);
         res.json({ success: true });
     } catch (err) {
         res.json({ success: true });
     }
 });
 
-app.post('/api/sincronizar-recarga', (req, res) => {
+app.post('/api/sincronizar-recarga', async (req, res) => {
     try {
         const { paymentId } = req.body;
         if (!paymentId) return res.status(400).json({ error: 'paymentId obrigatório' });
         const recargas = db.getRecargas();
         const recarga = recargas.find(r => r.paymentId === paymentId);
         if (recarga) recarga.sincronizado = true;
-        db.setRecargas(recargas);
+        await db.setRecargas(recargas);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Erro ao sincronizar recarga.' });
     }
 });
 
-app.post('/api/salvar-historico', (req, res) => {
+app.post('/api/salvar-historico', async (req, res) => {
     try {
         const dados = req.body;
         if (!dados || !dados.numero) {
@@ -1969,7 +1961,7 @@ app.post('/api/salvar-historico', (req, res) => {
         } else {
             historico.push(dados);
         }
-        db.setHistorico(historico);
+        await db.setHistorico(historico);
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Erro ao salvar histórico.' });
@@ -2001,14 +1993,6 @@ async function iniciarServidor() {
     }
 
     await db.init(dbUrl);
-
-    if (db.getUsuarios().length === 0) {
-        const jsonExiste = fs.existsSync(path.join(__dirname, 'usuarios.json'));
-        if (jsonExiste) {
-            console.log('[SERVER] Banco vazio, migrando dados dos arquivos JSON...');
-            await db.migrateFromJson();
-        }
-    }
 
     fichasStore = db.getFichasStore();
     adminCreditsStore = db.getAdminCreditsStore();

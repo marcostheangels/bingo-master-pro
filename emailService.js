@@ -1,9 +1,19 @@
 const { Resend } = require('resend');
 
-// Inicializa o Resend com a chave que já está no seu Render
-const resend = new Resend(process.env.RESEND_API_KEY);
+let resend = null;
+if (process.env.RESEND_API_KEY) {
+    try {
+        resend = new Resend(process.env.RESEND_API_KEY);
+    } catch (e) {
+        console.log('[EMAIL] Resend não inicializado:', e.message);
+    }
+}
 
 async function alertarNovoCadastro(nomeUsuario, emailUsuario) {
+    if (!resend) {
+        console.log('[EMAIL] Resend não configurado, pulando notificação.');
+        return;
+    }
     try {
         const data = await resend.emails.send({
             from: 'onboarding@resend.dev', // Nota: Se você tem um domínio verificado no Resend, use o seu e-mail aqui
