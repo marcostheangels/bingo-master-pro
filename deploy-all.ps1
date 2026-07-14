@@ -5,7 +5,7 @@ Write-Output "   DEPLOY COMPLETO"
 Write-Output "=============================="
 
 Write-Output "`n>>> [1/3] Firebase Hosting..."
-firebase deploy --only hosting --project bingo-master-pro-39ae0 2>&1 | Select-Object -Last 1
+firebase deploy --only hosting --project bingo-vip-club-e8164 2>&1 | Select-Object -Last 1
 if ($LASTEXITCODE -ne 0) { Write-Output "ERRO no Firebase"; exit 1 }
 Write-Output ">>> OK"
 
