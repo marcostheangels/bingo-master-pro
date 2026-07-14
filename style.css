@@ -117,11 +117,14 @@ body {
 .screen {
     display: none;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     min-height: 100vh;
     padding: 20px;
 }
 .screen.active { display: flex; }
+/* Telas pequenas (login/admin) continuam centralizadas quando cabem na tela */
+#screenHome.active,
+#screenAdmin.active { align-items: center; }
 
 /* === HOME SCREEN === */
 .box {
