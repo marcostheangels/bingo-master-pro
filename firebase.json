@@ -1,6 +1,14 @@
 {
   "hosting": {
     "public": ".",
+    "headers": [
+      {
+        "source": "**/*.@(html|js|css)",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        ]
+      }
+    ],
     "ignore": [
       "node_modules/**",
       ".git/**",
