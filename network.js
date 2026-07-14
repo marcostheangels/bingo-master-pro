@@ -1,9 +1,17 @@
 // CONFIGURAÇÃO DO BACKEND (servidor autoritativo)
 // Local: ws://<host>:3000 (server.js). Produção (GitHub Pages / domínio próprio): aponte para o seu backend.
 const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.');
-const WS_SERVER_URL = IS_LOCAL
-    ? `ws://${window.location.hostname}:3000`
-    : `wss://api.bingovipclub.online`; // <-- PRODUÇÃO Render
+const WS_CANDIDATES = IS_LOCAL
+    ? [`ws://${window.location.hostname}:3000`]
+    : [
+          `wss://api.bingovipclub.online`,
+          `wss://bingo-master-pro-2026.onrender.com`
+      ];
+let wsCandidateIndex = 0;
+let wsOpened = false;
+function currentWsUrl() {
+    return WS_CANDIDATES[Math.min(wsCandidateIndex, WS_CANDIDATES.length - 1)];
+}
 
 let socket = null;
 let souDono = false;
@@ -105,10 +113,12 @@ function connectSocket() {
         socket.close();
     }
 
-    socket = new WebSocket(WS_SERVER_URL);
+    socket = new WebSocket(currentWsUrl());
 
     socket.addEventListener('open', () => {
         socketReady = true;
+        wsOpened = true;
+        wsCandidateIndex = 0;
         reconnectAttempts = 0;
         updateConnectionBadge(true);
         showOfflineBanner(false);
@@ -132,6 +142,9 @@ function connectSocket() {
     socket.addEventListener('close', (event) => {
         socketReady = false;
         stopHeartbeat();
+        if (!wsOpened && wsCandidateIndex < WS_CANDIDATES.length - 1) {
+            wsCandidateIndex++;
+        }
         if (pendingConnect) {
             showOfflineBanner(true);
             scheduleReconnect();
@@ -143,6 +156,9 @@ function connectSocket() {
 
     socket.addEventListener('error', () => {
         showOfflineBanner(true);
+        if (!wsOpened && wsCandidateIndex < WS_CANDIDATES.length - 1) {
+            wsCandidateIndex++;
+        }
     });
 }
 
