@@ -1,7 +1,7 @@
 window.API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'))
     ? '' : 'https://api.bingovipclub.online';
 window.API_FALLBACK = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'))
-    ? '' : 'https://bingo-master-pro-2026.onrender.com';
+    ? '' : 'https://bingo-master-pro-fcty.onrender.com';
 
 // Fallback automático: se o domínio principal do backend falhar (ex.: SSL do subdomínio
 // api.bingovipclub.online inválido), tenta o domínio padrão do Render.

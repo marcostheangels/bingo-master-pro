@@ -5,7 +5,7 @@ const WS_CANDIDATES = IS_LOCAL
     ? [`ws://${window.location.hostname}:3000`]
     : [
           `wss://api.bingovipclub.online`,
-          `wss://bingo-master-pro-2026.onrender.com`
+          `wss://bingo-master-pro-fcty.onrender.com`
       ];
 let wsCandidateIndex = 0;
 let wsOpened = false;
