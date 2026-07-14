@@ -120,11 +120,15 @@ body {
     align-items: flex-start;
     min-height: 100vh;
     padding: 20px;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
 }
-.screen.active { display: flex; }
-/* Telas pequenas (login/admin) continuam centralizadas quando cabem na tela */
+.screen.active { display: flex; flex-direction: column; }
+/* Telas pequenas (login/admin) centralizam quando cabem na tela */
 #screenHome.active,
-#screenAdmin.active { align-items: center; }
+#screenAdmin.active { align-items: center; justify-content: center; }
+/* Tela do jogo: nunca centraliza na vertical (evita cortar o topo) */
+#screenGame.active { align-items: center; justify-content: flex-start; }
 
 /* === HOME SCREEN === */
 .box {

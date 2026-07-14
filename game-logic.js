@@ -392,57 +392,61 @@ function goToScreen(screenId) {
     if (!screen) return;
     screen.classList.add('active');
 
-    if (screenId === 'screenGame') {
-        updatePhaseUI();
-        const nameLabel = document.getElementById('labelMyName');
-        const avatar = document.getElementById('avatarIcon');
-        if (nameLabel) nameLabel.textContent = myName;
-        if (avatar) avatar.textContent = myName.charAt(0).toUpperCase();
-        loadWinnings();
-        updateChipsDisplay();
-        
-        // Botão admin no topo - só para o dono.
-        const adminBtn = document.getElementById('btnAdminOpen');
-        const isMarcos = typeof isMarcosName === 'function' && isMarcosName(myName);
-        const ehDono = isMarcos || (typeof souDono !== 'undefined' && souDono);
-        const ehEspectador = typeof myRole !== 'undefined' && myRole === 'spectator';
-        if (adminBtn) adminBtn.style.display = (!ehEspectador && (isHost || ehDono)) ? '' : 'none';
-        
-        if (ehEspectador && typeof hideBotoesFinanceiros === 'function') {
-            hideBotoesFinanceiros();
-        }
-        
-        const hostMsgEl = document.getElementById('hostOnlyMsg');
-        if (hostMsgEl) hostMsgEl.style.display = isHost ? 'block' : 'none';
-        renderMyCards();
-        if (isHost) {
-            addBotsToGame();
-            sendToGuest({ type: 'gameState', players: allPlayers, drawnBalls, currentPhaseIndex });
-        }
+        if (screenId === 'screenGame') {
+            try {
+                updatePhaseUI();
+                const nameLabel = document.getElementById('labelMyName');
+                const avatar = document.getElementById('avatarIcon');
+                if (nameLabel) nameLabel.textContent = myName;
+                if (avatar) avatar.textContent = myName.charAt(0).toUpperCase();
+                loadWinnings();
+                updateChipsDisplay();
 
-        if (!speedControlInitialized) {
-            speedControlInitialized = true;
-            const speedInput = document.getElementById('speedRange');
-            if (speedInput) {
-                speedInput.addEventListener('input', () => {
-                    if (drawDelayTimeout) {
-                        scheduleNextDraw();
+                // Botão admin no topo - só para o dono.
+                const adminBtn = document.getElementById('btnAdminOpen');
+                const isMarcos = typeof isMarcosName === 'function' && isMarcosName(myName);
+                const ehDono = isMarcos || (typeof souDono !== 'undefined' && souDono);
+                const ehEspectador = typeof myRole !== 'undefined' && myRole === 'spectator';
+                if (adminBtn) adminBtn.style.display = (!ehEspectador && (isHost || ehDono)) ? '' : 'none';
+
+                if (ehEspectador && typeof hideBotoesFinanceiros === 'function') {
+                    hideBotoesFinanceiros();
+                }
+
+                const hostMsgEl = document.getElementById('hostOnlyMsg');
+                if (hostMsgEl) hostMsgEl.style.display = isHost ? 'block' : 'none';
+                renderMyCards();
+                if (isHost) {
+                    addBotsToGame();
+                    sendToGuest({ type: 'gameState', players: allPlayers, drawnBalls, currentPhaseIndex });
+                }
+
+                if (!speedControlInitialized) {
+                    speedControlInitialized = true;
+                    const speedInput = document.getElementById('speedRange');
+                    if (speedInput) {
+                        speedInput.addEventListener('input', () => {
+                            if (drawDelayTimeout) {
+                                scheduleNextDraw();
+                            }
+                        });
                     }
-                });
+                }
+
+                // Pré-carrega os áudios para não atrasar na primeira bola
+                if (typeof initSounds === 'function') initSounds();
+
+                // Solicita wake lock para manter a tela acesa durante o jogo
+                requestWakeLock();
+                // Fallback iOS: vídeo invisível mudo
+                setupNoSleepFallback();
+            } catch (err) {
+                console.error('Erro ao inicializar a tela do jogo (tela ainda visível):', err);
             }
+        } else {
+            // Libera wake lock ao sair da tela do jogo
+            releaseWakeLock();
         }
-
-        // Pré-carrega os áudios para não atrasar na primeira bola
-        if (typeof initSounds === 'function') initSounds();
-
-        // Solicita wake lock para manter a tela acesa durante o jogo
-        requestWakeLock();
-        // Fallback iOS: vídeo invisível mudo
-        setupNoSleepFallback();
-    } else {
-        // Libera wake lock ao sair da tela do jogo
-        releaseWakeLock();
-    }
 }
 
 function updatePhaseUI() {
