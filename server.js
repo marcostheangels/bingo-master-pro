@@ -171,26 +171,12 @@ async function saveFichas() {
 }
 function getChips(nome) {
     const key = (nome || '').toLowerCase().trim().normalize('NFC');
-    // Busca exata
-    for (const k of Object.keys(fichasStore)) {
-        if (k.normalize('NFC') === key) return fichasStore[k];
-    }
-    // Busca por prefixo
-    for (const k of Object.keys(fichasStore)) {
-        if (k.normalize('NFC').startsWith(key)) return fichasStore[k];
-    }
+    if (fichasStore[key]) return fichasStore[key];
     return { chips: engine.INITIAL_CHIPS, winnings: 0 };
 }
 async function setChips(nome, chips, winnings) {
     const key = (nome || '').toLowerCase().trim().normalize('NFC');
-    let targetKey = key;
-    for (const k of Object.keys(fichasStore)) {
-        if (k.normalize('NFC').startsWith(key) || key.startsWith(k.normalize('NFC'))) {
-            targetKey = k;
-            break;
-        }
-    }
-    fichasStore[targetKey] = { chips: Math.max(0, Math.round(chips)), winnings: Math.round(winnings || 0) };
+    fichasStore[key] = { chips: Math.max(0, Math.round(chips)), winnings: Math.round(winnings || 0) };
     await saveFichas();
 }
 
@@ -1911,37 +1897,11 @@ let modoTesteSaque = false;
 
 function getAdminCreditos(nome) {
     const key = (nome || '').toLowerCase().trim().normalize('NFC');
-    console.log('[DEBUG getAdminCreditos] Buscando:', key);
-    
-    let bestMatch = null;
-    let bestLen = -1;
-    
-    for (const k of Object.keys(adminCreditsStore)) {
-        const kNorm = k.normalize('NFC');
-        if (kNorm.startsWith(key) || key.startsWith(kNorm)) {
-            if (kNorm.length > bestLen) {
-                bestLen = kNorm.length;
-                bestMatch = k;
-            }
-        }
-    }
-    
-    if (bestMatch) {
-        console.log('[DEBUG getAdminCreditos] Match encontrado:', bestMatch, '->', adminCreditsStore[bestMatch]);
-        return adminCreditsStore[bestMatch];
-    }
-    return 0;
+    return adminCreditsStore[key] || 0;
 }
 async function setAdminCreditos(nome, valor) {
     const key = (nome || '').toLowerCase().trim().normalize('NFC');
-    let targetKey = key;
-    for (const k of Object.keys(adminCreditsStore)) {
-        if (k.normalize('NFC').startsWith(key) || key.startsWith(k.normalize('NFC'))) {
-            targetKey = k;
-            break;
-        }
-    }
-    adminCreditsStore[targetKey] = Math.max(0, Math.round(valor));
+    adminCreditsStore[key] = Math.max(0, Math.round(valor));
     await saveAdminCreditos();
 }
 
