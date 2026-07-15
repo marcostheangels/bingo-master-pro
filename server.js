@@ -1519,10 +1519,12 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
 // Admin - Enviar PIX
 app.post('/api/admin/enviar-pix', async (req, res) => {
     try {
-        const { para, chavePix, valor, tipoChave } = req.body;
+        const { para, chavePix, valor, tipoChave, saqueId } = req.body;
         const saques = db.getSaques();
         
-        let saqueExistente = saques.find(s => s.status === 'pendente' && s.nome === para && s.valor === valor);
+        let saqueExistente = saqueId
+            ? saques.find(s => String(s.id) === String(saqueId))
+            : saques.find(s => s.status === 'pendente' && s.nome === para && s.valor === valor);
         
         let asaasTransferId = null;
         if (chavePix && valor > 0) {
@@ -1581,7 +1583,7 @@ app.post('/api/admin/saque-pago', async (req, res) => {
         const { saqueId } = req.body;
         const saques = db.getSaques();
         
-        const saqueIndex = saques.findIndex(s => s.id === saqueId);
+        const saqueIndex = saques.findIndex(s => String(s.id) === String(saqueId));
         if (saqueIndex === -1) {
             return res.status(404).json({ error: 'Saque não encontrado.' });
         }

@@ -895,8 +895,8 @@ function carregarSaquesAdmin() {
                     <div style="color:#a0a0b0">Chave: ${s.chavePix} (${s.tipoChave})</div>
                     <div style="color:#a0a0b0">${new Date(s.data).toLocaleString('pt-BR')}</div>
                     <div style="display:flex;gap:6px;margin-top:6px">
-                        <button class="btn btn-add" onclick="processarSaqueAuto(${s.id})" style="padding:4px 10px;font-size:0.8em">✅ Pagar e Marcar</button>
-                        <button class="btn btn-remove" onclick="processarSaqueManual(${s.id})" style="padding:4px 10px;font-size:0.8em">✅ Marcar Pago</button>
+                        <button class="btn btn-add" onclick="processarSaqueAuto('${s.id}')" style="padding:4px 10px;font-size:0.8em">✅ Pagar e Marcar</button>
+                        <button class="btn btn-remove" onclick="processarSaqueManual('${s.id}')" style="padding:4px 10px;font-size:0.8em">✅ Marcar Pago</button>
                     </div>
                 </div>
             `).join('');
@@ -947,6 +947,7 @@ function processarSaqueAuto(id) {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
+                    saqueId: saque.id,
                     para: saque.nome,
                     chavePix: saque.chavePix,
                     valor: saque.valor,
