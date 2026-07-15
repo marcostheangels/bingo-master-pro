@@ -8,7 +8,7 @@ const PHASES = {
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const CARD_COST = 150; // R$0,15 cada cartela (em fichas = centavos de real)
-const JACKPOT_BALL_LIMIT = 37;
+const JACKPOT_BALL_LIMIT = 75;
 const JACKPOT_REWARD = 100000; // R$100,00 fixo
 const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
