@@ -399,6 +399,7 @@ async function sortearProximaBola(room) {
                 }
                 const transacoes = db.getTransacoes();
                 transacoes.push({
+                    id: Date.now() + Math.floor(Math.random() * 1000),
                     tipo: 'premio', nome: player.name, nomeExibicao: player.name, valor: r.totalReward / 1000,
                     data: new Date().toISOString(), detalhe: `Prêmio ${phaseKey}`
                 });
@@ -1649,6 +1650,7 @@ app.post('/api/solicitar-saque', async (req, res) => {
 
         const transacoes = db.getTransacoes();
         transacoes.push({
+            id: Date.now() + Math.floor(Math.random() * 1000),
             tipo: 'saque_pendente',
             nome,
             nomeExibicao: nome,
@@ -2026,6 +2028,7 @@ async function processarConfirmacaoRecarga(nome, valor, paymentId) {
 
     const transacoes = db.getTransacoes();
     transacoes.push({
+        id: Date.now() + Math.floor(Math.random() * 1000),
         tipo: 'deposito', nome, nomeExibicao: nome, valor,
         data: new Date().toISOString(),
         detalhe: paymentId ? `PIX: ${paymentId}` : 'Depósito manual'
@@ -2076,6 +2079,7 @@ app.post('/api/registrar-premio', async (req, res) => {
         if (!nome || !valor) return res.json({ success: true });
         const transacoes = db.getTransacoes();
         transacoes.push({
+            id: Date.now() + Math.floor(Math.random() * 1000),
             tipo: 'premio', nome, nomeExibicao: nome, valor,
             data: new Date().toISOString(),
             detalhe: `Prêmio ${fase || ''}`
