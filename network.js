@@ -308,6 +308,7 @@ document.addEventListener('visibilitychange', () => {
             backgroundPingInterval = null;
         }
         cancelReconnect();
+        if (typeof clearStaleCelebrations === 'function') clearStaleCelebrations();
         if (pendingConnect && (!socket || socket.readyState !== WebSocket.OPEN)) {
             connectSocket();
         }

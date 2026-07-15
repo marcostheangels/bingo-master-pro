@@ -1828,6 +1828,7 @@ let confettiPieces = [];
 let confettiAnimId = null;
 
 function launchConfetti() {
+    if (document.hidden) return; // não dispara confete em aba em segundo plano (evita "confete atrasado" ao voltar)
     const canvas = document.getElementById('confettiCanvas');
     if (!canvas) return;
     canvas.width = window.innerWidth;
@@ -1877,6 +1878,14 @@ function launchConfetti() {
         }
     }
     animate();
+}
+
+function clearStaleCelebrations() {
+    if (confettiAnimId) { cancelAnimationFrame(confettiAnimId); confettiAnimId = null; }
+    confettiPieces = [];
+    const canvas = document.getElementById('confettiCanvas');
+    if (canvas) { const ctx = canvas.getContext('2d'); if (ctx) ctx.clearRect(0, 0, canvas.width, canvas.height); }
+    document.querySelectorAll('.winner-banner-overlay, .keno-ranking-overlay').forEach(o => o.remove());
 }
 
 // ==================== TOAST NOTIFICATIONS ====================
