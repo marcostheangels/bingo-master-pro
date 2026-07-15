@@ -2980,3 +2980,58 @@ body {
 }
 #screenGame .user-name { color: #fff; }
 #screenGame .user-chips { color: var(--gold); }
+
+/* =====================================================
+   MOBILE CLEANUP — GAME SCREEN (telas estreitas <=620px)
+   ===================================================== */
+@media (max-width: 620px) {
+    .game-wrapper-mobile { padding: 10px; gap: 10px; }
+
+    /* Top bar: logo + status na 1ª linha, ações na 2ª linha */
+    .top-bar {
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 8px 10px;
+        padding: 10px 12px;
+    }
+    .room-logo { height: 44px; width: 44px; }
+    .connection-info { order: 1; margin-left: auto; font-size: 0.7em; }
+    .user-info {
+        order: 2;
+        width: 100%;
+        justify-content: flex-start;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding-top: 8px;
+        margin-top: 2px;
+        border-top: 1px solid rgba(251, 191, 36, 0.12);
+    }
+    .btn-deposit, .btn-withdraw, .btn-logout, .btn-sound {
+        padding: 8px 12px;
+        font-size: 0.78em;
+        min-height: 38px;
+    }
+
+    /* Jackpot */
+    #screenGame .jackpot-panel { padding: 14px; }
+    #screenGame .jackpot-value { font-size: 1.55em; }
+    #screenGame .jackpot-subtitle { font-size: 0.72em; line-height: 1.35; margin-top: 4px; }
+    #screenGame .btn-hall { width: 100%; margin-top: 10px; }
+
+    /* Premios (Kuadra / Kina / Keno) */
+    #screenGame .prizes-strip { gap: 8px; }
+    #screenGame .phase-item-mini { padding: 10px 6px; gap: 2px; }
+    #screenGame .phase-item-mini .phase-label { font-size: 0.82em; }
+    #screenGame .phase-item-mini .prize { font-size: 1.05em; }
+
+    /* Comprar cartelas: botões ocupam toda a largura */
+    #screenGame .buy-options { gap: 6px; flex-wrap: wrap; }
+    #screenGame .buy-options .btn { flex: 1 1 0; min-width: 0; padding: 11px 4px; font-size: 0.82em; }
+
+    /* Cartelas em 1 coluna em telas muito estreitas */
+    #screenGame .cards-grid { grid-template-columns: 1fr; }
+
+    /* Login */
+    #screenHome .box.login-card { padding: 26px 18px; }
+    #screenHome .brand-title { font-size: 1.5em; }
+}
