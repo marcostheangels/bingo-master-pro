@@ -245,7 +245,7 @@ const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎'
 const BOT_MAX_CARDS = 15;
 const HUMAN_MAX_CARDS = 40;
 const CARD_COST = 50;
-const JACKPOT_BALL_LIMIT = 70;
+const JACKPOT_BALL_LIMIT = 68;
 let JACKPOT_REWARD = 20000;
 
 function getRoundNumber() {

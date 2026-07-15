@@ -8,7 +8,7 @@ const PHASES = {
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const CARD_COST = 50; // R$0,05 cada cartela (em fichas = centavos de real)
-const JACKPOT_BALL_LIMIT = 70; // keno em ate 70 bolas (raro o suficiente p/ casa nao perder com cartela a R$0,05)
+const JACKPOT_BALL_LIMIT = 68; // keno em ate 68 bolas (jackpot mais raro/premium; casa nunca perde)
 const JACKPOT_INITIAL = 20000; // R$20,00 inicial do poço progressivo (atrativo e seguro)
 const JACKPOT_CONTRIBUTION_PER_CARD = 0; // poço FIXO em R$20,00 (não acumula); casa nunca banca e não há risco
 const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada (exige >=2 jogadores, pois HUMAN_MAX_CARDS=40)
