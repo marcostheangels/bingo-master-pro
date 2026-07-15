@@ -2573,7 +2573,7 @@ function iniciarAutoStart() {
     atualizarAutoStartDisplay();
     // toca corneta de largada ao iniciar a contagem regressiva
     if (typeof soundMuted === 'undefined' || !soundMuted) {
-        try { new Audio('Music, Bugle - First Call, Horse Race, Sports Bugle Music.mp3').play().catch(() => {}); } catch (e) {}
+        try { new Audio('inicio do bingo.mp3').play().catch(() => {}); } catch (e) {}
     }
     autoStartTimer = setInterval(() => {
         autoStartSeconds--;

@@ -785,7 +785,7 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
                 if (overlayTimer) overlayTimer.textContent = text;
                 // toca corneta de largada na primeira vez que o contador aparece
                 if (!jaVisivel && (typeof soundMuted === 'undefined' || !soundMuted)) {
-                    try { new Audio('Music, Bugle - First Call, Horse Race, Sports Bugle Music.mp3').play().catch(() => {}); } catch (e) {}
+                    try { new Audio('inicio do bingo.mp3').play().catch(() => {}); } catch (e) {}
                 }
             } else {
                 if (overlay) overlay.classList.remove('visible');
