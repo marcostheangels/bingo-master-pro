@@ -1826,12 +1826,17 @@ function asaasRequest(method, path, body) {
             }
         };
         if (data) options.headers['Content-Length'] = Buffer.byteLength(data);
-        const req = https.request(options, (res) => {
+        const req = https.request(options, (r) => {
             let responseBody = '';
-            res.on('data', chunk => responseBody += chunk);
-            res.on('end', () => {
-                try { resolve(JSON.parse(responseBody)); }
-                catch (e) { resolve({ error: 'Erro ao processar resposta Asaas', raw: responseBody }); }
+            r.on('data', chunk => responseBody += chunk);
+            r.on('end', () => {
+                let parsed;
+                try { parsed = JSON.parse(responseBody); } catch (e) { parsed = { raw: responseBody }; }
+                if (r.statusCode >= 400) {
+                    const msg = parsed && parsed.errors ? JSON.stringify(parsed.errors) : (responseBody || ('HTTP ' + r.statusCode));
+                    return reject(new Error('Asaas HTTP ' + r.statusCode + ': ' + msg));
+                }
+                resolve(parsed);
             });
         });
         req.on('error', reject);
@@ -1844,28 +1849,23 @@ const asaasCustomerCache = new Map();
 
 async function findOrCreateAsaasCustomer(nome, cpf, email) {
     if (asaasCustomerCache.has(cpf)) return asaasCustomerCache.get(cpf);
-    try {
-        const search = await asaasRequest('GET', `/customers?cpfCnpj=${cpf}`);
-        if (search && search.data && search.data.length > 0) {
-            asaasCustomerCache.set(cpf, search.data[0].id);
-            return search.data[0].id;
-        }
-
-        const customer = await asaasRequest('POST', '/customers', {
-            name: nome,
-            cpfCnpj: cpf,
-            email: email 
-        }); // 👈 Aqui fecha o objeto corretamente. O outro "});" que estava embaixo foi removido!
-
-        if (customer && customer.id) {
-            asaasCustomerCache.set(cpf, customer.id);
-            return customer.id;
-        }
-        return null;
-    } catch (e) {
-        console.error('[ASAAS] Erro ao criar/buscar cliente:', e.message);
-        return null;
+    const search = await asaasRequest('GET', `/customers?cpfCnpj=${cpf}`);
+    if (search && search.data && search.data.length > 0) {
+        asaasCustomerCache.set(cpf, search.data[0].id);
+        return search.data[0].id;
     }
+
+    const customer = await asaasRequest('POST', '/customers', {
+        name: nome,
+        cpfCnpj: cpf,
+        email: email
+    });
+
+    if (customer && customer.id) {
+        asaasCustomerCache.set(cpf, customer.id);
+        return customer.id;
+    }
+    throw new Error('Asaas não retornou id do cliente: ' + JSON.stringify(customer));
 }
 
 // Deposito - Criar PIX
@@ -1936,6 +1936,16 @@ app.post('/api/criar-pix', async (req, res) => {
             } catch (e) {
                 console.error('[ASAAS] Erro ao buscar QR Code:', e.message);
             }
+            // Notifica o admin de que um jogador gerou um PIX
+            try {
+                await enviarEmailNotificacao(
+                    `📥 Novo PIX gerado - R$ ${valor.toFixed(2)}`,
+                    `Jogador: ${nome}\nValor: R$ ${valor.toFixed(2)}\nCPF: ${cpfLimpo}\nEmail: ${email || 'não informado'}\nData: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`
+                );
+            } catch (e) {
+                console.error('[EMAIL] Falha ao notificar PIX gerado:', e.message);
+            }
+
             res.json({
                 copyPaste: copyPaste,
                 qrCode: qrCode,
@@ -1948,7 +1958,7 @@ app.post('/api/criar-pix', async (req, res) => {
         }
     } catch (err) {
         console.error('[ASAAS] Erro criar-pix:', err.message);
-        res.status(500).json({ error: 'Erro interno ao gerar PIX.' });
+        res.status(500).json({ error: 'Erro ao gerar PIX: ' + err.message });
     }
 });
 
