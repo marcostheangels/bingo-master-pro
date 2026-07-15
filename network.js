@@ -784,8 +784,13 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
                 if (overlay) overlay.classList.add('visible');
                 if (overlayTimer) overlayTimer.textContent = text;
                 // toca corneta de largada na primeira vez que o contador aparece
+                // (não toca de novo se atualizar a página durante a mesma contagem)
                 if (!jaVisivel && (typeof soundMuted === 'undefined' || !soundMuted)) {
-                    try { new Audio('inicio do bingo.mp3').play().catch(() => {}); } catch (e) {}
+                    const bugleKey = 'bingo_bugle_' + (typeof currentRound !== 'undefined' ? currentRound : 0);
+                    if (!sessionStorage.getItem(bugleKey)) {
+                        try { new Audio('inicio do bingo.mp3').play().catch(() => {}); } catch (e) {}
+                        sessionStorage.setItem(bugleKey, '1');
+                    }
                 }
             } else {
                 if (overlay) overlay.classList.remove('visible');

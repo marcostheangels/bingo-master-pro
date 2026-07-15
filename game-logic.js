@@ -1211,6 +1211,17 @@ function buyBingoCard() {
     buyBingoCards(1);
 }
 
+function comprarCartelas() {
+    const input = document.getElementById('buyQtyInput');
+    if (!input) return;
+    const qty = parseInt(input.value, 10);
+    if (isNaN(qty) || qty < 1) {
+        showToast('Digite um número válido de cartelas.', 'warning', 3000);
+        return;
+    }
+    buyBingoCards(qty);
+}
+
 function renderMyCards() {
     const grid = document.getElementById('myCardsGrid');
     if (!grid) return;
