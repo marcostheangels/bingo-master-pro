@@ -2,14 +2,15 @@
 // Lógica pura e autoritativa do Bingo. O servidor é a única fonte da verdade.
 
 const PHASES = {
-    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 3,00', reward: 3000 },
-    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 5,00', reward: 5000 },
-    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 7,00', reward: 7000 }
+    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 0,30', reward: 300 },
+    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 0,40', reward: 400 },
+    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 0,80', reward: 800 }
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
-const CARD_COST = 150; // R$0,15 cada cartela (em fichas = centavos de real)
+const CARD_COST = 100; // R$0,10 cada cartela (em fichas = centavos de real)
 const JACKPOT_BALL_LIMIT = 75;
-const JACKPOT_REWARD = 100000; // R$100,00 fixo
+const JACKPOT_INITIAL = 5000; // R$50,00 inicial do poço progressivo
+const JACKPOT_CONTRIBUTION_PER_CARD = 20; // R$0,02 de cada cartela vendida vai para o poço (100% dos jogadores, casa nunca banca)
 const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
 const HUMAN_MAX_CARDS = 15;
@@ -168,9 +169,10 @@ function isJackpotEligible(phaseKey, drawnBalls) {
     return phaseKey === 'keno' && drawnBalls.length <= JACKPOT_BALL_LIMIT;
 }
 
-function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards) {
+function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards, jackpotAmount) {
     const reward = PHASES[phaseKey].reward;
     const isJackpot = isJackpotEligible(phaseKey, drawnBalls) && (humanCards || 0) >= JACKPOT_MIN_HUMAN_CARDS;
+    const jackpotPool = jackpotAmount || JACKPOT_INITIAL;
 
     // Count unique winners (one prize per player, not per card)
     const uniquePlayers = [];
@@ -188,7 +190,7 @@ function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards) {
 
     // Split phase prize equally among all winners
     const perPlayer = Math.max(1, Math.floor(reward / uniquePlayers.length));
-    const jackpotPerPlayer = isJackpot ? Math.floor(JACKPOT_REWARD / uniquePlayers.length) : 0;
+    const jackpotPerPlayer = isJackpot ? Math.floor(jackpotPool / uniquePlayers.length) : 0;
 
     const results = uniquePlayers.map(player => {
         let totalReward = perPlayer;
@@ -207,7 +209,7 @@ function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards) {
 }
 
 module.exports = {
-    PHASES, PHASE_SEQUENCE, CARD_COST, JACKPOT_BALL_LIMIT, JACKPOT_REWARD, JACKPOT_MIN_HUMAN_CARDS,
+    PHASES, PHASE_SEQUENCE, CARD_COST, JACKPOT_BALL_LIMIT, JACKPOT_INITIAL, JACKPOT_CONTRIBUTION_PER_CARD, JACKPOT_MIN_HUMAN_CARDS,
     INITIAL_CHIPS, HUMAN_MAX_CARDS, BOT_NAMES, BOT_MAX_CARDS, BOT_INITIAL_CHIPS,
     getMaxCardsForPlayer, generateBingoCardData,
     computeCardAwards, getCardClosePhase, computeCloseCardsForAllPlayers,

@@ -207,7 +207,7 @@ function getRoom(roomId) {
             gameActive: false,
             gameEnded: false,
             currentRound: 0,
-            jackpot: engine.JACKPOT_REWARD,
+            jackpot: engine.JACKPOT_INITIAL,
             jackpotAwarded: false,
             autoStartSeconds: 0,
             autoStartTimer: null,
@@ -345,7 +345,8 @@ function iniciarNovaRodada(room) {
     
     const initialCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
     room.totalCardsAtStart = initialCards;
-    room.jackpot = engine.JACKPOT_REWARD;
+    // Jackpot é progressivo: mantém o acumulado; só semeia o valor inicial se estiver zerado
+    if (!room.jackpot) room.jackpot = engine.JACKPOT_INITIAL;
     
     saveRoomSnapshot(room);
     sendGameState(room);
@@ -429,7 +430,7 @@ async function sortearProximaBola(room) {
         if (winners.length > 0) {
             const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
             const humanCards = playersArr.filter(p => !p.isBot).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
-            const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, humanCards);
+            const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, humanCards, room.jackpot);
 
             // Update persistent chips/winnings (cache instantâneo, sync em background)
             for (const r of results) {
@@ -503,8 +504,10 @@ async function sortearProximaBola(room) {
         
         room.jackpotAwarded = isJackpot;
         if (isJackpot) {
-    room.jackpot = engine.JACKPOT_REWARD;
-    room.jackpotAwarded = false;
+            const awardedPool = room.jackpot;
+            room.jackpotAwardedValue = awardedPool;
+            room.jackpot = engine.JACKPOT_INITIAL;
+            room.jackpotAwarded = false;
             room.totalCardsAtStart = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
             broadcast(room, { type: 'jackpotUpdate', value: room.jackpot });
         }
@@ -547,7 +550,7 @@ async function salvarHistoricoSorteio(room) {
             if (card.awards.kuadra) vencedores.kuadra.push({ nome: player.name, premio: engine.PHASES.kuadra.reward });
             if (card.awards.kina) vencedores.kina.push({ nome: player.name, premio: engine.PHASES.kina.reward });
             if (card.awards.keno) {
-                const jackpot = room.jackpotAwarded ? room.jackpot : 0;
+                const jackpot = room.jackpotAwarded ? (room.jackpotAwardedValue || 0) : 0;
                 vencedores.keno.push({ nome: player.name, premio: engine.PHASES.keno.reward + jackpot });
             }
         });
@@ -654,7 +657,7 @@ function loadRoomSnapshot(room) {
         room.gameActive = snap.gameActive === true;
         room.gameEnded = snap.gameEnded === true;
         room.currentRound = snap.currentRound || 0;
-        room.jackpot = snap.jackpot || engine.JACKPOT_REWARD;
+        room.jackpot = snap.jackpot || engine.JACKPOT_INITIAL;
         if (Array.isArray(snap.players)) {
             snap.players.forEach(p => {
                 room.players.set(p.id, {
@@ -921,6 +924,8 @@ async function handleAction(ws, room, action, payload) {
             return;
         }
         player.chips -= cost;
+        // Jackpot progressivo: R$0,02 de cada cartela vendida alimenta o poço (100% dos jogadores)
+        room.jackpot = (room.jackpot || 0) + qty * engine.JACKPOT_CONTRIBUTION_PER_CARD;
         for (let i = 0; i < qty; i++) player.cards.push(engine.generateBingoCardData());
         await setChips(player.name, player.chips, player.winnings);
         try {

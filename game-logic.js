@@ -236,17 +236,17 @@ async function validarSessaoExistente() {
 }
 const BOT_INITIAL_CHIPS = 10000; // bots comecam com R$10,00 em fichas (somente bots)
 const PHASES = {
-    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 3,00', reward: 3000 },
-    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 5,00', reward: 5000 },
-    keno: { label: 'Keno', description: 'Cartela completa', prize: '💰 R$ 7,00', reward: 7000 }
+    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 0,30', reward: 300 },
+    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 0,40', reward: 400 },
+    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 0,80', reward: 800 }
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋'];
 const BOT_MAX_CARDS = 15;
 const HUMAN_MAX_CARDS = 15;
-const CARD_COST = 150;
-const JACKPOT_BALL_LIMIT = 37;
-let JACKPOT_REWARD = 100000;
+const CARD_COST = 100;
+const JACKPOT_BALL_LIMIT = 75;
+let JACKPOT_REWARD = 5000;
 
 function getRoundNumber() {
     return parseInt(localStorage.getItem('bingo_round_number') || '0', 10);
@@ -1575,7 +1575,7 @@ function processPhaseWinners(winners, phaseKey) {
     if (typeof updatePlayerListUI === 'function') updatePlayerListUI();
 
     if (isJackpot) {
-        JACKPOT_REWARD = 100000;
+        JACKPOT_REWARD = 5000;
         saveJackpotReward();
         sendToGuest({ type: 'jackpotUpdate', value: JACKPOT_REWARD });
         const jackpotDisplay = document.querySelector('.jackpot-value');
