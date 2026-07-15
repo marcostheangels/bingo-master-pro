@@ -125,6 +125,24 @@ const DEFAULT_ROOM = 'bingo-master-pro-marcos';
 const DRAW_SPEED = 3000;
 const AUTO_START_INTERVAL = 150;
 let fichasStore = {};//
+
+// Lista oficial de bots (deve espelhar a lista usada em usuarios-com-saldo)
+const BOT_NAMES = [
+    'Gabriel Costa', 'Lucas Almeida', 'Amanda Silva', 'Beatriz Souza',
+    'Rafael Oliveira', 'Juliana Santos', 'Matheus Lima', 'Camila Pereira',
+    'Felipe Rodrigues', 'Marina Fernandes', 'Thiago Barbosa', 'Larissa Gomes',
+    'Gustavo Ribeiro', 'Isabela Martins', 'Leonardo Carvalho', 'Vanessa Rocha',
+    'Eduardo Correia', 'Tatiana Nunes', 'Vinicius Moreira', 'Aline Vieira',
+    'Diego Araujo', 'Fernanda Castro', 'Bruno Cardoso', 'Letícia Freitas',
+    'Henrique Dias', 'Patrícia Teixeira', 'Murilo Farias', 'Raquel Monteiro',
+    'Caio Mendes', 'Ana Clara Duarte', 'Igor Macedo', 'Carla Nascimento',
+    'Renan Antunes', 'Luciana Vasconcelos', 'Fábio Rezende', 'Priscila Azevedo',
+    'Nicolas Fonseca', 'Débora Peixoto', 'Otávio Guimarães', 'Bianca Albuquerque'
+];
+function isNomeDeBot(nome) {
+    const key = (nome || '').toLowerCase().trim();
+    return BOT_NAMES.some(b => b.toLowerCase().trim() === key);
+}
 function loadFichas() {
     return db.getFichasStore();
 }
@@ -767,18 +785,7 @@ async function handleAction(ws, room, action, payload) {
         console.log('[ADMIN CHIPS] Players in room:', Array.from(room.players.entries()).map(([k, v]) => ({ key: k, name: v.name, id: v.id })));
         
         // Lista de nomes de bots (mesma de generateBotName)
-        const botNamesList = [
-            'Gabriel Costa', 'Lucas Almeida', 'Amanda Silva', 'Beatriz Souza',
-            'Rafael Oliveira', 'Juliana Santos', 'Matheus Lima', 'Camila Pereira',
-            'Felipe Rodrigues', 'Marina Fernandes', 'Thiago Barbosa', 'Larissa Gomes',
-            'Gustavo Ribeiro', 'Isabela Martins', 'Leonardo Carvalho', 'Vanessa Rocha',
-            'Eduardo Correia', 'Tatiana Nunes', 'Vinicius Moreira', 'Aline Vieira',
-            'Diego Araujo', 'Fernanda Castro', 'Bruno Cardoso', 'Letícia Freitas',
-            'Henrique Dias', 'Patrícia Teixeira', 'Murilo Farias', 'Raquel Monteiro',
-            'Caio Mendes', 'Ana Clara Duarte', 'Igor Macedo', 'Carla Nascimento',
-            'Renan Antunes', 'Luciana Vasconcelos', 'Fábio Rezende', 'Priscila Azevedo',
-            'Nicolas Fonseca', 'Débora Peixoto', 'Otávio Guimarães', 'Bianca Albuquerque'
-        ];
+        const botNamesList = BOT_NAMES;
         
         let target = room.players.get(payload.targetId);
         let targetName = null;
@@ -1273,18 +1280,7 @@ app.get('/api/admin/usuarios-com-saldo', (req, res) => {
             };
         });
 
-        const botNames = [
-            'Gabriel Costa', 'Lucas Almeida', 'Amanda Silva', 'Beatriz Souza',
-            'Rafael Oliveira', 'Juliana Santos', 'Matheus Lima', 'Camila Pereira',
-            'Felipe Rodrigues', 'Marina Fernandes', 'Thiago Barbosa', 'Larissa Gomes',
-            'Gustavo Ribeiro', 'Isabela Martins', 'Leonardo Carvalho', 'Vanessa Rocha',
-            'Eduardo Correia', 'Tatiana Nunes', 'Vinicius Moreira', 'Aline Vieira',
-            'Diego Araujo', 'Fernanda Castro', 'Bruno Cardoso', 'Letícia Freitas',
-            'Henrique Dias', 'Patrícia Teixeira', 'Murilo Farias', 'Raquel Monteiro',
-            'Caio Mendes', 'Ana Clara Duarte', 'Igor Macedo', 'Carla Nascimento',
-            'Renan Antunes', 'Luciana Vasconcelos', 'Fábio Rezende', 'Priscila Azevedo',
-            'Nicolas Fonseca', 'Débora Peixoto', 'Otávio Guimarães', 'Bianca Albuquerque'
-        ];
+        const botNames = BOT_NAMES;
 
         botNames.forEach(name => {
             const key = 'bot-' + name.toLowerCase().replace(/\s+/g, '-');
@@ -2081,9 +2077,7 @@ async function processarConfirmacaoRecarga(nome, valor, paymentId) {
     const bonusStore = db.getBonusPrimeiroDeposito();
     const keyNome = (nome || '').toLowerCase().trim();
     const jaTemBonus = !!bonusStore[keyNome];
-    const usuariosArr = carregarUsuarios();
-    const usuarioRecarga = usuariosArr.find(u => (u.nomeCompleto || '').toLowerCase().trim() === keyNome);
-    const isBotRecarga = !!(usuarioRecarga && usuarioRecarga.isBot);
+    const isBotRecarga = isNomeDeBot(keyNome);
     const bonus = (jaTemBonus || isBotRecarga) ? 0 : Math.round(fichas * 0.10);
     const totalFichas = fichas + bonus;
 
