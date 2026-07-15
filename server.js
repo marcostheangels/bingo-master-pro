@@ -555,12 +555,12 @@ async function salvarHistoricoSorteio(room) {
     if (room.currentRound === 0) return;
     const vencedores = { kuadra: [], kina: [], keno: [] };
     room.players.forEach(player => {
-        if (player.isBot) return; // Bots não entram no Hall da Fama
         (player.cards || []).forEach(card => {
             if (card.awards.kuadra) vencedores.kuadra.push({ nome: player.name, premio: engine.PHASES.kuadra.reward });
             if (card.awards.kina) vencedores.kina.push({ nome: player.name, premio: engine.PHASES.kina.reward });
             if (card.awards.keno) {
-                const jackpot = room.jackpotAwarded ? (room.jackpotAwardedValue || 0) : 0;
+                // Jackpot só entra no registro de HUMANOS (bots não recebem jackpot).
+                const jackpot = (!player.isBot && room.jackpotAwarded) ? (room.jackpotAwardedValue || 0) : 0;
                 vencedores.keno.push({ nome: player.name, premio: engine.PHASES.keno.reward + jackpot });
             }
         });

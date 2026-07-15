@@ -2743,7 +2743,7 @@ function abrirHallDaFama() {
                     if (!arr.length) return '';
                     return `<div class="hall-secao">
                         <div class="hall-fase" style="color:${cor}">${titulo}</div>
-                        ${arr.map(x => `<div class="hall-vencedor"><span>${escapeHtml(x.nome)}</span><span style="color:#fcd34d">R$ ${parseFloat(x.premio || 0).toFixed(2).replace('.', ',')}</span></div>`).join('')}
+                        ${arr.map(x => `<div class="hall-vencedor"><span>${escapeHtml(x.nome)}</span><span style="color:#fcd34d">R$ ${parseFloat((x.premio || 0) / 1000).toFixed(2).replace('.', ',')}</span></div>`).join('')}
                     </div>`;
                 };
                 return `<div class="hall-rodada">
