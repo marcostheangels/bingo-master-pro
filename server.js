@@ -208,6 +208,7 @@ function getRoom(roomId) {
             gameEnded: false,
             currentRound: 0,
             jackpot: engine.JACKPOT_REWARD,
+            jackpotAwarded: false,
             autoStartSeconds: 0,
             autoStartTimer: null,
             drawTimer: null,
@@ -427,12 +428,13 @@ async function sortearProximaBola(room) {
         
         if (winners.length > 0) {
             const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
-            const totalCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
-            const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, totalCards);
-            
+            const humanCards = playersArr.filter(p => !p.isBot).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
+            const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, humanCards);
+
             // Update persistent chips/winnings (cache instantâneo, sync em background)
             for (const r of results) {
                 const player = r.player;
+                if (player.isBot) continue; // segurança: bots nunca entram no ledger/prêmio
                 if (!player.isBot) {
                     setChips(player.name, player.chips, player.winnings).catch(e => console.error('[GAME] Erro setChips winner:', e.message));
                 }
@@ -499,8 +501,10 @@ async function sortearProximaBola(room) {
         });
         broadcast(room, { type: 'confetti' });
         
+        room.jackpotAwarded = isJackpot;
         if (isJackpot) {
-            room.jackpot = engine.JACKPOT_REWARD;
+    room.jackpot = engine.JACKPOT_REWARD;
+    room.jackpotAwarded = false;
             room.totalCardsAtStart = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
             broadcast(room, { type: 'jackpotUpdate', value: room.jackpot });
         }
@@ -538,11 +542,12 @@ async function salvarHistoricoSorteio(room) {
     if (room.currentRound === 0) return;
     const vencedores = { kuadra: [], kina: [], keno: [] };
     room.players.forEach(player => {
+        if (player.isBot) return; // Bots não entram no Hall da Fama
         (player.cards || []).forEach(card => {
             if (card.awards.kuadra) vencedores.kuadra.push({ nome: player.name, premio: engine.PHASES.kuadra.reward });
             if (card.awards.kina) vencedores.kina.push({ nome: player.name, premio: engine.PHASES.kina.reward });
             if (card.awards.keno) {
-                const jackpot = room.drawnBalls.length <= engine.JACKPOT_BALL_LIMIT ? room.jackpot : 0;
+                const jackpot = room.jackpotAwarded ? room.jackpot : 0;
                 vencedores.keno.push({ nome: player.name, premio: engine.PHASES.keno.reward + jackpot });
             }
         });

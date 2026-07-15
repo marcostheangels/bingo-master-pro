@@ -10,6 +10,7 @@ const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const CARD_COST = 150; // R$0,15 cada cartela (em fichas = centavos de real)
 const JACKPOT_BALL_LIMIT = 37;
 const JACKPOT_REWARD = 100000; // R$100,00 fixo
+const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
 const HUMAN_MAX_CARDS = 15;
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋', 'Lucas 🔥', 'Beatriz 🌻', 'Gustavo 🍎', 'Larissa 🦄', 'Rafael 🎲', 'Patrícia 🌹', 'Thiago ⚽', 'Vanessa 🍓', 'Felipe 🚀', 'Mariana 🐬'];
@@ -152,6 +153,7 @@ function computeCloseCardsForAllPlayers(players, currentPhaseIndex, drawnBalls) 
 function checkAwardsForAllPlayers(players, currentPhaseIndex, drawnBalls) {
     const winners = [];
     players.forEach(player => {
+        if (player.isBot) return; // Bots NÃO ganham prêmios (são apenas figurantes)
         (player.cards || []).forEach((cardData, cardIndex) => {
             const newAwards = computeCardAwards(cardData, currentPhaseIndex, drawnBalls);
             newAwards.forEach(phase => {
@@ -166,9 +168,9 @@ function isJackpotEligible(phaseKey, drawnBalls) {
     return phaseKey === 'keno' && drawnBalls.length <= JACKPOT_BALL_LIMIT;
 }
 
-function processPhaseWinners(winners, phaseKey, drawnBalls, totalCards) {
+function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards) {
     const reward = PHASES[phaseKey].reward;
-    const isJackpot = isJackpotEligible(phaseKey, drawnBalls);
+    const isJackpot = isJackpotEligible(phaseKey, drawnBalls) && (humanCards || 0) >= JACKPOT_MIN_HUMAN_CARDS;
 
     // Count unique winners (one prize per player, not per card)
     const uniquePlayers = [];
@@ -205,7 +207,7 @@ function processPhaseWinners(winners, phaseKey, drawnBalls, totalCards) {
 }
 
 module.exports = {
-    PHASES, PHASE_SEQUENCE, CARD_COST, JACKPOT_BALL_LIMIT, JACKPOT_REWARD,
+    PHASES, PHASE_SEQUENCE, CARD_COST, JACKPOT_BALL_LIMIT, JACKPOT_REWARD, JACKPOT_MIN_HUMAN_CARDS,
     INITIAL_CHIPS, HUMAN_MAX_CARDS, BOT_NAMES, BOT_MAX_CARDS, BOT_INITIAL_CHIPS,
     getMaxCardsForPlayer, generateBingoCardData,
     computeCardAwards, getCardClosePhase, computeCloseCardsForAllPlayers,
