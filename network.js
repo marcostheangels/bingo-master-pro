@@ -85,6 +85,7 @@ let myRoomId = '';
 let pendingConnect = null;
 let reconnectAttempts = 0;
 let reconnectTimeout = null;
+let wasForcedDisconnect = false;
 let heartbeatInterval = null;
 let backgroundPingInterval = null;
 const MAX_RECONNECT_ATTEMPTS = 999;
@@ -187,6 +188,7 @@ function connectSocket() {
         wsOpened = true;
         wsCandidateIndex = 0;
         reconnectAttempts = 0;
+        wasForcedDisconnect = false;
         updateConnectionBadge(true);
         showOfflineBanner(false);
         if (typeof hideSpinner === 'function') hideSpinner();
@@ -209,6 +211,13 @@ function connectSocket() {
     socket.addEventListener('close', (event) => {
         socketReady = false;
         stopHeartbeat();
+        if (wasForcedDisconnect) {
+            wasForcedDisconnect = false;
+            cancelReconnect();
+            updateConnectionBadge(false, false);
+            showOfflineBanner(false);
+            return;
+        }
         if (!wsOpened && wsCandidateIndex < WS_CANDIDATES.length - 1) {
             wsCandidateIndex++;
         }
@@ -358,8 +367,16 @@ function handleSocketMessage(raw) {
     }
 
     if (message.type === 'forcedDisconnect') {
-        showToast(message.message, 'error', 5000);
+        wasForcedDisconnect = true;
+        cancelReconnect();
+        showToast(message.message || 'Conta aberta em outro dispositivo. Você foi desconectado.', 'error', 5000);
+        localStorage.removeItem('bingo_session_token');
+        localStorage.removeItem('bingo_meu_cpf');
+        minhaSessaoToken = '';
+        meuCpf = '';
+        pendingConnect = null;
         if (typeof goToScreen === 'function') setTimeout(() => goToScreen('screenHome'), 100);
+        if (socket) { try { socket.close(); } catch (e) {} }
         return;
     }
 
