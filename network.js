@@ -780,8 +780,13 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
             const overlay = document.getElementById('countdownOverlay');
             const overlayTimer = document.getElementById('countdownTimer');
             if (s > 0) {
+                const jaVisivel = overlay && overlay.classList.contains('visible');
                 if (overlay) overlay.classList.add('visible');
                 if (overlayTimer) overlayTimer.textContent = text;
+                // toca corneta de largada na primeira vez que o contador aparece
+                if (!jaVisivel && (typeof soundMuted === 'undefined' || !soundMuted)) {
+                    try { new Audio('Music, Bugle - First Call, Horse Race, Sports Bugle Music.mp3').play().catch(() => {}); } catch (e) {}
+                }
             } else {
                 if (overlay) overlay.classList.remove('visible');
             }

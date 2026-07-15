@@ -2571,6 +2571,10 @@ function iniciarAutoStart() {
     if (!isHost || gameActive || bloquearAutoStart) return;
     autoStartSeconds = AUTO_START_INTERVAL / 1000;
     atualizarAutoStartDisplay();
+    // toca corneta de largada ao iniciar a contagem regressiva
+    if (typeof soundMuted === 'undefined' || !soundMuted) {
+        try { new Audio('Music, Bugle - First Call, Horse Race, Sports Bugle Music.mp3').play().catch(() => {}); } catch (e) {}
+    }
     autoStartTimer = setInterval(() => {
         autoStartSeconds--;
         atualizarAutoStartDisplay();
