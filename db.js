@@ -71,7 +71,7 @@ async function createTables() {
     `);
     await pool.query(`
         CREATE TABLE IF NOT EXISTS transacoes (
-            "id" SERIAL PRIMARY KEY,
+            "id" BIGINT PRIMARY KEY,
             "tipo" TEXT,
             "nome" TEXT,
             "nomeExibicao" TEXT,
@@ -80,6 +80,11 @@ async function createTables() {
             "data" TEXT
         )
     `);
+    try {
+        await pool.query(`ALTER TABLE transacoes ALTER COLUMN "id" TYPE BIGINT`);
+    } catch (e) {
+        console.error('[DB] ALTER transacoes id BIGINT (ignorado):', e.message);
+    }
     await pool.query(`
         CREATE TABLE IF NOT EXISTS recargas (
             "paymentId" TEXT PRIMARY KEY,
