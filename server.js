@@ -508,7 +508,8 @@ async function sortearProximaBola(room) {
             type: 'winnerEvent',
             phaseKey,
             results: resultsWithCards,
-            winningBall: room.drawnBalls.length ? room.drawnBalls[room.drawnBalls.length - 1] : null
+            winningBall: room.drawnBalls.length ? room.drawnBalls[room.drawnBalls.length - 1] : null,
+            jackpotValue: isJackpot ? room.jackpot : 0
         });
         broadcast(room, { type: 'confetti' });
         

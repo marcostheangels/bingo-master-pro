@@ -677,13 +677,13 @@ function notifyGuestsOfWinner(phaseKey, playerResults) {
 
 let jackpotAudio = null;
 
-function showWinnerBanner(phaseKey, results) {
+function showWinnerBanner(phaseKey, results, jackpotValue) {
     const isJackpot = results.some(r => r.jackpotCount > 0);
     const nomes = results.map(r => (r.player ? r.player.name : r.name)).filter(Boolean).join(', ');
     const titulo = (PHASES[phaseKey] && PHASES[phaseKey].label) || 'Vitória';
     mostrarNotificacao('🏆 ' + titulo + '!', nomes ? nomes + ' venceu' + (results.length > 1 ? 'ram' : '') + '!' : 'Você venceu!');
     if (isJackpot) {
-        showJackpotCelebration(results);
+        showJackpotCelebration(results, jackpotValue);
         return true;
     }
     showPhaseCelebration(phaseKey, results);
@@ -871,7 +871,7 @@ function closePhaseBanner(btn, overlay) {
     if (el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 500); }
 }
 
-function showJackpotCelebration(results) {
+function showJackpotCelebration(results, jackpotValue) {
     if (jackpotAudio) { jackpotAudio.pause(); jackpotAudio = null; }
     if (!soundMuted) {
         jackpotAudio = new Audio('chaves_3.mp3');
@@ -883,16 +883,18 @@ function showJackpotCelebration(results) {
 
     const overlay = document.createElement('div');
     overlay.className = 'winner-banner-overlay celebration-jackpot';
-    overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,2,113,0.75);backdrop-filter:blur(12px);z-index:10000;opacity:0;transition:opacity 0.4s';
+    overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,2,113,0.75);backdrop-filter:blur(12px);z-index:12000;opacity:0;transition:opacity 0.4s';
     const names = results.map(r => escapeHtml(r.player ? r.player.name : r.name)).join(', ');
     const total = results.reduce((s, r) => s + (r.totalReward || 0), 0);
-    const totalReais = (total / 1000).toFixed(2).replace('.', ',');
+    const valorExibido = (jackpotValue && jackpotValue > 0) ? jackpotValue : total;
+    const totalReais = (valorExibido / 1000).toFixed(2).replace('.', ',');
     overlay.innerHTML = `
     <div style="background:linear-gradient(to bottom, rgb(106, 121, 255), rgb(0, 3, 152), rgb(0, 3, 152), rgb(0, 3, 152));color:#ffffff;padding:50px 60px;border-radius:14px;text-align:center;box-shadow:5px 5px 0px rgba(0,0,0,0.55);max-width:520px;width:90%;position:relative;overflow:hidden;border:2px solid rgba(255,255,0,0.4)" id="jackpotBanner">
         <div style="font-size:4em;margin-bottom:10px">👑</div>
         <div style="font-size:4em;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#ffff00;text-shadow:3px 3px rgba(0,0,0,1)">JACKPOT!</div>
         <div style="font-size:1.3em;font-weight:600;margin-top:8px;opacity:0.9">GRANDE VENCEDOR</div>
-        <div style="font-size:3.2em;font-weight:900;margin:16px 0;color:#ffff00;text-shadow:3px 3px rgba(0,0,0,1)">R$ ${totalReais}</div>
+        <div style="font-size:1em;font-weight:700;margin-top:14px;opacity:0.85;letter-spacing:2px;text-transform:uppercase">Prêmio do Jackpot</div>
+        <div style="font-size:3.4em;font-weight:900;margin:6px 0 16px;color:#ffff00;text-shadow:3px 3px rgba(0,0,0,1)">R$ ${totalReais}</div>
         <div style="font-size:1.3em;font-weight:900;opacity:1;margin-bottom:20px;color:#ffff00;text-shadow:2px 2px rgba(0,0,0,1)">${names}</div>
         <button onclick="closeJackpotBanner()" style="padding:14px 40px;border-radius:50px;border:2px solid rgba(255,255,0,0.4);background:rgba(0,0,0,0.2);color:#ffffff;font-size:1em;font-weight:700;cursor:pointer;transition:all 0.3s">Fechar</button>
     </div>`;
@@ -906,7 +908,7 @@ function showJackpotCelebration(results) {
     @keyframes jackpotBounce { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-15px)} }
     @keyframes jackpotGlow { 0%,100%{text-shadow:0 4px 20px rgba(0,0,0,0.15)} 50%{text-shadow:0 4px 40px rgba(0,0,0,0.25),0 0 60px rgba(255,215,0,0.3)} }
     @keyframes jackpotValuePulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.05)} }
-    .jackpotCoin{position:fixed;pointer-events:none;z-index:10001;animation:jackpotCoinFall linear forwards}
+    .jackpotCoin{position:fixed;pointer-events:none;z-index:12001;animation:jackpotCoinFall linear forwards}
     @keyframes jackpotCoinFall{0%{transform:translateY(-100px) rotate(0deg);opacity:1}100%{transform:translateY(110vh) rotate(720deg);opacity:0}}
     .jackpotSpark{position:absolute;border-radius:50%;pointer-events:none;animation:jackpotSparkBurst ease-out forwards}
     @keyframes jackpotSparkBurst{0%{transform:translate(0,0) scale(1);opacity:1}100%{transform:translate(var(--tx),var(--ty)) scale(0);opacity:0}}
@@ -926,7 +928,7 @@ function showJackpotCelebration(results) {
         }, i * 80);
     }
 
-    setTimeout(closeJackpotBanner, getCelebrationDuration(results.length));
+    setTimeout(closeJackpotBanner, Math.max(getCelebrationDuration(results.length), 6000));
 }
 
 function closeJackpotBanner() {
@@ -1462,7 +1464,7 @@ function drawNextBall() {
             addLog(`${result.player.name} ganhou ${result.totalReward.toLocaleString('pt-BR')} fichas em ${phaseTitle}.${jackpotText}`);
         });
 
-        showWinnerBanner(phaseKey, playerResults);
+        showWinnerBanner(phaseKey, playerResults, JACKPOT_REWARD);
         notifyGuestsOfWinner(phaseKey, playerResults);
         updatePlayerListUI();
         renderMyCards();
@@ -2178,7 +2180,7 @@ drawNextBall = function() {
             const isJackpot = playerResults.some(r => r.jackpotCount > 0);
             if (!isJackpot) playWinnerSound(phaseKey, playerResults);
             launchConfetti();
-            showWinnerBanner(phaseKey, playerResults);
+            showWinnerBanner(phaseKey, playerResults, JACKPOT_REWARD);
             notifyGuestsOfWinner(phaseKey, playerResults);
             sendToGuest({ type: 'confetti' });
             updatePlayerListUI();

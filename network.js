@@ -656,7 +656,7 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
             if (data.winningBall) {
                 try { window.__ultimaBolaVencedora = data.winningBall; } catch (e) {}
             }
-            showWinnerBanner(data.phaseKey || data.phase, results);
+            showWinnerBanner(data.phaseKey || data.phase, results, data.jackpotValue);
             if (typeof playWinnerSound === 'function') {
                 const isJackpot = results.some(r => r.jackpotCount > 0);
                 if (!isJackpot) playWinnerSound(data.phaseKey || data.phase, results);
