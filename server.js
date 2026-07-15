@@ -397,18 +397,28 @@ async function sortearProximaBola(room) {
             return;
         }
         
-        // Se a fase atual já foi ganha por alguém, não sortear mais bolas nesta fase
+        // Se a fase atual já foi ganha, não sortear mais bolas nesta fase.
+        // Em sala com humanos, a fase avança SÓ quando um humano ganha (bots não snipam o prêmio).
+        // Em sala SÓ de bots, avança pela conclusão dos próprios bots (senão a rodada travava em Kuadra).
+        // Em ambos os casos, bots NÃO recebem prêmio nem entram no Hall da Fama.
         const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
+        const salaTemHumanos = Array.from(room.players.values()).some(p => !p.isBot && p.cards && p.cards.length > 0);
         let jaTemVencedor = false;
         room.players.forEach(p => {
+            if (p.isBot && salaTemHumanos) return; // com humanos na sala, só humanos avançam a fase
             (p.cards || []).forEach(c => {
+                engine.computeCardAwards(c, room.currentPhaseIndex, room.drawnBalls);
                 if (c.awards && c.awards[phaseKey]) jaTemVencedor = true;
             });
         });
         if (jaTemVencedor) {
             room.phasePauseTimer = setTimeout(() => {
                 room.phasePauseTimer = null;
-                avancarParaProximaFase(room);
+                if (room.currentPhaseIndex < engine.PHASE_SEQUENCE.length - 1) {
+                    avancarParaProximaFase(room);
+                } else {
+                    finalizarRodada(room);
+                }
             }, 3000);
             return;
         }
