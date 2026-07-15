@@ -74,7 +74,8 @@ async function enviarEmailNotificacao(assunto, texto) {
         }
     }
     if (!transporter) {
-        throw new Error('Nenhum método de email configurado (adicione RESEND_API_KEY ou SMTP_PASS).');
+        console.warn('[EMAIL] Nenhum método de email configurado (Resend/SMTP). Notificação ignorada.');
+        return;
     }
     console.log('[EMAIL] Enviando via SMTP:', assunto, 'para', ADMIN_EMAIL);
     try {
@@ -84,8 +85,7 @@ async function enviarEmailNotificacao(assunto, texto) {
         });
         console.log('[EMAIL] Enviado! ID:', info.messageId);
     } catch (err) {
-        console.error('[EMAIL] Erro ao enviar:', err.message);
-        throw err;
+        console.error('[EMAIL] Erro ao enviar (ignorado):', err.message);
     }
 }
 
@@ -1586,7 +1586,8 @@ const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, ne
     res.status(500).json({ error: 'Erro interno no servidor.' });
 });
 
-app.post('/api/solicitar-saque', asyncHandler(async (req, res) => {
+app.post('/api/solicitar-saque', async (req, res) => {
+ try {
     const { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
     console.log('[SAQUE DEBUG] Recebido:', { nome, valor, chavePix, tipoChave, hasToken: !!sessionToken });
     if (!nome || !valor || !chavePix) {
@@ -1681,8 +1682,12 @@ app.post('/api/solicitar-saque', asyncHandler(async (req, res) => {
         });
         console.log(`[SAQUE] ${nome} solicitou saque de R$ ${valor.toFixed(2)} via ${tipoChave || 'cpf'}: ${chavePix}`);
 
-    res.json({ success: true, saqueId: novoSaque.id });
-}));
+        res.json({ success: true, saqueId: novoSaque.id });
+    } catch (err) {
+        console.error('[SAQUE ERRO]', err && err.stack ? err.stack : err);
+        res.status(500).json({ error: 'Erro ao processar saque.', detalhe: err && err.message ? err.message : String(err) });
+    }
+});
 
 // Rota de teste para verificar email (admin)
 app.post('/api/admin/testar-email', async (req, res) => {
