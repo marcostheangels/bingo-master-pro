@@ -629,6 +629,8 @@ body.admin-mode .admin-screen-wrapper * {
     transition: background 0.3s, box-shadow 0.3s;
 }
 .conn-dot.disconnected { background: #ef4444; box-shadow: 0 0 6px rgba(239,68,68,0.5); }
+.conn-dot.reconnecting { background: #f59e0b; box-shadow: 0 0 8px rgba(245,158,11,0.7); animation: reconnectPulse 1s ease-in-out infinite; }
+@keyframes reconnectPulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.4; transform: scale(1.4); } }
 
 .user-info { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
 
@@ -1548,6 +1550,9 @@ body.admin-mode .admin-screen-wrapper * {
     background: rgba(255,255,255,0.04);
     border: 1px solid rgba(255,255,255,0.06);
 }
+.sec-kuadra { background: rgba(16,185,129,0.10); border: 1.5px solid rgba(52,211,153,0.45); box-shadow: 0 0 24px rgba(16,185,129,0.12); }
+.sec-kina { background: rgba(14,165,233,0.10); border: 1.5px solid rgba(96,165,250,0.45); box-shadow: 0 0 24px rgba(14,165,233,0.12); }
+.sec-keno { background: rgba(234,88,12,0.12); border: 1.5px solid rgba(251,146,60,0.45); box-shadow: 0 0 24px rgba(234,88,12,0.14); }
 .ranking-section-title {
     font-size: 1.2em;
     font-weight: 800;
@@ -1555,9 +1560,9 @@ body.admin-mode .admin-screen-wrapper * {
     margin-bottom: 10px;
     text-transform: uppercase;
 }
-.kuadra-title { color: #34d399; }
-.kina-title { color: #60a5fa; }
-.keno-title { color: #fb923c; }
+.kuadra-title { color: #34d399; text-shadow: 0 0 14px rgba(52,211,153,0.5); }
+.kina-title { color: #60a5fa; text-shadow: 0 0 14px rgba(96,165,250,0.5); }
+.keno-title { color: #fb923c; text-shadow: 0 0 14px rgba(251,146,60,0.5); }
 .ranking-winner {
     display: flex;
     align-items: center;
@@ -1568,7 +1573,13 @@ body.admin-mode .admin-screen-wrapper * {
     color: rgba(255,255,255,0.9);
     font-weight: 600;
 }
+.win-kuadra { color: #6ee7b7; font-weight: 800; }
+.win-kina { color: #7dd3fc; font-weight: 800; }
+.win-keno { color: #fdba74; font-weight: 800; }
 .rank-pos { font-size: 1.2em; }
+.win-kuadra .rank-pos { color: #34d399; }
+.win-kina .rank-pos { color: #60a5fa; }
+.win-keno .rank-pos { color: #fb923c; }
 .rank-prize { color: #fcd34d; font-weight: 800; }
 .ranking-close-btn {
     margin-top: 20px;
@@ -1902,6 +1913,18 @@ body.admin-mode .admin-screen-wrapper * {
 
     .admin-panel .admin-panel-content { padding: 12px; }
     .admin-grid { grid-template-columns: 1fr; }
+    .admin-header { flex-direction: column; align-items: flex-start; gap: 8px; }
+    .admin-header h3 { font-size: 1.2em; }
+    .admin-tabs { flex-wrap: wrap; gap: 6px; }
+    .admin-tab { flex: 1 1 auto; font-size: 0.8em; padding: 10px 8px; text-align: center; }
+    .admin-filtros { flex-direction: column; align-items: stretch; gap: 8px; }
+    .admin-filtros .btn-row { flex-wrap: wrap; }
+    .admin-card-section { min-width: 0; }
+    .admin-card { padding: 12px; }
+    .admin-saldo-display { font-size: 1.4em; }
+    .admin-info-text, .admin-warning-text { font-size: 0.8em; }
+    .admin-input-row { flex-direction: column; align-items: stretch; }
+    .admin-cadastros-list, .admin-saques-list, .admin-transacoes-list, .admin-historico-list { max-height: 50vh; }
 
     .ready-section { flex-direction: column; align-items: center; text-align: center; }
     .fullscreen-btn { bottom: 12px; right: 12px; width: 38px; height: 38px; font-size: 1em; }
@@ -2038,6 +2061,18 @@ body.admin-mode .admin-screen-wrapper * {
     white-space: nowrap;
 }
 .btn-logout:hover { background: rgba(239, 68, 68, 0.2); border-color: #ef4444; }
+.btn-sound {
+    padding: 6px 10px;
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font-size: 1em;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Poppins', sans-serif;
+}
+.btn-sound:hover { background: rgba(255, 255, 255, 0.16); }
 
 /* === MODALS === */
 .modal-overlay {
@@ -2098,6 +2133,37 @@ body.admin-mode .admin-screen-wrapper * {
 .saque-form { display: flex; flex-direction: column; gap: 12px; }
 .saque-form label { font-size: 0.9em; color: rgba(255,255,255,0.8); }
 .saque-msg { margin-top: 12px; }
+.meus-saques-box { margin-top: 18px; border-top: 1px solid rgba(255,255,255,0.08); padding-top: 12px; }
+.meus-saques-title { font-weight: 800; font-size: 0.95em; margin-bottom: 8px; color: #fff; }
+.meus-saques-list { display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; }
+.meu-saque-item { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: rgba(255,255,255,0.05); border-radius: 8px; padding: 8px 10px; font-size: 0.85em; flex-wrap: wrap; }
+
+.btn-hall {
+    margin-top: 8px;
+    padding: 7px 14px;
+    border-radius: 50px;
+    border: 1px solid rgba(255,215,0,0.4);
+    background: rgba(255,215,0,0.1);
+    color: #ffff00;
+    font-weight: 700;
+    font-size: 0.8em;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-family: 'Poppins', sans-serif;
+}
+.btn-hall:hover { background: rgba(255,215,0,0.2); }
+
+.hall-list { display: flex; flex-direction: column; gap: 12px; max-height: 60vh; overflow-y: auto; }
+.hall-rodada { background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 12px; }
+.hall-rodada-titulo { font-weight: 800; font-size: 0.95em; margin-bottom: 8px; color: #fff; }
+.hall-secao { margin: 6px 0; }
+.hall-fase { font-weight: 700; font-size: 0.82em; letter-spacing: 1px; margin-bottom: 4px; }
+.hall-vencedor { display: flex; justify-content: space-between; gap: 8px; padding: 4px 0; font-size: 0.85em; color: rgba(255,255,255,0.9); }
+
+.estatisticas-content { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.estat-card { background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 14px 8px; text-align: center; }
+.estat-num { font-size: 1.3em; font-weight: 900; color: #fff; }
+.estat-label { font-size: 0.72em; color: #a0a0b0; margin-top: 4px; text-transform: uppercase; letter-spacing: 1px; }
 .saque-sucesso { color: #10b981; font-weight: 600; text-align: center; padding: 10px; background: rgba(16,185,129,0.08); border-radius: 10px; }
 .saque-erro { color: #ef4444; font-weight: 600; text-align: center; padding: 10px; background: rgba(239,68,68,0.08); border-radius: 10px; }
 

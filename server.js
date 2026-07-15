@@ -11,6 +11,26 @@ const { alertarNovoCadastro } = require('./emailService');
 let nodemailer = null;
 try { nodemailer = require('nodemailer'); } catch (e) { console.log('[EMAIL] nodemailer não disponível.'); }
 
+// ===================== HELPERS DE VALIDAÇÃO / SANITIZAÇÃO =====================
+function sanitizeText(str, maxLen = 40) {
+    if (typeof str !== 'string') return '';
+    return str
+        .replace(/[\x00-\x1F\x7F]/g, '')
+        .trim()
+        .replace(/\s+/g, ' ')
+        .slice(0, maxLen);
+}
+function normalizeCpf(cpf) {
+    const digits = typeof cpf === 'string' ? cpf.replace(/\D/g, '') : '';
+    if (digits.length !== 11) return null;
+    return digits;
+}
+function validarValorSaque(v) {
+    const n = Number(v);
+    if (!isFinite(n) || n <= 0 || n > 1000000) return null;
+    return n;
+}
+
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
@@ -1121,11 +1141,19 @@ wss.on('connection', (ws) => {
 // Alteramos para "async (req, res)" para o servidor conseguir enviar o e-mail sem travar o jogo
 app.post('/api/register', async (req, res) => {
     try {
-        let { nomeCompleto, cpf, email, senha, chavePix } = req.body;
+        let { nomeCompleto, cpf, email, senha, chavePix, fingerprint } = req.body;
         if (!nomeCompleto || !cpf || !email || !senha || !chavePix) {
             return res.status(400).json({ error: 'Preencha todos os campos.' });
         }
-        cpf = String(cpf).replace(/\D/g, '').padStart(11, '0');
+        nomeCompleto = sanitizeText(nomeCompleto, 60);
+        if (!nomeCompleto) {
+            return res.status(400).json({ error: 'Nome inválido.' });
+        }
+        const cpfNormalizado = normalizeCpf(cpf);
+        if (!cpfNormalizado) {
+            return res.status(400).json({ error: 'CPF inválido' });
+        }
+        cpf = cpfNormalizado;
         senha = String(senha);
         if (!validarCPF(cpf)) {
             return res.status(400).json({ error: 'CPF inválido.' });
@@ -1144,6 +1172,7 @@ app.post('/api/register', async (req, res) => {
             email,
             senha,
             chavePix,
+            fingerprint: fingerprint ? sanitizeText(String(fingerprint), 128) : null,
             sessionToken: crypto.randomBytes(24).toString('hex'),
             data: new Date().toISOString()
         };
@@ -1173,7 +1202,11 @@ app.post('/api/login', async (req, res) => {
         if (!cpf || !senha) {
             return res.status(400).json({ error: 'CPF e senha são obrigatórios.' });
         }
-        cpf = String(cpf).replace(/\D/g, '').padStart(11, '0');
+        const cpfNormalizado = normalizeCpf(cpf);
+        if (!cpfNormalizado) {
+            return res.status(400).json({ error: 'CPF inválido' });
+        }
+        cpf = cpfNormalizado;
         console.log('-> CPF limpo para busca:', cpf);
         senha = String(senha);
         const usuarios = carregarUsuarios();
@@ -1676,6 +1709,11 @@ app.post('/api/solicitar-saque', async (req, res) => {
     if (!nome || !valor || !chavePix) {
         return res.status(400).json({ error: 'Parâmetros incompletos.' });
     }
+    const valorValidado = validarValorSaque(valor);
+    if (valorValidado === null) {
+        return res.status(400).json({ error: 'Valor de saque inválido' });
+    }
+    valor = valorValidado;
     if (sessionToken) {
         const usuarios = carregarUsuarios();
         const user = usuarios.find(u => u.sessionToken === sessionToken && u.nomeCompleto === nome);
@@ -2200,6 +2238,128 @@ app.post('/api/salvar-historico', async (req, res) => {
         res.json({ success: true });
     } catch (err) {
         res.status(500).json({ error: 'Erro ao salvar histórico.' });
+    }
+});
+
+// ===================== HALL DA FAMA (histórico de ranking) =====================
+app.get('/api/hall-da-fama', (req, res) => {
+    try {
+        const limite = Math.min(Math.max(parseInt(req.query.limite) || 20, 1), 50);
+        const historico = db.getHistorico();
+        const rodadas = historico
+            .slice()
+            .sort((a, b) => (b.numero || 0) - (a.numero || 0))
+            .slice(0, limite)
+            .map(h => {
+                const v = h.vencedores || {};
+                const normalizar = (arr) => (Array.isArray(arr) ? arr : []).map(x => ({
+                    nome: x && x.nome ? x.nome : '',
+                    premio: x && (x.premio !== undefined ? x.premio : 0)
+                }));
+                return {
+                    numero: h.numero,
+                    data: h.data || null,
+                    vencedores: {
+                        kuadra: normalizar(v.kuadra),
+                        kina: normalizar(v.kina),
+                        keno: normalizar(v.keno)
+                    }
+                };
+            });
+        res.json({ success: true, rodadas });
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao carregar hall da fama.' });
+    }
+});
+
+// ===================== STATUS DE SAQUE DO JOGADOR =====================
+app.get('/api/meus-saques', (req, res) => {
+    try {
+        const token = req.headers['x-session-token'];
+        const usuarios = db.getUsuarios();
+        const user = usuarios.find(u => u.sessionToken === token);
+        if (!user) {
+            return res.status(401).json({ error: 'Não autorizado.' });
+        }
+        const nomeLower = (user.nomeCompleto || '').toLowerCase().trim();
+        const saques = db.getSaques()
+            .filter(s => (s.nome || '').toLowerCase().trim() === nomeLower)
+            .sort((a, b) => (b.id || 0) - (a.id || 0))
+            .map(s => ({
+                id: s.id,
+                valor: s.valor,
+                status: s.status,
+                data: s.data,
+                dataPagamento: s.dataPagamento || null
+            }));
+        res.json({ success: true, saques });
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao carregar saques.' });
+    }
+});
+
+// ===================== ESTATÍSTICAS DO JOGADOR =====================
+app.get('/api/minhas-estatisticas', (req, res) => {
+    try {
+        const token = req.headers['x-session-token'];
+        const usuarios = db.getUsuarios();
+        const user = usuarios.find(u => u.sessionToken === token);
+        if (!user) {
+            return res.status(401).json({ error: 'Não autorizado.' });
+        }
+        const nomeLower = (user.nomeCompleto || '').toLowerCase().trim();
+        const historico = db.getHistorico();
+        const vitorias = { kuadra: 0, kina: 0, keno: 0 };
+        let premiosTotal = 0;
+        historico.forEach(h => {
+            const v = h.vencedores || {};
+            ['kuadra', 'kina', 'keno'].forEach(fase => {
+                const arr = Array.isArray(v[fase]) ? v[fase] : [];
+                arr.forEach(x => {
+                    if (x && (x.nome || '').toLowerCase().trim() === nomeLower) {
+                        vitorias[fase] += 1;
+                        const p = Number(x.premio);
+                        if (isFinite(p)) premiosTotal += p;
+                    }
+                });
+            });
+        });
+        const key = (user.nomeCompleto || '').toLowerCase().trim();
+        const fichas = db.getFichasStore()[key] || { chips: 0, winnings: 0 };
+        res.json({
+            success: true,
+            vitorias,
+            premiosTotal,
+            saldo: { chips: fichas.chips || 0, winnings: fichas.winnings || 0 }
+        });
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao carregar estatísticas.' });
+    }
+});
+
+// ===================== ANTI-FRAUDE: USUÁRIOS SUSPEITOS =====================
+app.get('/api/admin/usuarios-suspeitos', (req, res) => {
+    try {
+        const usuarios = db.getUsuarios();
+        const gruposMap = {};
+        usuarios.forEach(u => {
+            const fp = u.fingerprint;
+            if (fp) {
+                if (!gruposMap[fp]) gruposMap[fp] = [];
+                gruposMap[fp].push({
+                    nome: u.nomeCompleto,
+                    cpf: u.cpf,
+                    email: u.email,
+                    data: u.data || null
+                });
+            }
+        });
+        const grupos = Object.keys(gruposMap)
+            .filter(fp => gruposMap[fp].length > 1)
+            .map(fp => ({ fingerprint: fp, contas: gruposMap[fp] }));
+        res.json({ success: true, grupos });
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao carregar usuários suspeitos.' });
     }
 });
 

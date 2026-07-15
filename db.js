@@ -86,6 +86,11 @@ async function createTables() {
     } catch (e) {
         console.error('[DB] ALTER transacoes id BIGINT (ignorado):', e.message);
     }
+    try {
+        await pool.query('ALTER TABLE usuarios ADD COLUMN "fingerprint" TEXT');
+    } catch (e) {
+        console.error('[DB] ALTER usuarios fingerprint (ignorado):', e.message);
+    }
     await pool.query(`
         CREATE TABLE IF NOT EXISTS compras_pendentes (
             "id" BIGINT PRIMARY KEY,
@@ -302,8 +307,8 @@ async function syncUsuarios() {
     try {
         for (const u of usuariosCache) {
             await pool.query(
-                `INSERT INTO usuarios ("nomeCompleto", "cpf", "cpfFormatado", "email", "senha", "chavePix", "sessionToken", "data")
-                VALUES ($1,$2,$3,$4,$5,$6,$7,$8)
+                `INSERT INTO usuarios ("nomeCompleto", "cpf", "cpfFormatado", "email", "senha", "chavePix", "sessionToken", "data", "fingerprint")
+                VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9)
                 ON CONFLICT ("cpf") DO UPDATE SET
                     "nomeCompleto"=EXCLUDED."nomeCompleto",
                     "cpfFormatado"=EXCLUDED."cpfFormatado",
@@ -311,8 +316,9 @@ async function syncUsuarios() {
                     "senha"=EXCLUDED."senha",
                     "chavePix"=EXCLUDED."chavePix",
                     "sessionToken"=EXCLUDED."sessionToken",
-                    "data"=EXCLUDED."data"`,
-                [u.nomeCompleto, u.cpf, u.cpfFormatado || null, u.email, u.senha, u.chavePix || null, u.sessionToken || null, u.data || null]
+                    "data"=EXCLUDED."data",
+                    "fingerprint"=EXCLUDED."fingerprint"`,
+                [u.nomeCompleto, u.cpf, u.cpfFormatado || null, u.email, u.senha, u.chavePix || null, u.sessionToken || null, u.data || null, u.fingerprint || null]
             );
         }
     } catch (e) { console.error('[DB] syncUsuarios error:', e.message); throw e; }

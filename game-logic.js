@@ -3,6 +3,42 @@ window.API_BASE = (window.location.hostname === 'localhost' || window.location.h
 window.API_FALLBACK = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'))
     ? '' : 'https://bingo-master-pro-fcty.onrender.com';
 
+// ===================== UTILITÁRIOS (segurança + log) =====================
+// Mantém debugs centralizados e DESLIGÁVEIS (não vazam em produção).
+window.__DEBUG__ = window.__DEBUG__ || false;
+function dbg(...args) { if (window.__DEBUG__) console.log('[DEBUG]', ...args); }
+function dbgWarn(...args) { if (window.__DEBUG__) console.warn('[DEBUG]', ...args); }
+
+// Escapa HTML de qualquer dado vindo do usuário antes de injetar via innerHTML (previne XSS).
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+// Header com o token de sessão para os endpoints autenticados do jogador.
+function authHeaders(extra) {
+    const h = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+    if (minhaSessaoToken) h['x-session-token'] = minhaSessaoToken;
+    return h;
+}
+
+// Gera uma impressão digital simples do dispositivo (anti-fraude, item 19).
+function gerarFingerprint() {
+    try {
+        const n = navigator;
+        const s = screen;
+        const raw = [n.userAgent, n.language, (n.platform || ''), (s ? (s.width + 'x' + s.height + 'x' + s.colorDepth) : ''), (n.hardwareConcurrency || ''), (n.maxTouchPoints || '')].join('|');
+        let hash = 0;
+        for (let i = 0; i < raw.length; i++) { hash = ((hash << 5) - hash + raw.charCodeAt(i)) | 0; }
+        return 'fp_' + (hash >>> 0).toString(36);
+    } catch (e) { return 'fp_unknown'; }
+}
+
 // Fallback automático: se a chamada à API_BASE falhar (erro de rede), repete
 // no API_FALLBACK. Ambos apontam para o backend funcional no Render.
 (function () {
@@ -91,7 +127,7 @@ async function registrar() {
         const res = await fetch(API_BASE + '/api/register', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ nomeCompleto: nome, cpf: cpfLimpo, email, senha, chavePix })
+            body: JSON.stringify({ nomeCompleto: nome, cpf: cpfLimpo, email, senha, chavePix, fingerprint: gerarFingerprint() })
         });
         const data = await res.json();
         if (!res.ok) {
@@ -610,7 +646,7 @@ function showWinnerToast(phaseKey, results) {
     setTimeout(() => {
         toast.classList.remove('visible');
         setTimeout(() => toast.remove(), 500);
-    }, 3500);
+    }, CELEBRATION_DURATION);
 }
 
 function playWinnerSound(phaseKey, results) {
@@ -640,6 +676,9 @@ let jackpotAudio = null;
 
 function showWinnerBanner(phaseKey, results) {
     const isJackpot = results.some(r => r.jackpotCount > 0);
+    const nomes = results.map(r => (r.player ? r.player.name : r.name)).filter(Boolean).join(', ');
+    const titulo = (PHASES[phaseKey] && PHASES[phaseKey].label) || 'Vitória';
+    mostrarNotificacao('🏆 ' + titulo + '!', nomes ? nomes + ' venceu' + (results.length > 1 ? 'ram' : '') + '!' : 'Você venceu!');
     if (isJackpot) {
         showJackpotCelebration(results);
         return true;
@@ -726,7 +765,7 @@ function renderWinnerCardHTML(cardData) {
                 const isWinningNum = Number(val) === wn;
                 let bg, color, extra = '';
                 if (isWinningNum) {
-                    bg = isKeno ? '#ef4444' : '#047857'; color = '#fff';
+                    bg = '#ef4444'; color = '#fff';
                     extra = 'box-shadow:0 0 0 2px #fff inset;';
                 } else if (marked) {
                     bg = isKeno ? '#1e90ff' : '#10b981'; color = '#fff';
@@ -744,17 +783,21 @@ function renderWinnerCardHTML(cardData) {
     return grid;
 }
 
+const CELEBRATION_DURATION = 4000;
+
 function showPhaseCelebration(phaseKey, results) {
     const cfg = PHASE_CELEBRATIONS[phaseKey] || PHASE_CELEBRATIONS.keno;
     const overlay = document.createElement('div');
     overlay.className = 'winner-banner-overlay celebration-' + phaseKey;
     overlay.style.cssText = `position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,2,113,0.7);backdrop-filter:blur(8px);z-index:10000;opacity:0;transition:opacity 0.4s`;
-    const names = results.map(r => (r.player ? r.player.name : r.name)).join(', ');
+    const names = results.map(r => escapeHtml(r.player ? r.player.name : r.name)).join(', ');
     const total = results.reduce((s, r) => s + (r.totalReward || 0), 0);
     const totalReais = (total / 1000).toFixed(2).replace('.', ',');
 
     let cardsHTML = '';
     results.forEach(r => {
+        const playerName = (r.player ? r.player.name : r.name) || 'Jogador';
+        const rewardReais = ((r.totalReward || 0) / 1000).toFixed(2).replace('.', ',');
         let cardData = null;
         if (r.card) {
             cardData = { numbers: r.card.numbers, winningRow: r.card.winningRow, winningNum: r.card.winningNum, codigo: r.card.codigo, phaseKey: r.card.phaseKey || phaseKey };
@@ -762,9 +805,8 @@ function showPhaseCelebration(phaseKey, results) {
             const playerObj = r.player || (typeof allPlayers !== 'undefined' ? allPlayers.find(p => p.name === r.name) : null);
             if (playerObj) cardData = getWinnerCardDetails(playerObj, phaseKey);
         }
-        if (cardData) {
-            cardsHTML += `<div style="margin:8px 0;text-align:center">${renderWinnerCardHTML(cardData)}</div>`;
-        }
+        const nameTag = `<div style="text-align:center;font-weight:900;font-size:1.2em;color:#ffff00;text-shadow:2px 2px rgba(0,0,0,1);margin-bottom:6px">🏆 ${escapeHtml(playerName)} <span style="color:#fff;font-size:0.75em;font-weight:600">— R$ ${rewardReais}</span></div>`;
+        cardsHTML += `<div style="margin:12px 0;text-align:center">${nameTag}${cardData ? renderWinnerCardHTML(cardData) : ''}</div>`;
     });
 
     overlay.innerHTML = `
@@ -773,7 +815,7 @@ function showPhaseCelebration(phaseKey, results) {
         <div style="font-size:2.5em;font-weight:900;letter-spacing:4px;text-transform:uppercase;color:#ffff00;text-shadow:3px 3px rgba(0,0,0,1)">${cfg.title}</div>
         <div style="font-size:1.1em;font-weight:600;margin-top:6px;color:#ffffff">${cfg.subtitle}</div>
         <div style="font-size:2.2em;font-weight:900;margin:10px 0;color:#ffff00;text-shadow:3px 3px rgba(0,0,0,1)">R$ ${totalReais}</div>
-        <div style="font-size:1.1em;font-weight:500;margin-bottom:8px;color:#ffffff">${names}</div>
+        <div style="font-size:1.2em;font-weight:900;margin-bottom:8px;color:#ffff00;text-shadow:2px 2px rgba(0,0,0,1)">${names}</div>
         ${cardsHTML}
     </div>`;
     document.body.appendChild(overlay);
@@ -804,7 +846,7 @@ function showPhaseCelebration(phaseKey, results) {
         }, i * (isMobile ? 60 : 100));
     }
 
-    setTimeout(() => closePhaseBanner(null, overlay), 4000);
+    setTimeout(() => closePhaseBanner(null, overlay), CELEBRATION_DURATION);
 }
 
 function closePhaseBanner(btn, overlay) {
@@ -814,15 +856,18 @@ function closePhaseBanner(btn, overlay) {
 
 function showJackpotCelebration(results) {
     if (jackpotAudio) { jackpotAudio.pause(); jackpotAudio = null; }
-    jackpotAudio = new Audio('chaves_3.mp3');
-    jackpotAudio.loop = false;
-    jackpotAudio.volume = 0.4;
+    if (!soundMuted) {
+        jackpotAudio = new Audio('chaves_3.mp3');
+        jackpotAudio.loop = false;
+        jackpotAudio.volume = 0.4;
+        jackpotAudio.play().catch(() => {});
+    }
     jackpotAudio.play().catch(() => {});
 
     const overlay = document.createElement('div');
     overlay.className = 'winner-banner-overlay celebration-jackpot';
     overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,2,113,0.75);backdrop-filter:blur(12px);z-index:10000;opacity:0;transition:opacity 0.4s';
-    const names = results.map(r => (r.player ? r.player.name : r.name)).join(', ');
+    const names = results.map(r => escapeHtml(r.player ? r.player.name : r.name)).join(', ');
     const total = results.reduce((s, r) => s + (r.totalReward || 0), 0);
     const totalReais = (total / 1000).toFixed(2).replace('.', ',');
     overlay.innerHTML = `
@@ -831,7 +876,7 @@ function showJackpotCelebration(results) {
         <div style="font-size:4em;font-weight:900;letter-spacing:6px;text-transform:uppercase;color:#ffff00;text-shadow:3px 3px rgba(0,0,0,1)">JACKPOT!</div>
         <div style="font-size:1.3em;font-weight:600;margin-top:8px;opacity:0.9">GRANDE VENCEDOR</div>
         <div style="font-size:3.2em;font-weight:900;margin:16px 0;color:#ffff00;text-shadow:3px 3px rgba(0,0,0,1)">R$ ${totalReais}</div>
-        <div style="font-size:1.2em;font-weight:500;opacity:0.85;margin-bottom:20px">${names}</div>
+        <div style="font-size:1.3em;font-weight:900;opacity:1;margin-bottom:20px;color:#ffff00;text-shadow:2px 2px rgba(0,0,0,1)">${names}</div>
         <button onclick="closeJackpotBanner()" style="padding:14px 40px;border-radius:50px;border:2px solid rgba(255,255,0,0.4);background:rgba(0,0,0,0.2);color:#ffffff;font-size:1em;font-weight:700;cursor:pointer;transition:all 0.3s">Fechar</button>
     </div>`;
     document.body.appendChild(overlay);
@@ -864,7 +909,7 @@ function showJackpotCelebration(results) {
         }, i * 80);
     }
 
-    setTimeout(closeJackpotBanner, 4000);
+    setTimeout(closeJackpotBanner, CELEBRATION_DURATION);
 }
 
 function closeJackpotBanner() {
@@ -1089,7 +1134,7 @@ function renderCloseCardsPanel() {
 
         const item = document.createElement('div');
         item.className = 'close-card-item';
-        item.innerHTML = `<span class="close-player">${isHostPlayer ? '👑 ' : ''}${playerName}</span><span class="close-badges">${badges.join('')}</span>`;
+        item.innerHTML = `<span class="close-player">${isHostPlayer ? '👑 ' : ''}${escapeHtml(playerName)}</span><span class="close-badges">${badges.join('')}</span>`;
         panel.appendChild(item);
     });
 }
@@ -1573,6 +1618,7 @@ function addLog(message) {
 
 // ==================== SOUND EFFECTS (MP3 reais do ShowOnline) ====================
 let soundInitialized = false;
+let soundMuted = (localStorage.getItem('bingo_som_mudo') === '1');
 let kuadraSound = null, kinaSound = null, bingoSound = null;
 let drawAudioCtx = null;
 
@@ -1606,9 +1652,97 @@ function unlockAudioOnInteraction() {
 }
 if (typeof window !== 'undefined') {
     unlockAudioOnInteraction();
+    const _btn = document.getElementById('btnSoundToggle');
+    if (_btn) _btn.textContent = soundMuted ? '🔇' : '🔊';
+    // Em mobile o autoplay de áudio é bloqueado até um gesto do usuário.
+    if (/Mobi|Android|iPhone|iPad/i.test(navigator.userAgent)) {
+        setTimeout(mostrarDicaSom, 1200);
+    }
+}
+
+// Liga/desliga o som (respeita bloqueio de autoplay em mobile).
+function alternarSom() {
+    soundMuted = !soundMuted;
+    localStorage.setItem('bingo_som_mudo', soundMuted ? '1' : '0');
+    const btn = document.getElementById('btnSoundToggle');
+    if (btn) btn.textContent = soundMuted ? '🔇' : '🔊';
+    // Ao ligar, destrava o áudio com um gesto do usuário.
+    if (!soundMuted) {
+        try {
+            if (drawAudioCtx && drawAudioCtx.state === 'suspended') drawAudioCtx.resume().catch(() => {});
+            if (typeof Howl !== 'undefined') { const s = new Howl({ src: ['kuadra.mp3'], volume: 0 }); s.play(); }
+        } catch (e) {}
+    }
+    mostrarDicaSom();
+}
+
+// Avisa o jogador (mobile) caso o áudio ainda esteja bloqueado.
+function mostrarDicaSom() {
+    let el = document.getElementById('soundHint');
+    const bloqueado = !soundMuted && (typeof drawAudioCtx !== 'undefined' && drawAudioCtx && drawAudioCtx.state === 'suspended');
+    if (!bloqueado) { if (el) el.remove(); return; }
+    if (!el) {
+        el = document.createElement('div');
+        el.id = 'soundHint';
+        el.style.cssText = 'position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:12000;background:rgba(0,0,0,0.8);color:#fff;padding:8px 14px;border-radius:50px;font-size:0.85em;font-weight:600;box-shadow:0 4px 16px rgba(0,0,0,0.4);cursor:pointer';
+        el.innerHTML = '🔊 Toque aqui para ativar o som';
+        el.onclick = () => { alternarSom(); alternarSom(); };
+        document.body.appendChild(el);
+    }
+}
+
+// ===================== NOTIFICAÇÕES (item 10) =====================
+// Chave pública VAPID do servidor. Defina para ativar push server->client.
+// Sem ela, usamos notificações locais (quando o jogador está com a aba inativa).
+const VAPID_PUBLIC_KEY = '';
+
+function habilitarNotificacoes() {
+    if (!('Notification' in window)) {
+        showToast('Este navegador não suporta notificações.', 'info', 3000);
+        return;
+    }
+    if (Notification.permission === 'granted') {
+        showToast('Notificações já estão ativadas! 🔔', 'success', 2500);
+        assinarPush();
+        return;
+    }
+    Notification.requestPermission().then(permission => {
+        if (permission === 'granted') {
+            showToast('Notificações ativadas! 🔔', 'success', 2500);
+            assinarPush();
+        } else {
+            showToast('Notificações não foram ativadas.', 'info', 3000);
+        }
+    });
+}
+
+function assinarPush() {
+    if (!VAPID_PUBLIC_KEY || !('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    navigator.serviceWorker.ready.then(reg => {
+        reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY) })
+            .then(sub => { dbg('Push inscrito:', sub.endpoint); /* envie a subscription ao backend se necessário */ })
+            .catch(e => dbgWarn('Falha ao inscrever push:', e));
+    });
+}
+
+function urlBase64ToUint8Array(base64) {
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const raw = atob((base64 + padding).replace(/-/g, '+').replace(/_/g, '/'));
+    const out = new Uint8Array(raw.length);
+    for (let i = 0; i < raw.length; i++) out[i] = raw.charCodeAt(i);
+    return out;
+}
+
+function mostrarNotificacao(titulo, corpo) {
+    try {
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification(titulo, { body: corpo, icon: 'Nova Imagem de Bitmap.jpg' });
+        }
+    } catch (e) {}
 }
 
 function playNarration(ballNumber) {
+    if (soundMuted) return;
     if (ballNumber < 1 || ballNumber > 90) return;
     if (lastNarrationAudio) {
         lastNarrationAudio.pause();
@@ -1631,6 +1765,7 @@ function announcePhaseDraw() {
 
 function playSound(type, phase) {
     initSounds();
+    if (soundMuted) return;
     if (type === 'draw') {
         try {
             if (!drawAudioCtx) drawAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2353,17 +2488,17 @@ function showKenoRanking() {
         <div class="keno-ranking-content">
             <div class="keno-ranking-header">🏆 RANKING FINAL 🏆</div>
             <div class="keno-ranking-round">Rodada #${currentRound || '---'}</div>
-            ${kuadra.length ? `<div class="ranking-section">
+            ${kuadra.length ? `<div class="ranking-section sec-kuadra">
                 <div class="ranking-section-title kuadra-title">◆ KUADRA ◆</div>
-                ${kuadra.map(w => `<div class="ranking-winner"><span class="rank-pos">◆</span> ${w.nome} <span class="rank-prize">R$ ${w.premio.toFixed(2).replace('.', ',')}</span></div>`).join('')}
+                ${kuadra.map(w => `<div class="ranking-winner win-kuadra"><span class="rank-pos">◆</span> ${escapeHtml(w.nome)} <span class="rank-prize">R$ ${w.premio.toFixed(2).replace('.', ',')}</span></div>`).join('')}
             </div>` : ''}
-            ${kina.length ? `<div class="ranking-section">
+            ${kina.length ? `<div class="ranking-section sec-kina">
                 <div class="ranking-section-title kina-title">⭐ KINA ⭐</div>
-                ${kina.map(w => `<div class="ranking-winner"><span class="rank-pos">⭐</span> ${w.nome} <span class="rank-prize">R$ ${w.premio.toFixed(2).replace('.', ',')}</span></div>`).join('')}
+                ${kina.map(w => `<div class="ranking-winner win-kina"><span class="rank-pos">⭐</span> ${escapeHtml(w.nome)} <span class="rank-prize">R$ ${w.premio.toFixed(2).replace('.', ',')}</span></div>`).join('')}
             </div>` : ''}
-            ${keno.length ? `<div class="ranking-section">
+            ${keno.length ? `<div class="ranking-section sec-keno">
                 <div class="ranking-section-title keno-title">🎯 KENO 🎯</div>
-                ${keno.map(w => `<div class="ranking-winner"><span class="rank-pos">🎯</span> ${w.nome} <span class="rank-prize">R$ ${w.premio.toFixed(2).replace('.', ',')}</span></div>`).join('')}
+                ${keno.map(w => `<div class="ranking-winner win-keno"><span class="rank-pos">🎯</span> ${escapeHtml(w.nome)} <span class="rank-prize">R$ ${w.premio.toFixed(2).replace('.', ',')}</span></div>`).join('')}
             </div>` : ''}
             <button class="ranking-close-btn" onclick="fecharKenoRanking()">Fechar</button>
         </div>
@@ -2379,8 +2514,8 @@ function showKenoRanking() {
         if (el) el.classList.add('visible');
     });
 
-    // Auto-fechar ranking em 5 segundos
-    setTimeout(fecharKenoRanking, 5000);
+    // Auto-fechar ranking com o mesmo tempo das animações de kuadra/kina/keno
+    setTimeout(fecharKenoRanking, CELEBRATION_DURATION);
 }
 function fecharKenoRanking() {
     const el = document.getElementById('kenoRankingOverlay');
@@ -2583,6 +2718,76 @@ function abrirModalDeposito() {
     document.getElementById('pixLoader').style.display = 'none';
     document.getElementById('pixValor').value = 10;
     document.getElementById('modalPix').style.display = 'flex';
+}
+
+// ===================== HALL DA FAMA (item 6) =====================
+function abrirHallDaFama() {
+    document.getElementById('modalHall').style.display = 'flex';
+    const list = document.getElementById('hallList');
+    if (!list) return;
+    list.innerHTML = 'Carregando…';
+    fetch(API_BASE + '/api/hall-da-fama?limite=20')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || !data.rodadas || data.rodadas.length === 0) {
+                list.innerHTML = '<p style="color:#a0a0b0;font-size:0.82em">Nenhum sorteio registrado ainda.</p>';
+                return;
+            }
+            list.innerHTML = data.rodadas.map(rd => {
+                const v = rd.vencedores || {};
+                const secao = (fase, titulo, cor) => {
+                    const arr = (v[fase] || []).filter(x => x && x.nome);
+                    if (!arr.length) return '';
+                    return `<div class="hall-secao">
+                        <div class="hall-fase" style="color:${cor}">${titulo}</div>
+                        ${arr.map(x => `<div class="hall-vencedor"><span>${escapeHtml(x.nome)}</span><span style="color:#fcd34d">R$ ${parseFloat(x.premio || 0).toFixed(2).replace('.', ',')}</span></div>`).join('')}
+                    </div>`;
+                };
+                return `<div class="hall-rodada">
+                    <div class="hall-rodada-titulo">Rodada #${rd.numero}${rd.data ? ' · ' + new Date(rd.data).toLocaleString('pt-BR') : ''}</div>
+                    ${secao('kuadra', '◆ Kuadra', '#34d399')}
+                    ${secao('kina', '⭐ Kina', '#60a5fa')}
+                    ${secao('keno', '🎯 Keno', '#fb923c')}
+                </div>`;
+            }).join('');
+        })
+        .catch(() => { list.innerHTML = '<p style="color:#ef4444;font-size:0.82em">Erro ao carregar.</p>'; });
+}
+
+// ===================== MINHAS ESTATÍSTICAS (item 17) =====================
+function abrirMinhasEstatisticas() {
+    document.getElementById('modalEstatisticas').style.display = 'flex';
+    const el = document.getElementById('estatisticasContent');
+    if (!el) return;
+    el.innerHTML = 'Carregando…';
+    if (!minhaSessaoToken) { el.innerHTML = '<p style="color:#a0a0b0;font-size:0.85em">Faça login para ver suas estatísticas.</p>'; return; }
+    fetch(API_BASE + '/api/minhas-estatisticas', { headers: authHeaders() })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { el.innerHTML = '<p style="color:#ef4444">Erro ao carregar.</p>'; return; }
+            const v = data.vitorias || { kuadra: 0, kina: 0, keno: 0 };
+            const saldo = data.saldo || { chips: 0, winnings: 0 };
+            el.innerHTML = `
+                <div class="estat-card">
+                    <div class="estat-num" style="color:#34d399">${v.kuadra}</div><div class="estat-label">Kuadra</div>
+                </div>
+                <div class="estat-card">
+                    <div class="estat-num" style="color:#60a5fa">${v.kina}</div><div class="estat-label">Kina</div>
+                </div>
+                <div class="estat-card">
+                    <div class="estat-num" style="color:#fb923c">${v.keno}</div><div class="estat-label">Keno</div>
+                </div>
+                <div class="estat-card">
+                    <div class="estat-num" style="color:#fcd34d">R$ ${(data.premiosTotal || 0).toFixed(2).replace('.', ',')}</div><div class="estat-label">Prêmios</div>
+                </div>
+                <div class="estat-card">
+                    <div class="estat-num">R$ ${(saldo.chips / 1000 || 0).toFixed(2).replace('.', ',')}</div><div class="estat-label">Fichas</div>
+                </div>
+                <div class="estat-card">
+                    <div class="estat-num" style="color:#10b981">R$ ${(saldo.winnings / 1000 || 0).toFixed(2).replace('.', ',')}</div><div class="estat-label">Ganhos</div>
+                </div>`;
+        })
+        .catch(() => { el.innerHTML = '<p style="color:#ef4444">Erro ao carregar.</p>'; });
 }
 
 function fecharModal(id) {
@@ -2865,6 +3070,39 @@ function abrirModalSaque() {
         msgEl.innerHTML = '';
     }
     document.getElementById('modalSaque').style.display = 'flex';
+    carregarMeusSaques();
+}
+
+const SAQUE_STATUS_LABEL = {
+    pendente: { txt: '⏳ Pendente', cor: '#fbbf24' },
+    aprovado: { txt: '✅ Aprovado', cor: '#10b981' },
+    pago: { txt: '💸 Pago', cor: '#34d399' },
+    rejeitado: { txt: '❌ Rejeitado', cor: '#ef4444' }
+};
+
+function carregarMeusSaques() {
+    const list = document.getElementById('meusSaquesList');
+    if (!list) return;
+    if (!minhaSessaoToken) { list.innerHTML = '<p style="color:#a0a0b0;font-size:0.8em">Faça login para ver seus saques.</p>'; return; }
+    list.innerHTML = 'Carregando…';
+    fetch(API_BASE + '/api/meus-saques', { headers: authHeaders() })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success || !data.saques || data.saques.length === 0) {
+                list.innerHTML = '<p style="color:#a0a0b0;font-size:0.8em">Você ainda não solicitou saques.</p>';
+                return;
+            }
+            list.innerHTML = data.saques.map(s => {
+                const st = SAQUE_STATUS_LABEL[(s.status || 'pendente').toLowerCase()] || SAQUE_STATUS_LABEL.pendente;
+                const dataTxt = s.data ? new Date(s.data).toLocaleString('pt-BR') : '';
+                return `<div class="meu-saque-item">
+                    <span>R$ ${parseFloat(s.valor || 0).toFixed(2).replace('.', ',')}</span>
+                    <span style="color:${st.cor};font-weight:700">${st.txt}</span>
+                    <span style="color:#6b6599;font-size:0.75em">${dataTxt}</span>
+                </div>`;
+            }).join('');
+        })
+        .catch(() => { list.innerHTML = '<p style="color:#ef4444;font-size:0.8em">Erro ao carregar.</p>'; });
 }
 
 async function solicitarSaque() {

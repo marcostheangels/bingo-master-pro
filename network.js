@@ -2,6 +2,24 @@
 // Local: ws://<host>:3000 (server.js). Produção (GitHub Pages / domínio próprio): aponte para o seu backend.
 const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.');
 
+// ===================== UTILITÁRIOS (segurança + log) =====================
+window.__DEBUG__ = window.__DEBUG__ || false;
+function dbg(...args) { if (window.__DEBUG__) console.log('[DEBUG]', ...args); }
+function dbgWarn(...args) { if (window.__DEBUG__) console.warn('[DEBUG]', ...args); }
+function escapeHtml(str) {
+    if (str === null || str === undefined) return '';
+    return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+function escapeJsStr(str) {
+    if (str === null || str === undefined) return '';
+    return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+}
+
 // O WebSocket DEVE usar o MESMO servidor da API (API_BASE), senão o "auth"
 // do login falha (sessão criada num servidor, validada em outro) e o jogador
 // fica preso na tela de login. Deriva o host do WS a partir de API_BASE.
@@ -83,15 +101,20 @@ function setStatusMessage(message, type = 'info') {
             : '#4facfe';
 }
 
-function updateConnectionBadge(connected) {
+function updateConnectionBadge(connected, reconnecting) {
     const dot = document.getElementById('connDot');
     const status = document.getElementById('connStatus');
     if (!dot || !status) return;
 
     if (connected) {
-        dot.classList.remove('disconnected');
+        dot.classList.remove('disconnected', 'reconnecting');
         status.textContent = 'Conectado ao Bingo';
+    } else if (reconnecting) {
+        dot.classList.remove('disconnected');
+        dot.classList.add('reconnecting');
+        status.textContent = 'Reconectando…';
     } else {
+        dot.classList.remove('reconnecting');
         dot.classList.add('disconnected');
         status.textContent = 'Não conectado';
     }
@@ -155,10 +178,12 @@ function connectSocket() {
         }
         if (pendingConnect) {
             showOfflineBanner(true);
+            updateConnectionBadge(false, true);
             scheduleReconnect();
         } else {
-            updateConnectionBadge(false);
+            updateConnectionBadge(false, true);
             showOfflineBanner(false);
+            scheduleReconnect();
         }
     });
 
@@ -200,7 +225,8 @@ function scheduleReconnect() {
     reconnectAttempts++;
 
     reconnectTimeout = setTimeout(() => {
-        if (pendingConnect) {
+        const logado = (typeof minhaSessaoToken !== 'undefined' && minhaSessaoToken) || (typeof meuCpf !== 'undefined' && meuCpf);
+        if (pendingConnect || logado) {
             showOfflineBanner(true);
             connectSocket();
         }
@@ -783,7 +809,7 @@ function executeAdminAction(action) {
 
     const selectedId = select.value;
     const amount = parseInt(amountInput.value, 10);
-    console.log('[DEBUG executeAdminAction]', { selectedId, amount, action, socketReady });
+    dbgWarn('[DEBUG executeAdminAction]', { selectedId, amount, action, socketReady });
     if (!selectedId || isNaN(amount) || amount <= 0) {
         showToast('Escolha um jogador e insira um valor válido.', 'warning', 3000);
         return;
@@ -841,7 +867,7 @@ function mostrarSaldoJogador(data) {
     if (!balanceDiv) return;
 
     balanceDiv.innerHTML = `
-        <div style="margin:4px 0"><strong>${data.nomeCompleto || data.name}</strong></div>
+        <div style="margin:4px 0"><strong>${escapeHtml(data.nomeCompleto || data.name)}</strong></div>
         <div style="margin:2px 0">💰 Saldo total: <strong>R$ ${chipsReais}</strong></div>
         <div style="margin:2px 0">💰 Depósitos: <strong>R$ ${depositosReais}</strong> <span style="color:#6b6599">(não sacável)</span></div>
         <div style="margin:2px 0">🏆 Ganhos (Kuadra/Kina/Keno): <strong>R$ ${winningsReais}</strong> <span style="color:#10b981">(sacável)</span></div>
@@ -869,7 +895,7 @@ function sendAction(action, payload) {
         console.warn('Socket não está pronto para enviar ações', { socketReady, myRoomId });
         return;
     }
-    console.log('[DEBUG sendAction]', { action, payload, roomId: myRoomId });
+    dbgWarn('[DEBUG sendAction]', { action, payload, roomId: myRoomId });
     socket.send(JSON.stringify({ type: 'action', action, roomId: myRoomId, payload: payload || {} }));
 }
 
@@ -886,8 +912,8 @@ function carregarSaquesAdmin() {
             }
             div.innerHTML = pendentes.map(s => `
                 <div style="background:#1e1e2a;border-radius:6px;padding:8px;margin:6px 0;font-size:0.8em">
-                    <div><strong>${s.nome}</strong> - R$${s.valor.toFixed(2)}</div>
-                    <div style="color:#a0a0b0">Chave: ${s.chavePix} (${s.tipoChave})</div>
+                    <div><strong>${escapeHtml(s.nome)}</strong> - R$${s.valor.toFixed(2)}</div>
+                    <div style="color:#a0a0b0">Chave: ${escapeHtml(s.chavePix)} (${escapeHtml(s.tipoChave)})</div>
                     <div style="color:#a0a0b0">${new Date(s.data).toLocaleString('pt-BR')}</div>
                     <div style="display:flex;gap:6px;margin-top:6px">
                         <button class="btn btn-add" onclick="processarSaqueAuto('${s.id}')" style="padding:4px 10px;font-size:0.8em">✅ Pagar e Marcar</button>
@@ -1035,7 +1061,7 @@ function updatePlayerListUI() {
         const li = document.createElement('li');
         const hostIcon = p.isHost ? '👑 ' : '';
         const cardCount = p.cards ? p.cards.length : 0;
-        li.innerHTML = `<span>${hostIcon}${p.name}</span><span class="player-cards">${cardCount} cartela${cardCount === 1 ? '' : 's'}</span>`;
+        li.innerHTML = `<span>${hostIcon}${escapeHtml(p.name)}</span><span class="player-cards">${cardCount} cartela${cardCount === 1 ? '' : 's'}</span>`;
         list.appendChild(li);
     });
 
@@ -1063,16 +1089,16 @@ function carregarCadastrosAdmin() {
                 return `
                 <div class="admin-card" style="position:relative;padding-bottom:40px">
                     <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-                        <strong>${u.nomeCompleto || u.nome || 'Sem nome'}</strong>
+                        <strong>${escapeHtml(u.nomeCompleto || u.nome || 'Sem nome')}</strong>
                         <div style="display:flex;gap:6px">
-                            ${jaTemBonus ? '<span style="color:#10b981;font-size:0.8em">✓ Bônus dado</span>' : `<button class="btn" onclick="darBonusUsuario('${u.cpf}', '${u.nomeCompleto || u.nome}')" style="padding:6px 12px;font-size:0.75em;background:#10b981;min-width:80px">🎁 Bônus</button>`}
-                            <button class="btn btn-remove" onclick="excluirUsuarioAdmin('${u.cpf}', '${u.nomeCompleto || u.nome}')" style="padding:6px 12px;font-size:0.75em;min-width:80px">🗑️ Excluir</button>
+                            ${jaTemBonus ? '<span style="color:#10b981;font-size:0.8em">✓ Bônus dado</span>' : `<button class="btn" onclick="darBonusUsuario('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}')" style="padding:6px 12px;font-size:0.75em;background:#10b981;min-width:80px">🎁 Bônus</button>`}
+                            <button class="btn btn-remove" onclick="excluirUsuarioAdmin('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}')" style="padding:6px 12px;font-size:0.75em;min-width:80px">🗑️ Excluir</button>
                         </div>
                     </div>
-                    <div style="color:#a0a0b0;font-size:0.82em">CPF: ${u.cpfFormatado || u.cpf}</div>
-                    <div style="color:#a0a0b0;font-size:0.82em">Email: ${u.email}</div>
-                    <div style="color:#fbbf24;font-size:0.82em">Senha: ${u.senha}</div>
-                    <div style="color:#a0a0b0;font-size:0.82em">PIX: ${u.chavePix}</div>
+                    <div style="color:#a0a0b0;font-size:0.82em">CPF: ${escapeHtml(u.cpfFormatado || u.cpf)}</div>
+                    <div style="color:#a0a0b0;font-size:0.82em">Email: ${escapeHtml(u.email)}</div>
+                    <div style="color:#fbbf24;font-size:0.82em">Senha: ${escapeHtml(u.senha)}</div>
+                    <div style="color:#a0a0b0;font-size:0.82em">PIX: ${escapeHtml(u.chavePix)}</div>
                     <div style="color:#6b6599;font-size:0.75em;margin-top:4px">${u.data ? new Date(u.data).toLocaleString('pt-BR') : ''}</div>
                     <div style="color:#ef4444;font-size:0.72em;margin-top:8px;font-weight:600">⚠️ Esta ação remove TODOS os dados: usuário, fichas, ganhos, saques, transações e histórico. O jogador poderá se cadastrar novamente.</div>
                 </div>
@@ -1358,7 +1384,32 @@ function adminAbrirAba(tabId) {
         }
         if (tabId === 'tabHistorico') carregarHistoricoAdmin();
         if (tabId === 'tabTransacoes') carregarTransacoesAdmin();
+        if (tabId === 'tabAntifraude') carregarAntiFraude();
     }
+}
+
+// ===================== ANTI-FRAUDE (item 19) =====================
+function carregarAntiFraude() {
+    const div = document.getElementById('adminAntiFraudeList');
+    if (!div) return;
+    div.innerHTML = '<p class="admin-empty">Carregando...</p>';
+    fetch(API_BASE + '/api/admin/usuarios-suspeitos')
+        .then(r => r.json())
+        .then(data => {
+            if (!data.success) { div.innerHTML = '<p class="admin-empty">Erro ao carregar.</p>'; return; }
+            const grupos = data.grupos || [];
+            if (!grupos.length) {
+                div.innerHTML = '<p class="admin-empty">Nenhuma conta suspeita detectada. 👍</p>';
+                return;
+            }
+            div.innerHTML = grupos.map(g => `
+                <div class="admin-card" style="border-color:rgba(239,68,68,0.5)">
+                    <div style="font-weight:800;color:#fca5a5;margin-bottom:6px">⚠️ ${g.contas.length} contas · ${escapeHtml(g.fingerprint)}</div>
+                    ${g.contas.map(c => `<div style="color:#fff;font-size:0.85em;padding:2px 0">👤 ${escapeHtml(c.nome || c.cpf)} <span style="color:#a0a0b0">(${escapeHtml(c.cpf || '')})</span></div>`).join('')}
+                </div>
+            `).join('');
+        })
+        .catch(() => { div.innerHTML = '<p class="admin-empty">Erro ao carregar.</p>'; });
 }
 
 function getDataFiltro(deId, ateId) {
@@ -1441,8 +1492,8 @@ function renderTransacao(t) {
     return `
     <div class="admin-card">
         <div><strong style="color:${cor}">${tipo}</strong> <span style="color:rgba(255,255,255,0.6)">${new Date(t.data).toLocaleString('pt-BR')}</span></div>
-        <div style="color:#fff">Jogador: ${t.nomeExibicao || t.nome} — <strong style="color:#ffff00">R$ ${valor}</strong></div>
-        ${t.detalhe ? `<div style="color:rgba(255,255,255,0.7);font-size:0.9em">${t.detalhe}</div>` : ''}
+        <div style="color:#fff">Jogador: ${escapeHtml(t.nomeExibicao || t.nome)} — <strong style="color:#ffff00">R$ ${valor}</strong></div>
+        ${t.detalhe ? `<div style="color:rgba(255,255,255,0.7);font-size:0.9em">${escapeHtml(t.detalhe)}</div>` : ''}
     </div>`;
 }
 

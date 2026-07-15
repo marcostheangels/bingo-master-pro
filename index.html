@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎱%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.0.8/index.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=22">
+    <link rel="stylesheet" href="style.css?v=23">
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => {
@@ -148,6 +148,8 @@
                     <button class="btn-deposit" onclick="abrirModalDeposito()">💰 Depositar</button>
                     <button class="btn-withdraw" id="btnSacar" onclick="abrirModalSaque()" style="display:none">💵 Sacar</button>
                     <button class="btn-logout" onclick="sairDaConta()">🚪 Sair</button>
+                    <button class="btn-sound" id="btnSoundToggle" onclick="alternarSom()" title="Ligar/desligar som">🔊</button>
+                    <button class="btn-sound" id="btnNotify" onclick="habilitarNotificacoes()" title="Ativar notificações">🔔</button>
                 </div>
             </div>
 
@@ -157,6 +159,7 @@
                 <div class="jackpot-value" id="jackpotDisplay">R$ 1.000,00</div>
                 <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÉ 37 BOLAS E LEVE O JACKPOT DE R$ 1.000,00!</div>
                 <div class="round-number" id="currentRoundNumber">Nenhum sorteio ainda</div>
+                <button class="btn-hall" onclick="abrirHallDaFama()">🏆 Hall da Fama</button>
             </div>
                 <div class="jackpot-balls-panel" id="jackpotBallsPanel" style="display:none;">
                     <div class="jackpot-balls-label">Bolas para o Jackpot:</div>
@@ -309,6 +312,7 @@
                     <button class="admin-tab" data-tab="tabUsuarios" onclick="adminAbrirAba('tabUsuarios')">📋 Usuários</button>
                     <button class="admin-tab" data-tab="tabHistorico" onclick="adminAbrirAba('tabHistorico')">📜 Histórico</button>
                     <button class="admin-tab" data-tab="tabTransacoes" onclick="adminAbrirAba('tabTransacoes')">💳 Transações</button>
+                    <button class="admin-tab" data-tab="tabAntifraude" onclick="adminAbrirAba('tabAntifraude')">🛡️ Anti-fraude</button>
                 </div>
 
                 <!-- Conteúdo das Abas -->
@@ -363,6 +367,15 @@
                         <button class="btn btn-sm btn-download" onclick="baixarTransacoesJSON()">JSON</button>
                     </div>
                     <div id="adminTransacoesList"><p class="admin-empty">Nenhuma transação encontrada.</p></div>
+                </div>
+
+                <div class="admin-tab-content" id="tabAntifraude" style="display:none">
+                    <div class="admin-tab-header">
+                        <h4>🛡️ Contas Suspeitas (mesma impressão digital)</h4>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarAntiFraude()">🔄</button>
+                    </div>
+                    <p class="admin-info-text">Grupos de contas que compartilham o mesmo dispositivo (possível multi-conta para abuso de bônus/jackpot).</p>
+                    <div id="adminAntiFraudeList"><p class="admin-empty">Carregando...</p></div>
                 </div>
 
                 <!-- Barra de todos os jogadores reais -->
@@ -428,6 +441,7 @@
         <div class="modal-content">
             <button class="modal-close" onclick="fecharModal('modalSaque')">✖</button>
             <h2>💵 Solicitar Saque</h2>
+            <button class="btn-hall" style="margin-left:auto" onclick="abrirMinhasEstatisticas()">📊 Minhas Estatísticas</button>
             <div class="regra-deposito">
                 ⚠️ <strong>Saque mínimo: R$ 10,00.</strong><br>
                 <span id="saqueRegra">Podem ser sacados: <strong>Créditos (admin)</strong> + <strong>Prêmios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).</span><br>
@@ -449,6 +463,29 @@
                 <button class="btn btn-success" onclick="solicitarSaque()">📤 Solicitar Saque</button>
             </div>
             <div id="saqueMsg" class="saque-msg"></div>
+            <div class="meus-saques-box">
+                <div class="meus-saques-title">📋 Meus saques</div>
+                <div id="meusSaquesList" class="meus-saques-list">Carregando…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hall da Fama -->
+    <div class="modal-overlay" id="modalHall" style="display:none">
+        <div class="modal-content">
+            <button class="modal-close" onclick="fecharModal('modalHall')">✖</button>
+            <h2>🏆 Hall da Fama</h2>
+            <p style="color:#a0a0b0;font-size:0.82em;margin-bottom:10px">Últimos ganhadores de Kuadra, Kina e Keno.</p>
+            <div id="hallList" class="hall-list">Carregando…</div>
+        </div>
+    </div>
+
+    <!-- Minhas Estatísticas -->
+    <div class="modal-overlay" id="modalEstatisticas" style="display:none">
+        <div class="modal-content">
+            <button class="modal-close" onclick="fecharModal('modalEstatisticas')">✖</button>
+            <h2>📊 Minhas Estatísticas</h2>
+            <div id="estatisticasContent" class="estatisticas-content">Carregando…</div>
         </div>
     </div>
 
@@ -461,8 +498,8 @@
     </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-<script src="game-logic.js?v=18"></script>
-<script src="network.js?v=19"></script>
+<script src="game-logic.js?v=20"></script>
+<script src="network.js?v=20"></script>
     <script>
         // Auto-login se tiver sessao valida
         (async function() {
