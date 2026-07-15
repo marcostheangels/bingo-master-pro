@@ -243,10 +243,10 @@ const PHASES = {
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋'];
 const BOT_MAX_CARDS = 15;
-const HUMAN_MAX_CARDS = 15;
-const CARD_COST = 100;
-const JACKPOT_BALL_LIMIT = 75;
-let JACKPOT_REWARD = 5000;
+const HUMAN_MAX_CARDS = 40;
+const CARD_COST = 50;
+const JACKPOT_BALL_LIMIT = 70;
+let JACKPOT_REWARD = 20000;
 
 function getRoundNumber() {
     return parseInt(localStorage.getItem('bingo_round_number') || '0', 10);
@@ -788,7 +788,21 @@ function renderWinnerCardHTML(cardData) {
 
 const CELEBRATION_DURATION = 4000;
 
+// Duração "padrão" das animações de kuadra/kina/keno/jackpot/ranking.
+// Base de 4s + 1,5s por vencedor extra (até 12s) para que TODOS os
+// vencedores sejam vistos, independente de quantos ganham na mesma fase.
+function getCelebrationDuration(winnerCount) {
+    const count = Math.max(1, winnerCount || 1);
+    const extra = Math.max(0, count - 1) * 1500;
+    return Math.min(CELEBRATION_DURATION + extra, 12000);
+}
+
+function closePhaseOverlays() {
+    document.querySelectorAll('.winner-banner-overlay:not(.celebration-jackpot)').forEach(o => o.remove());
+}
+
 function showPhaseCelebration(phaseKey, results) {
+    closePhaseOverlays();
     const cfg = PHASE_CELEBRATIONS[phaseKey] || PHASE_CELEBRATIONS.keno;
     const overlay = document.createElement('div');
     overlay.className = 'winner-banner-overlay celebration-' + phaseKey;
@@ -849,7 +863,7 @@ function showPhaseCelebration(phaseKey, results) {
         }, i * (isMobile ? 60 : 100));
     }
 
-    setTimeout(() => closePhaseBanner(null, overlay), CELEBRATION_DURATION);
+    setTimeout(() => closePhaseBanner(null, overlay), getCelebrationDuration(results.length));
 }
 
 function closePhaseBanner(btn, overlay) {
@@ -912,7 +926,7 @@ function showJackpotCelebration(results) {
         }, i * 80);
     }
 
-    setTimeout(closeJackpotBanner, CELEBRATION_DURATION);
+    setTimeout(closeJackpotBanner, getCelebrationDuration(results.length));
 }
 
 function closeJackpotBanner() {
@@ -1575,11 +1589,11 @@ function processPhaseWinners(winners, phaseKey) {
     if (typeof updatePlayerListUI === 'function') updatePlayerListUI();
 
     if (isJackpot) {
-        JACKPOT_REWARD = 5000;
+        JACKPOT_REWARD = 20000;
         saveJackpotReward();
         sendToGuest({ type: 'jackpotUpdate', value: JACKPOT_REWARD });
         const jackpotDisplay = document.querySelector('.jackpot-value');
-        if (jackpotDisplay) jackpotDisplay.textContent = 'R$ 100,00';
+        if (jackpotDisplay) jackpotDisplay.textContent = 'R$ ' + formatReais(JACKPOT_REWARD);
         updateJackpotPanel();
     }
 
@@ -2455,6 +2469,7 @@ function renderMissingNumbersPanel() {
 
 // ==================== KENO RANKING ANIMATION ====================
 function showKenoRanking() {
+    closePhaseOverlays();
     if (typeof allPlayers === 'undefined' || !allPlayers) return;
     const kuadra = [];
     const kina = [];
@@ -2518,7 +2533,8 @@ function showKenoRanking() {
     });
 
     // Auto-fechar ranking com o mesmo tempo das animações de kuadra/kina/keno
-    setTimeout(fecharKenoRanking, CELEBRATION_DURATION);
+    const totalWinners = kuadra.length + kina.length + keno.length;
+    setTimeout(fecharKenoRanking, getCelebrationDuration(totalWinners || 1));
 }
 function fecharKenoRanking() {
     const el = document.getElementById('kenoRankingOverlay');

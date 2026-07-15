@@ -156,8 +156,8 @@
             <!-- Jackpot -->
             <div class="jackpot-panel">
                 <div class="jackpot-label">🎰 Jackpot Acumulado</div>
-                <div class="jackpot-value" id="jackpotDisplay">R$ 1.000,00</div>
-                <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÉ 37 BOLAS E LEVE O JACKPOT DE R$ 1.000,00!</div>
+                <div class="jackpot-value" id="jackpotDisplay">R$ 20,00</div>
+                <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÉ 70 BOLAS E LEVE O JACKPOT DE R$ 20,00!</div>
                 <div class="round-number" id="currentRoundNumber">Nenhum sorteio ainda</div>
                 <button class="btn-hall" onclick="abrirHallDaFama()">🏆 Hall da Fama</button>
             </div>
@@ -168,9 +168,9 @@
 
                 <!-- Premios band (Kuadra / Kina / Keno) -->
                 <div class="prizes-strip">
-                    <div class="phase-item phase-item-mini" id="phase_kuadra"><span class="phase-label">Kuadra</span> <span class="prize">💰 R$ 3</span></div>
-                    <div class="phase-item phase-item-mini" id="phase_kina"><span class="phase-label">Kina</span> <span class="prize">💰 R$ 5</span></div>
-                    <div class="phase-item phase-item-mini" id="phase_keno"><span class="phase-label">Bingo</span> <span class="prize">💰 R$ 7</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_kuadra"><span class="phase-label">Kuadra</span> <span class="prize">💰 R$ 0,30</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_kina"><span class="phase-label">Kina</span> <span class="prize">💰 R$ 0,40</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_keno"><span class="phase-label">Bingo</span> <span class="prize">💰 R$ 0,80</span></div>
                 </div>
 
                 <!-- Game Body -->
@@ -188,7 +188,7 @@
 
                     <div class="ball-actions">
                         <div class="buy-options" id="buySection">
-                            <span class="buy-label">Comprar (R$0,15)</span>
+                            <span class="buy-label">Comprar (R$0,05)</span>
                             <button class="btn btn-primary" onclick="buyBingoCards(1)">1</button>
                             <button class="btn btn-primary" onclick="buyBingoCards(5)">5</button>
                             <button class="btn btn-primary" onclick="buyBingoCards(10)">10</button>
@@ -498,8 +498,8 @@
     </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-<script src="game-logic.js?v=23"></script>
-<script src="network.js?v=22"></script>
+<script src="game-logic.js?v=24"></script>
+<script src="network.js?v=23"></script>
     <script>
         // Auto-login se tiver sessao valida
         (async function() {

@@ -594,7 +594,7 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
                 const wasEnded = gameEnded;
                 gameEnded = data.gameEnded;
                 if (gameEnded && !wasEnded && typeof showKenoRanking === 'function') {
-                    setTimeout(showKenoRanking, 3000);
+                    setTimeout(showKenoRanking, 4500);
                 }
             }
             if (data.currentRound !== undefined) {

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'bingo-master-pro-v26';
+const CACHE_NAME = 'bingo-master-pro-v27';
 
 self.addEventListener('install', (event) => {
     self.skipWaiting();

@@ -7,13 +7,14 @@ const PHASES = {
     keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 0,80', reward: 800 }
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
-const CARD_COST = 100; // R$0,10 cada cartela (em fichas = centavos de real)
-const JACKPOT_BALL_LIMIT = 75;
-const JACKPOT_INITIAL = 5000; // R$50,00 inicial do poço progressivo
-const JACKPOT_CONTRIBUTION_PER_CARD = 20; // R$0,02 de cada cartela vendida vai para o poço (100% dos jogadores, casa nunca banca)
-const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada
+const CARD_COST = 50; // R$0,05 cada cartela (em fichas = centavos de real)
+const JACKPOT_BALL_LIMIT = 70; // keno em ate 70 bolas (raro o suficiente p/ casa nao perder com cartela a R$0,05)
+const JACKPOT_INITIAL = 20000; // R$20,00 inicial do poço progressivo (atrativo e seguro)
+const JACKPOT_CONTRIBUTION_PER_CARD = 10; // R$0,01 de cada cartela vendida vai para o poço (casa nunca banca; margem saudável com cartela a R$0,05)
+const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada (exige >=2 jogadores, pois HUMAN_MAX_CARDS=40)
+
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
-const HUMAN_MAX_CARDS = 15;
+const HUMAN_MAX_CARDS = 40; // limite de cartelas por jogador (aumentado p/ dar mais opções e garantir lucro da casa)
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋', 'Lucas 🔥', 'Beatriz 🌻', 'Gustavo 🍎', 'Larissa 🦄', 'Rafael 🎲', 'Patrícia 🌹', 'Thiago ⚽', 'Vanessa 🍓', 'Felipe 🚀', 'Mariana 🐬'];
 const BOT_MAX_CARDS = 15;
 const BOT_INITIAL_CHIPS = 10000; // R$10,00 somente para bots
