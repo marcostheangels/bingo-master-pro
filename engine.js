@@ -10,7 +10,7 @@ const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const CARD_COST = 50; // R$0,05 cada cartela (em fichas = centavos de real)
 const JACKPOT_BALL_LIMIT = 70; // keno em ate 70 bolas (raro o suficiente p/ casa nao perder com cartela a R$0,05)
 const JACKPOT_INITIAL = 20000; // R$20,00 inicial do poço progressivo (atrativo e seguro)
-const JACKPOT_CONTRIBUTION_PER_CARD = 10; // R$0,01 de cada cartela vendida vai para o poço (casa nunca banca; margem saudável com cartela a R$0,05)
+const JACKPOT_CONTRIBUTION_PER_CARD = 0; // poço FIXO em R$20,00 (não acumula); casa nunca banca e não há risco
 const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada (exige >=2 jogadores, pois HUMAN_MAX_CARDS=40)
 
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
@@ -190,17 +190,19 @@ function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards, jackpotA
     // Prêmio base é dividido entre TODOS os vencedores (humanos E bots) — bots dão vida ao jogo
     const perPlayer = Math.max(1, Math.floor(reward / uniquePlayers.length));
 
-    // Jackpot só vai para HUMANOS e só se houver ao menos um humano ganhador.
-    // Bots NUNCA consomem o poço (que é formado por dinheiro de humanos).
+    // Jackpot vai para QUALQUER vencedor de keno (humano OU bot) quando a condição é
+    // atingida (keno em ate BALL_LIMIT bolas + >= MIN cartelas humanas). Bots também podem
+    // ganhar — assim fica transparente para todos verem o jackpot sendo pago. Bots só recebem
+    // fichas nao sacáveis, então a casa nao tem prejuízo real com isso.
     const isJackpot = isJackpotEligible(phaseKey, drawnBalls) &&
-        (humanCards || 0) >= JACKPOT_MIN_HUMAN_CARDS && humanWinners.length > 0;
+        (humanCards || 0) >= JACKPOT_MIN_HUMAN_CARDS;
     const jackpotPool = jackpotAmount || JACKPOT_INITIAL;
-    const jackpotPerPlayer = isJackpot ? Math.floor(jackpotPool / humanWinners.length) : 0;
+    const jackpotPerPlayer = isJackpot ? Math.floor(jackpotPool / Math.max(1, uniquePlayers.length)) : 0;
 
     const results = uniquePlayers.map(player => {
         let totalReward = perPlayer;
         let jackpotCount = 0;
-        if (isJackpot && !player.isBot) {
+        if (isJackpot) {
             totalReward += jackpotPerPlayer;
             jackpotCount = 1;
         }

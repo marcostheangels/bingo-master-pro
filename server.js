@@ -559,8 +559,8 @@ async function salvarHistoricoSorteio(room) {
             if (card.awards.kuadra) vencedores.kuadra.push({ nome: player.name, premio: engine.PHASES.kuadra.reward });
             if (card.awards.kina) vencedores.kina.push({ nome: player.name, premio: engine.PHASES.kina.reward });
             if (card.awards.keno) {
-                // Jackpot só entra no registro de HUMANOS (bots não recebem jackpot).
-                const jackpot = (!player.isBot && room.jackpotAwarded) ? (room.jackpotAwardedValue || 0) : 0;
+                // Jackpot agora pode ser de humanos OU bots (transparência). Registra para todos.
+                const jackpot = room.jackpotAwarded ? (room.jackpotAwardedValue || 0) : 0;
                 vencedores.keno.push({ nome: player.name, premio: engine.PHASES.keno.reward + jackpot });
             }
         });
