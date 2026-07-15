@@ -183,9 +183,11 @@
 
                     <div class="ball-actions">
                         <div class="buy-options" id="buySection">
-                            <span class="buy-label">Comprar cartelas (R$0,05 cada)</span>
+                            <span class="buy-label">Comprar cartelas (R$0,05 cada) <span style="color:#fbbf24;font-size:0.85em">— Máx: 40</span></span>
                             <div style="display:flex;gap:6px;align-items:center;width:100%">
+                                <button class="btn btn-primary" onclick="ajustarQtd(-1)" style="flex:0 0 40px;padding:8px 0">−</button>
                                 <input type="number" id="buyQtyInput" value="1" min="1" max="40" style="flex:1;min-width:50px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;font-size:0.95em;text-align:center">
+                                <button class="btn btn-primary" onclick="ajustarQtd(1)" style="flex:0 0 40px;padding:8px 0">+</button>
                                 <button class="btn btn-primary" onclick="comprarCartelas()" style="flex:2">Comprar</button>
                             </div>
                         </div>

@@ -1222,6 +1222,14 @@ function comprarCartelas() {
     buyBingoCards(qty);
 }
 
+function ajustarQtd(delta) {
+    const input = document.getElementById('buyQtyInput');
+    if (!input) return;
+    let val = parseInt(input.value, 10) || 1;
+    val = Math.max(1, Math.min(40, val + delta));
+    input.value = val;
+}
+
 function renderMyCards() {
     const grid = document.getElementById('myCardsGrid');
     if (!grid) return;
