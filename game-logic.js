@@ -437,11 +437,14 @@ function addBotsToGame() {
 }
 
 function abrirAdminScreen() {
-    goToScreen('screenAdmin');
-    adminAbrirAba('tabSaques');
-    carregarAdminUsuariosComSaldo();
-    carregarUsuariosParaExclusao();
-    carregarBarraJogadores();
+    solicitarSenhaAdmin().then(ok => {
+        if (!ok) return;
+        goToScreen('screenAdmin');
+        adminAbrirAba('tabSaques');
+        carregarAdminUsuariosComSaldo();
+        carregarUsuariosParaExclusao();
+        carregarBarraJogadores();
+    });
 }
 function fecharAdminScreen() {
     goToScreen('screenGame');

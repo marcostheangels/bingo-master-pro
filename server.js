@@ -1245,6 +1245,18 @@ app.post('/api/validar-sessao', (req, res) => {
     }
 });
 
+// ===================== AUTENTICAÇÃO DE ADMIN =====================
+// Todas as rotas /api/admin/* exigem o cabeçalho x-admin-token igual a
+// process.env.ADMIN_SENHA (definida no painel do Render). Sem isso -> 401.
+function verificarAdmin(req, res, next) {
+    const senha = req.headers['x-admin-token'];
+    if (!senha || senha !== process.env.ADMIN_SENHA) {
+        return res.status(401).json({ erro: 'Acesso negado: senha mestre inválida.' });
+    }
+    next();
+}
+app.use('/api/admin', verificarAdmin);
+
 // Admin - Listar saques
 app.get('/api/admin/saques', (req, res) => {
     try {

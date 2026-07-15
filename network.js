@@ -20,6 +20,42 @@ function escapeJsStr(str) {
     return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
 }
 
+// ===================== AUTENTICAÇÃO DE ADMIN (senha mestre) =====================
+// A senha mestre é digitada no painel admin e enviada via header x-admin-token.
+// O servidor compara com process.env.ADMIN_SENHA (definida no Render). A senha
+// NÃO fica no código — só na memória/sessionStorage após o dono digitá-la.
+let adminAuthToken = sessionStorage.getItem('bingo_admin_token') || '';
+function adminFetch(url, options) {
+    options = options || {};
+    options.headers = Object.assign({}, options.headers, { 'x-admin-token': adminAuthToken });
+    return fetch(url, options);
+}
+function solicitarSenhaAdmin() {
+    if (adminAuthToken) return Promise.resolve(true);
+    return new Promise((resolve) => {
+        const senha = prompt('Painel administrativo — digite a senha mestre:');
+        if (!senha) { resolve(false); return; }
+        adminAuthToken = senha;
+        adminFetch(API_BASE + '/api/admin/usuarios-suspeitos')
+            .then(r => {
+                if (!r.ok) {
+                    adminAuthToken = '';
+                    sessionStorage.removeItem('bingo_admin_token');
+                    alert('Senha mestre incorreta.');
+                    resolve(false);
+                } else {
+                    sessionStorage.setItem('bingo_admin_token', senha);
+                    resolve(true);
+                }
+            })
+            .catch(() => {
+                adminAuthToken = '';
+                sessionStorage.removeItem('bingo_admin_token');
+                resolve(false);
+            });
+    });
+}
+
 // O WebSocket DEVE usar o MESMO servidor da API (API_BASE), senão o "auth"
 // do login falha (sessão criada num servidor, validada em outro) e o jogador
 // fica preso na tela de login. Deriva o host do WS a partir de API_BASE.
@@ -356,7 +392,7 @@ function handleSocketMessage(raw) {
             if (message.modoTeste !== undefined) {
                 modoTesteSaque = !!message.modoTeste;
             }
-            fetch(API_BASE + '/api/admin/modo-teste')
+            adminFetch(API_BASE + '/api/admin/modo-teste')
                 .then(r => r.json())
                 .then(d => { modoTesteSaque = !!(d && d.ligado); })
                 .catch(() => {});
@@ -838,7 +874,7 @@ function atualizarSaldoJogadorSelecionado() {
     // Sempre busca o saldo completo no servidor: o objeto do jogo (allPlayers)
     // não traz os campos derivados (depositos, adminCredits, bonusGiven), o que
     // fazia o painel exibir "Depósitos: R$ 0,00" mesmo com saldo creditado.
-    fetch(API_BASE + '/api/admin/usuarios-com-saldo')
+    adminFetch(API_BASE + '/api/admin/usuarios-com-saldo')
         .then(r => r.json())
         .then(usuarios => {
             const usuario = usuarios.find(u => u.nomeCompleto === selectedNome);
@@ -900,7 +936,7 @@ function sendAction(action, payload) {
 }
 
 function carregarSaquesAdmin() {
-    fetch(API_BASE + '/api/admin/saques')
+    adminFetch(API_BASE + '/api/admin/saques')
         .then(r => r.json())
         .then(saques => {
             const div = document.getElementById('adminSaquesList');
@@ -926,7 +962,7 @@ function carregarSaquesAdmin() {
 }
 
 function carregarModoTeste() {
-    fetch(API_BASE + '/api/admin/modo-teste')
+    adminFetch(API_BASE + '/api/admin/modo-teste')
         .then(r => r.json())
         .then(d => {
             modoTesteSaque = !!(d && d.ligado);
@@ -943,7 +979,7 @@ function carregarModoTeste() {
 
 function alternarModoTeste() {
     const novo = !modoTesteSaque;
-    fetch(API_BASE + '/api/admin/modo-teste', {
+    adminFetch(API_BASE + '/api/admin/modo-teste', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ligado: novo })
@@ -959,12 +995,12 @@ function alternarModoTeste() {
 
 function processarSaqueAuto(id) {
     if (!confirm('Enviar PIX automaticamente para este jogador via Asaas?')) return;
-    fetch(API_BASE + '/api/admin/saques')
+    adminFetch(API_BASE + '/api/admin/saques')
         .then(r => r.json())
         .then(saques => {
             const saque = saques.find(s => s.id === id);
             if (!saque) { showToast('Saque não encontrado.', 'error', 4000); return; }
-            return fetch(API_BASE + '/api/admin/enviar-pix', {
+            return adminFetch(API_BASE + '/api/admin/enviar-pix', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -990,7 +1026,7 @@ function processarSaqueAuto(id) {
 
 function processarSaqueManual(id) {
     if (!confirm('Marcar este saque como pago (manual)?')) return;
-    fetch(API_BASE + '/api/admin/saque-pago', {
+    adminFetch(API_BASE + '/api/admin/saque-pago', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ saqueId: id })
@@ -1008,7 +1044,7 @@ function processarSaqueManual(id) {
 }
 
 function testarEmailAdmin() {
-    fetch(API_BASE + '/api/admin/testar-email', { method: 'POST' })
+    adminFetch(API_BASE + '/api/admin/testar-email', { method: 'POST' })
         .then(r => r.json())
         .then(r => {
             if (r.success) {
@@ -1021,7 +1057,7 @@ function testarEmailAdmin() {
 }
 
 function testarAsaasAdmin() {
-    fetch(API_BASE + '/api/admin/testar-asaas')
+    adminFetch(API_BASE + '/api/admin/testar-asaas')
         .then(r => r.json())
         .then(r => {
             if (r.success) {
@@ -1072,8 +1108,8 @@ function updatePlayerListUI() {
 
 function carregarCadastrosAdmin() {
     Promise.all([
-        fetch(API_BASE + '/api/admin/usuarios').then(r => r.json()),
-        fetch(API_BASE + '/api/admin/usuarios-com-bonus').then(r => r.json())
+        adminFetch(API_BASE + '/api/admin/usuarios').then(r => r.json()),
+        adminFetch(API_BASE + '/api/admin/usuarios-com-bonus').then(r => r.json())
     ])
     .then(([usuarios, usuariosComBonus]) => {
             const div = document.getElementById('adminCadastrosList');
@@ -1123,7 +1159,7 @@ function excluirUsuarioAdmin(cpf, nome) {
 
     showSpinner('Excluindo usuário...');
     
-    fetch(API_BASE + '/api/admin/usuario/excluir', {
+    adminFetch(API_BASE + '/api/admin/usuario/excluir', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cpf })
@@ -1156,7 +1192,7 @@ function darBonusUsuario(cpf, nome) {
     
     showSpinner('Concedendo bônus...');
     
-    fetch(API_BASE + '/api/admin/usuario/bonus', {
+    adminFetch(API_BASE + '/api/admin/usuario/bonus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ cpf, bonus: valor })
@@ -1188,7 +1224,7 @@ function addBonusSelecionado() {
         return;
     }
     showSpinner('Concedendo bônus...');
-    fetch(API_BASE + '/api/admin/usuario/bonus', {
+    adminFetch(API_BASE + '/api/admin/usuario/bonus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome, bonus: valor })
@@ -1219,7 +1255,7 @@ function removerBonusSelecionado() {
     }
     if (!confirm(`Remover ${valor} de BÔNUS de "${nome}"?`)) return;
     showSpinner('Removendo bônus...');
-    fetch(API_BASE + '/api/admin/usuario/remover-bonus', {
+    adminFetch(API_BASE + '/api/admin/usuario/remover-bonus', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome, bonus: valor })
@@ -1242,7 +1278,7 @@ function carregarBarraJogadores() {
     const div = document.getElementById('adminPlayersBar');
     if (!div) return;
     div.innerHTML = 'Carregando...';
-    fetch(API_BASE + '/api/admin/usuarios-com-saldo')
+    adminFetch(API_BASE + '/api/admin/usuarios-com-saldo')
         .then(r => r.json())
         .then(usuarios => {
             const reais = (usuarios || []).filter(u => !u.isBot);
@@ -1279,7 +1315,7 @@ function carregarBarraJogadores() {
 }
 
 function carregarAdminUsuariosComSaldo() {
-    fetch(API_BASE + '/api/admin/usuarios-com-saldo')
+    adminFetch(API_BASE + '/api/admin/usuarios-com-saldo')
         .then(r => r.json())
         .then(usuarios => {
             const select = document.getElementById('adminPlayerSelect');
@@ -1323,7 +1359,7 @@ function carregarAdminUsuariosComSaldo() {
 
 // Admin - Carregar lista específica para o dropdown de exclusão rápida
 function carregarUsuariosParaExclusao() {
-    fetch(API_BASE + '/api/admin/usuarios-com-saldo')
+    adminFetch(API_BASE + '/api/admin/usuarios-com-saldo')
         .then(r => r.json())
         .then(usuarios => {
             const select = document.getElementById('deletePlayerSelect');
@@ -1393,7 +1429,7 @@ function carregarAntiFraude() {
     const div = document.getElementById('adminAntiFraudeList');
     if (!div) return;
     div.innerHTML = '<p class="admin-empty">Carregando...</p>';
-    fetch(API_BASE + '/api/admin/usuarios-suspeitos')
+    adminFetch(API_BASE + '/api/admin/usuarios-suspeitos')
         .then(r => r.json())
         .then(data => {
             if (!data.success) { div.innerHTML = '<p class="admin-empty">Erro ao carregar.</p>'; return; }
@@ -1433,7 +1469,7 @@ function carregarHistoricoAdmin() {
     if (!div) return;
     div.innerHTML = '<p style="color:#a0a0b0;font-size:0.82em">Carregando...</p>';
     const filtro = getDataFiltro('filtroHistDe', 'filtroHistAte');
-    fetch(API_BASE + '/api/admin/historico')
+    adminFetch(API_BASE + '/api/admin/historico')
         .then(r => r.json())
         .then(historico => {
             if (!div) return;
@@ -1502,7 +1538,7 @@ function carregarTransacoesAdmin() {
     if (!div) return;
     div.innerHTML = '<p style="color:#a0a0b0;font-size:0.82em">Carregando...</p>';
     const filtro = getDataFiltro('filtroTransDe', 'filtroTransAte');
-    fetch(API_BASE + '/api/admin/transacoes')
+    adminFetch(API_BASE + '/api/admin/transacoes')
         .then(r => r.json())
         .then(transacoes => {
             if (!div) return;
@@ -1551,14 +1587,14 @@ function baixarCSV(data, nomeArquivo, colunas) {
 }
 
 function baixarHistoricoJSON() {
-    fetch(API_BASE + '/api/admin/historico').then(r => r.json()).then(d => {
+    adminFetch(API_BASE + '/api/admin/historico').then(r => r.json()).then(d => {
         const filtro = getDataFiltro('filtroHistDe', 'filtroHistAte');
         baixarJSON(filtrarPorData(d, 'data', filtro.de, filtro.ate), 'historico_sorteios.json');
     }).catch(() => showToast('Erro ao baixar.', 'error', 4000));
 }
 
 function baixarHistoricoCSV() {
-    fetch(API_BASE + '/api/admin/historico').then(r => r.json()).then(d => {
+    adminFetch(API_BASE + '/api/admin/historico').then(r => r.json()).then(d => {
         const filtro = getDataFiltro('filtroHistDe', 'filtroHistAte');
         const dados = filtrarPorData(d, 'data', filtro.de, filtro.ate);
         baixarCSV(dados, 'historico_sorteios.csv', ['numero', 'data', 'totalBolas']);
@@ -1566,14 +1602,14 @@ function baixarHistoricoCSV() {
 }
 
 function baixarTransacoesJSON() {
-    fetch(API_BASE + '/api/admin/transacoes').then(r => r.json()).then(d => {
+    adminFetch(API_BASE + '/api/admin/transacoes').then(r => r.json()).then(d => {
         const filtro = getDataFiltro('filtroTransDe', 'filtroTransAte');
         baixarJSON(filtrarPorData(d, 'data', filtro.de, filtro.ate), 'transacoes.json');
     }).catch(() => showToast('Erro ao baixar.', 'error', 4000));
 }
 
 function baixarTransacoesCSV() {
-    fetch(API_BASE + '/api/admin/transacoes').then(r => r.json()).then(d => {
+    adminFetch(API_BASE + '/api/admin/transacoes').then(r => r.json()).then(d => {
         const filtro = getDataFiltro('filtroTransDe', 'filtroTransAte');
         const dados = filtrarPorData(d, 'data', filtro.de, filtro.ate);
         baixarCSV(dados, 'transacoes.csv', ['tipo', 'nome', 'valor', 'data', 'detalhe']);
