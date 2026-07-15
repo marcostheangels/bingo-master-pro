@@ -443,12 +443,12 @@ async function sortearProximaBola(room) {
             const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, humanCards, room.jackpot);
 
             // Update persistent chips/winnings (cache instantâneo, sync em background)
+            // Bots ganham no jogo (fichas/banner) para dar vida à sala, mas NÃO vão para o
+            // ledger de saque nem para o Hall da Fama (não podem sacar).
             for (const r of results) {
                 const player = r.player;
-                if (player.isBot) continue; // segurança: bots nunca entram no ledger/prêmio
-                if (!player.isBot) {
-                    setChips(player.name, player.chips, player.winnings).catch(e => console.error('[GAME] Erro setChips winner:', e.message));
-                }
+                if (player.isBot) continue; // bots não persistem no ledger de saque
+                setChips(player.name, player.chips, player.winnings).catch(e => console.error('[GAME] Erro setChips winner:', e.message));
                 const transacoes = db.getTransacoes();
                 transacoes.push({
                     id: Date.now() + Math.floor(Math.random() * 1000),

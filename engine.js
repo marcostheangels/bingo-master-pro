@@ -154,7 +154,6 @@ function computeCloseCardsForAllPlayers(players, currentPhaseIndex, drawnBalls) 
 function checkAwardsForAllPlayers(players, currentPhaseIndex, drawnBalls) {
     const winners = [];
     players.forEach(player => {
-        if (player.isBot) return; // Bots NÃO ganham prêmios (são apenas figurantes)
         (player.cards || []).forEach((cardData, cardIndex) => {
             const newAwards = computeCardAwards(cardData, currentPhaseIndex, drawnBalls);
             newAwards.forEach(phase => {
@@ -171,36 +170,40 @@ function isJackpotEligible(phaseKey, drawnBalls) {
 
 function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards, jackpotAmount) {
     const reward = PHASES[phaseKey].reward;
-    const isJackpot = isJackpotEligible(phaseKey, drawnBalls) && (humanCards || 0) >= JACKPOT_MIN_HUMAN_CARDS;
-    const jackpotPool = jackpotAmount || JACKPOT_INITIAL;
 
-    // Count unique winners (one prize per player, not per card)
+    // Vencedores únicos (1 prêmio por jogador, não por cartela)
     const uniquePlayers = [];
+    const humanWinners = [];
     const seen = new Set();
     winners.forEach(({ player }) => {
         if (!player || typeof player.chips !== 'number') return;
         const key = player.id || player.name;
-        if (!seen.has(key)) {
-            seen.add(key);
-            uniquePlayers.push(player);
-        }
+        if (seen.has(key)) return;
+        seen.add(key);
+        uniquePlayers.push(player);
+        if (!player.isBot) humanWinners.push(player);
     });
 
     if (uniquePlayers.length === 0) return { results: [], isJackpot: false };
 
-    // Split phase prize equally among all winners
+    // Prêmio base é dividido entre TODOS os vencedores (humanos E bots) — bots dão vida ao jogo
     const perPlayer = Math.max(1, Math.floor(reward / uniquePlayers.length));
-    const jackpotPerPlayer = isJackpot ? Math.floor(jackpotPool / uniquePlayers.length) : 0;
+
+    // Jackpot só vai para HUMANOS e só se houver ao menos um humano ganhador.
+    // Bots NUNCA consomem o poço (que é formado por dinheiro de humanos).
+    const isJackpot = isJackpotEligible(phaseKey, drawnBalls) &&
+        (humanCards || 0) >= JACKPOT_MIN_HUMAN_CARDS && humanWinners.length > 0;
+    const jackpotPool = jackpotAmount || JACKPOT_INITIAL;
+    const jackpotPerPlayer = isJackpot ? Math.floor(jackpotPool / humanWinners.length) : 0;
 
     const results = uniquePlayers.map(player => {
         let totalReward = perPlayer;
         let jackpotCount = 0;
-        if (isJackpot) {
+        if (isJackpot && !player.isBot) {
             totalReward += jackpotPerPlayer;
             jackpotCount = 1;
         }
-        const oldWinnings = player.winnings || 0;
-        player.winnings = oldWinnings + totalReward;
+        player.winnings = (player.winnings || 0) + totalReward;
         player.chips += totalReward;
         return { player, cards: 0, totalReward, jackpotCount };
     });
