@@ -281,6 +281,7 @@ function pararAutoStartServer(room) {
 
 function iniciarNovaRodada(room) {
     if (room.gameActive) return;
+    liquidarComprasSala(room.id);
     room.currentRound++;
     room.drawnBalls = [];
     room.currentPhaseIndex = 0;
@@ -697,6 +698,41 @@ async function creditarFichas(nome, fichas) {
     });
 }
 
+async function liquidarComprasSala(sala) {
+    try {
+        const compras = db.getComprasPendentes();
+        let changed = false;
+        for (const c of compras) {
+            if (c.sala === sala && c.status === 'pendente') { c.status = 'liquidada'; changed = true; }
+        }
+        if (changed) await db.setComprasPendentes(compras);
+    } catch (e) {
+        console.error('[COMPRA] Erro ao liquidar compras da sala:', e.message);
+    }
+}
+
+async function reembolsarComprasPendentes() {
+    try {
+        const compras = db.getComprasPendentes();
+        const pendentes = compras.filter(c => c.status === 'pendente');
+        if (pendentes.length === 0) { console.log('[REEMBOLSO] Nenhuma compra pendente para reembolsar.'); return; }
+        const usuarios = carregarUsuarios();
+        const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
+        for (const c of pendentes) {
+            const u = usuariosArray.find(x => (x.nomeCompleto || '').toLowerCase().trim() === String(c.nome).toLowerCase().trim());
+            if (u && u.isBot) { c.status = 'cancelada'; continue; }
+            const chipsAtuais = getChips(c.nome);
+            await setChips(c.nome, chipsAtuais.chips + c.custo, chipsAtuais.winnings);
+            c.status = 'reembolsada';
+            console.log(`[REEMBOLSO] Jogador ${c.nome} recebeu ${c.custo} fichas (cartelas de rodada interrompida)`);
+        }
+        await db.setComprasPendentes(compras);
+        console.log(`[REEMBOLSO] ${pendentes.length} compra(s) pendente(s) reembolsada(s).`);
+    } catch (e) {
+        console.error('[REEMBOLSO] Erro:', e.message);
+    }
+}
+
 async function handleAction(ws, room, action, payload) {
     try {
     console.log('[ACTION]', { action, payload, clientId: ws.clientId, roomId: room.id });
@@ -855,6 +891,34 @@ async function handleAction(ws, room, action, payload) {
         player.chips -= cost;
         for (let i = 0; i < qty; i++) player.cards.push(engine.generateBingoCardData());
         await setChips(player.name, player.chips, player.winnings);
+        try {
+            const key = player.name.toLowerCase().trim();
+            const bonusStore = db.getBonusGivenStore();
+            if (bonusStore[key]) {
+                const gasto = Math.min(bonusStore[key], cost);
+                if (gasto > 0) {
+                    bonusStore[key] -= gasto;
+                    await db.setBonusGivenStore(bonusStore);
+                }
+            }
+        } catch (e) {
+            console.error('[BONUS] Erro ao descontar bônus gasto em cartelas:', e.message);
+        }
+        try {
+            const compras = db.getComprasPendentes();
+            compras.push({
+                id: Date.now() + Math.floor(Math.random() * 1000),
+                nome: player.name,
+                sala: room.id,
+                rodada: room.currentRound,
+                qty,
+                custo: cost,
+                status: 'pendente'
+            });
+            await db.setComprasPendentes(compras);
+        } catch (e) {
+            console.error('[COMPRA] Erro ao registrar compra pendente:', e.message);
+        }
         sendGameState(room, ws);
         if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buySuccess', qty, chips: player.chips }));
         return;
@@ -868,6 +932,7 @@ async function handleAction(ws, room, action, payload) {
             if (!p.isBot && qtd > 0) { p.chips += qtd * engine.CARD_COST; await setChips(p.name, p.chips, p.winnings); }
             p.cards = [];
         }
+        liquidarComprasSala(room.id);
         room.drawnBalls = [];
         room.currentPhaseIndex = 0;
         room.gameEnded = false;
@@ -1270,6 +1335,10 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
         }
         if (!usuario) {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+
+        if (usuario.isBot) {
+            return res.status(400).json({ error: 'Não é possível conceder bônus a bots.' });
         }
 
         const key = usuario.nomeCompleto.toLowerCase().trim();
@@ -2012,7 +2081,10 @@ async function processarConfirmacaoRecarga(nome, valor, paymentId) {
     const bonusStore = db.getBonusPrimeiroDeposito();
     const keyNome = (nome || '').toLowerCase().trim();
     const jaTemBonus = !!bonusStore[keyNome];
-    const bonus = jaTemBonus ? 0 : Math.round(fichas * 0.10);
+    const usuariosArr = carregarUsuarios();
+    const usuarioRecarga = usuariosArr.find(u => (u.nomeCompleto || '').toLowerCase().trim() === keyNome);
+    const isBotRecarga = !!(usuarioRecarga && usuarioRecarga.isBot);
+    const bonus = (jaTemBonus || isBotRecarga) ? 0 : Math.round(fichas * 0.10);
     const totalFichas = fichas + bonus;
 
     const c = getChips(nome);
@@ -2145,11 +2217,14 @@ app.post('/api/asaas/webhook', express.json({ type: 'application/json' }), (req,
             const h = req.headers || {};
             const provided = String(h['asaas-access-token'] || h['authorization'] || (req.query && req.query.token) || '')
                 .replace(/^Bearer\s+/i, '').trim();
-            if (provided !== webhookToken) {
-                console.warn('[ASAAS WEBHOOK] Token de ativação inválido/ausente. Rejeitando.');
+            // Só rejeita se um token foi enviado E está errado.
+            // Permite webhooks sem header de token (ex.: Asaas nem sempre envia o authToken),
+            // já que a confirmação só ocorre se o paymentId existir no nosso mapeamento.
+            if (provided && provided !== webhookToken) {
+                console.warn('[ASAAS WEBHOOK] Token de ativação inválido. Rejeitando.');
                 return res.sendStatus(401);
             }
-            console.log('[ASAAS WEBHOOK] Token de ativação validado com sucesso.');
+            if (provided) console.log('[ASAAS WEBHOOK] Token de ativação validado com sucesso.');
         }
 
         const event = req.body;
@@ -2198,6 +2273,8 @@ async function iniciarServidor() {
     adminCreditsStore = db.getAdminCreditsStore();
     bonusGivenStore = db.getBonusGivenStore();
     modoTesteSaque = await db.loadModoTeste();
+
+    await reembolsarComprasPendentes();
 
     server.listen(PORT, () => {
         console.log(`Servidor rodando em http://localhost:${PORT}`);

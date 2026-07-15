@@ -13,6 +13,7 @@ let botFichasCache = {};
 let roomsStateCache = {};
 let bonusPrimeiroDepositoCache = {};
 let bonusGivenCache = {};
+let comprasPendentesCache = [];
 
 async function init(connectionString) {
     pool = new Pool({
@@ -85,6 +86,18 @@ async function createTables() {
     } catch (e) {
         console.error('[DB] ALTER transacoes id BIGINT (ignorado):', e.message);
     }
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS compras_pendentes (
+            "id" BIGINT PRIMARY KEY,
+            "nome" TEXT,
+            "sala" TEXT,
+            "rodada" BIGINT,
+            "qty" INTEGER,
+            "custo" BIGINT,
+            "status" TEXT
+        )
+    `);
+
     await pool.query(`
         CREATE TABLE IF NOT EXISTS recargas (
             "paymentId" TEXT PRIMARY KEY,
@@ -184,8 +197,11 @@ async function loadCache() {
     }
 
     try {
-        const r = await pool.query('SELECT * FROM recargas');
-        recargasCache = r.rows.map(row => {
+        const r = await pool.query('SELECT * FROM compras_pendentes');
+        comprasPendentesCache = r.rows.map(row => ({ ...row }));
+
+        const r2 = await pool.query('SELECT * FROM recargas');
+        recargasCache = r2.rows.map(row => {
             const obj = { ...row };
             if (obj.paymentId !== null && obj.paymentId !== undefined) obj.paymentId = isNaN(Number(obj.paymentId)) ? obj.paymentId : Number(obj.paymentId);
             return obj;
@@ -347,6 +363,20 @@ async function syncTransacoes() {
     } catch (e) { console.error('[DB] syncTransacoes error:', e.message); throw e; }
 }
 
+async function syncComprasPendentes() {
+    if (!pool) return;
+    try {
+        for (const c of comprasPendentesCache) {
+            await pool.query(
+                `INSERT INTO compras_pendentes ("id", "nome", "sala", "rodada", "qty", "custo", "status")
+                 VALUES ($1,$2,$3,$4,$5,$6,$7)
+                 ON CONFLICT ("id") DO UPDATE SET "status"=EXCLUDED."status"`,
+                [c.id, c.nome || null, c.sala || null, c.rodada || 0, c.qty || 0, c.custo || 0, c.status || 'pendente']
+            );
+        }
+    } catch (e) { console.error('[DB] syncComprasPendentes error:', e.message); throw e; }
+}
+
 async function syncRecargas() {
     if (!pool) return;
     try {
@@ -491,6 +521,15 @@ async function syncBonusGivenStore() {
     await syncBonusGiven();
 }
 
+function getComprasPendentes() { return comprasPendentesCache; }
+async function setComprasPendentes(lista) {
+    comprasPendentesCache = lista;
+    await syncComprasPendentes();
+}
+async function syncComprasPendentesStore() {
+    await syncComprasPendentes();
+}
+
 function getBotFichas() { return botFichasCache; }
 async function setBotFichas(store) {
     botFichasCache = store;
@@ -555,6 +594,9 @@ module.exports = {
     getBonusGivenStore,
     setBonusGivenStore,
     syncBonusGivenStore,
+    getComprasPendentes,
+    setComprasPendentes,
+    syncComprasPendentesStore,
     loadModoTeste,
     saveModoTeste,
     loadRoomState,

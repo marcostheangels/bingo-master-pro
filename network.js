@@ -808,15 +808,10 @@ function atualizarSaldoJogadorSelecionado() {
         balanceDiv.innerHTML = 'Selecione um jogador acima para ver os detalhes.';
         return;
     }
-    
-    // Primeiro tenta encontrar na sala (allPlayers)
-    const player = allPlayers.find(p => p.name === selectedNome);
-    if (player) {
-        mostrarSaldoJogador(player);
-        return;
-    }
-    
-    // Se não está na sala, busca no servidor pelo nome completo
+
+    // Sempre busca o saldo completo no servidor: o objeto do jogo (allPlayers)
+    // não traz os campos derivados (depositos, adminCredits, bonusGiven), o que
+    // fazia o painel exibir "Depósitos: R$ 0,00" mesmo com saldo creditado.
     fetch(API_BASE + '/api/admin/usuarios-com-saldo')
         .then(r => r.json())
         .then(usuarios => {
@@ -1273,16 +1268,14 @@ function carregarAdminUsuariosComSaldo() {
             defaultOption.textContent = '-- Selecione um usuário --';
             select.appendChild(defaultOption);
 
-            usuarios.forEach(u => {
+            usuarios.filter(u => u.isBot !== true).forEach(u => {
                 const option = document.createElement('option');
                 option.value = u.nomeCompleto;
-                const isBot = u.isBot === true;
-                const prefix = isBot ? '🤖 ' : '';
                 const saldo = (u.chips / 1000).toFixed(2).replace('.', ',');
                 const ganhos = (u.winnings / 1000).toFixed(2).replace('.', ',');
                 const credAdmin = (u.adminCreditos / 1000).toFixed(2).replace('.', ',');
                 const bonusG = ((u.bonusGiven || 0) / 1000).toFixed(2).replace('.', ',');
-                option.textContent = `${prefix}${u.nomeCompleto} (Saldo: R$ ${saldo} | Ganhos: R$ ${ganhos} | Créd.Admin: R$ ${credAdmin} | Bônus: R$ ${bonusG})`;
+                option.textContent = `${u.nomeCompleto} (Saldo: R$ ${saldo} | Ganhos: R$ ${ganhos} | Créd.Admin: R$ ${credAdmin} | Bônus: R$ ${bonusG})`;
                 select.appendChild(option);
             });
 
