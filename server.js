@@ -1284,6 +1284,21 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
         bonusGivenStore[key] = (bonusGivenStore[key] || 0) + parseInt(bonus);
         await db.setBonusGivenStore(bonusGivenStore);
 
+        // Sincroniza jogador conectado na sala para que possa gastar o bônus em cartelas
+        gameRooms.forEach(room => {
+            const player = Array.from(room.players.values()).find(p =>
+                !p.isBot && (p.name || '').toLowerCase().trim() === key
+            );
+            if (player) {
+                player.chips = fichasStore[key].chips;
+                broadcast(room, {
+                    type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
+                    currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive, gameEnded: room.gameEnded,
+                    currentRound: room.currentRound, jackpot: room.jackpot, autoStartSeconds: room.autoStartSeconds
+                });
+            }
+        });
+
         console.log(`[BONUS] ${bonus} fichas concedidas para ${usuario.nomeCompleto} via painel admin`);
         res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips });
     } catch (err) {
@@ -2109,6 +2124,18 @@ app.post('/api/salvar-historico', async (req, res) => {
 // ===================== ASAAS WEBHOOK =====================
 app.post('/api/asaas/webhook', express.json({ type: 'application/json' }), (req, res) => {
     try {
+        const webhookToken = process.env.ASAAS_WEBHOOK_TOKEN;
+        if (webhookToken) {
+            const h = req.headers || {};
+            const provided = String(h['asaas-access-token'] || h['authorization'] || (req.query && req.query.token) || '')
+                .replace(/^Bearer\s+/i, '').trim();
+            if (provided !== webhookToken) {
+                console.warn('[ASAAS WEBHOOK] Token de ativação inválido/ausente. Rejeitando.');
+                return res.sendStatus(401);
+            }
+            console.log('[ASAAS WEBHOOK] Token de ativação validado com sucesso.');
+        }
+
         const event = req.body;
         console.log('[ASAAS WEBHOOK] Evento recebido:', (event && event.event) || '?', JSON.stringify(event).slice(0, 500));
 
