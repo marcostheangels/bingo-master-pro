@@ -934,8 +934,12 @@ async function handleAction(ws, room, action, payload) {
             return;
         }
         player.chips -= cost;
-        // Jackpot progressivo: R$0,02 de cada cartela vendida alimenta o poço (100% dos jogadores)
-        room.jackpot = (room.jackpot || 0) + qty * engine.JACKPOT_CONTRIBUTION_PER_CARD;
+        // Jackpot progressivo: só CARTELAS HUMANAS alimentam o poço (dinheiro real do depósito).
+        // Bots NÃO contribuem (suas fichas são de brincadeira). Teto de segurança JACKPOT_MAX.
+        if (!player.isBot) {
+            const base = (typeof room.jackpot === 'number' && room.jackpot > 0) ? room.jackpot : engine.JACKPOT_INITIAL;
+            room.jackpot = Math.min(base + qty * engine.JACKPOT_CONTRIBUTION_PER_CARD, engine.JACKPOT_MAX);
+        }
         for (let i = 0; i < qty; i++) player.cards.push(engine.generateBingoCardData());
         await setChips(player.name, player.chips, player.winnings);
         try {

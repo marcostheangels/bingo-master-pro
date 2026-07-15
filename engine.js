@@ -8,10 +8,11 @@ const PHASES = {
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const CARD_COST = 50; // R$0,05 cada cartela (em fichas = centavos de real)
-const JACKPOT_BALL_LIMIT = 68; // keno em ate 68 bolas (jackpot mais raro/premium; casa nunca perde)
-const JACKPOT_INITIAL = 20000; // R$20,00 inicial do poço progressivo (atrativo e seguro)
-const JACKPOT_CONTRIBUTION_PER_CARD = 0; // poço FIXO em R$20,00 (não acumula); casa nunca banca e não há risco
+const JACKPOT_BALL_LIMIT = 55; // keno em ate 55 bolas: jackpot raro p/ a panela ACUMULAR e crescer com a sala (casa lucra)
+const JACKPOT_INITIAL = 20000; // R$20,00 de semente do poço progressivo (piso atrativo)
+const JACKPOT_CONTRIBUTION_PER_CARD = 5; // R$0,005 por CARTELA HUMANA alimenta o poço (dentro da margem da casa => seguro, sem prejuizo)
 const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada (exige >=2 jogadores, pois HUMAN_MAX_CARDS=40)
+const JACKPOT_MAX = 100000; // R$100,00 teto de segurança do poço (backstop; na pratica fica ~R$40)
 
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
 const HUMAN_MAX_CARDS = 40; // limite de cartelas por jogador (aumentado p/ dar mais opções e garantir lucro da casa)
@@ -215,7 +216,7 @@ function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards, jackpotA
 }
 
 module.exports = {
-    PHASES, PHASE_SEQUENCE, CARD_COST, JACKPOT_BALL_LIMIT, JACKPOT_INITIAL, JACKPOT_CONTRIBUTION_PER_CARD, JACKPOT_MIN_HUMAN_CARDS,
+    PHASES, PHASE_SEQUENCE, CARD_COST, JACKPOT_BALL_LIMIT, JACKPOT_INITIAL, JACKPOT_CONTRIBUTION_PER_CARD, JACKPOT_MIN_HUMAN_CARDS, JACKPOT_MAX,
     INITIAL_CHIPS, HUMAN_MAX_CARDS, BOT_NAMES, BOT_MAX_CARDS, BOT_INITIAL_CHIPS,
     getMaxCardsForPlayer, generateBingoCardData,
     computeCardAwards, getCardClosePhase, computeCloseCardsForAllPlayers,
