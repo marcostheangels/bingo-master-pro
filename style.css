@@ -1111,6 +1111,12 @@ body.admin-mode .admin-screen-wrapper * {
     box-shadow: 0 0 12px rgba(239,68,68,0.5);
 }
 
+/* A bola que completa Kuadra/Kina/Keno (última sorteada) mantém a cor da fase,
+   em vez de ficar vermelha, para não confundir com a vitória. */
+.card-cell.marked-last.phase-kuadra { background: radial-gradient(circle at 35% 30%, #34d399, #059669); color: #042f1f; box-shadow: 0 0 12px rgba(52,211,153,0.55); }
+.card-cell.marked-last.phase-kina   { background: radial-gradient(circle at 35% 30%, #38bdf8, #0284c7); color: #04263b; box-shadow: 0 0 12px rgba(56,189,248,0.55); }
+.card-cell.marked-last.phase-keno   { background: radial-gradient(circle at 35% 30%, #c084fc, #9333ea); color: #ffffff; box-shadow: 0 0 12px rgba(192,132,252,0.55); }
+
 .card-close {
     border: 3px solid #ffd700;
     box-shadow: 0 0 28px rgba(255,215,0,0.35);
