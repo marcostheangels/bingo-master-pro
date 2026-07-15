@@ -10,7 +10,7 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎱%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.0.8/index.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=8">
+    <link rel="stylesheet" href="style.css?v=21">
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => {
@@ -37,9 +37,34 @@
 
     <!-- ===== REGISTER / LOGIN SCREEN ===== -->
     <div class="screen active" id="screenHome">
-        <div class="box">
-            <h1>🎱 BINGO VIP CLUB</h1>
-            <p class="subtitle">Kuadra • Kina • Keno</p>
+        <div class="home-bg" aria-hidden="true">
+            <span class="orb orb-1"></span>
+            <span class="orb orb-2"></span>
+            <span class="orb orb-3"></span>
+            <span class="spark s1"></span>
+            <span class="spark s2"></span>
+            <span class="spark s3"></span>
+        </div>
+
+        <div class="box login-card">
+            <div class="brand">
+                <div class="hero-ball">
+                    <div class="hero-ball-sphere">
+                        <span class="hero-ball-num">7</span>
+                        <span class="hero-ball-gloss"></span>
+                    </div>
+                    <span class="hero-ball-shadow"></span>
+                </div>
+                <h1 class="brand-title">BINGO VIP CLUB</h1>
+                <p class="subtitle">Kuadra • Kina • Keno</p>
+                <span class="vip-pill">★ Clube VIP</span>
+            </div>
+
+            <!-- TABS -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab active" id="tabLogin" onclick="mostrarAba('login')">Entrar</button>
+                <button type="button" class="auth-tab" id="tabRegister" onclick="mostrarAba('register')">Criar conta</button>
+            </div>
 
             <!-- LOGIN (padrão) -->
             <div id="authLogin">
@@ -52,16 +77,8 @@
                     <input type="password" id="loginSenha" class="input-field" placeholder="Sua senha">
                 </div>
                 <p class="auth-error" id="loginError"></p>
-                <button class="mode-btn" onclick="fazerLogin()" style="width:100%">
-                    <span class="icon">🔑</span>
-                    <span class="text">
-                        <span class="title">Entrar</span>
-                        <span class="desc">Acessar minha conta</span>
-                    </span>
-                </button>
-                <p style="margin-top:16px;font-size:0.85em;color:#6b6599">
-                    Não tem conta? <a href="#" onclick="mostrarAba('register');return false" style="color:#fbbf24;text-decoration:none;font-weight:600">Cadastre-se</a>
-                </p>
+                <button class="btn-login" onclick="fazerLogin()">🔑 Entrar na conta</button>
+                <p class="switch-link">Não tem conta? <a href="#" onclick="mostrarAba('register');return false">Cadastre-se grátis</a></p>
             </div>
 
             <!-- CADASTRO -->
@@ -91,26 +108,18 @@
                     <input type="text" id="regChavePix" class="input-field" placeholder="CPF, e-mail, telefone ou chave aleatória">
                 </div>
                 <p class="auth-error" id="regError"></p>
-                <button class="mode-btn" onclick="registrar()" style="width:100%">
-                    <span class="icon">✅</span>
-                    <span class="text">
-                        <span class="title">Cadastrar</span>
-                        <span class="desc">Criar minha conta</span>
-                    </span>
-                </button>
-                <p style="margin-top:16px;font-size:0.85em;color:#6b6599">
-                    Já tem conta? <a href="#" onclick="mostrarAba('login');return false" style="color:#fbbf24;text-decoration:none;font-weight:600">Faça login</a>
-                </p>
+                <button class="btn-login" onclick="registrar()">✅ Criar minha conta</button>
+                <p class="switch-link">Já tem conta? <a href="#" onclick="mostrarAba('login');return false">Faça login</a></p>
             </div>
 
             <div class="spectator-entry">
-                <button class="mode-btn" onclick="conectarComoEspectador()" style="width:100%;margin-top:8px">
-                    <span class="icon">👁️</span>
-                    <span class="text">
-                        <span class="title">Assistir ao Vivo</span>
-                        <span class="desc">Acompanhe o sorteio sem fazer login</span>
-                    </span>
-                </button>
+                <button class="btn-spectador" onclick="conectarComoEspectador()">👁️ Assistir ao Vivo sem login</button>
+            </div>
+
+            <div class="trust-row">
+                <span>🔒 Ambiente Seguro</span>
+                <span>🎯 Exclusive 18+</span>
+                <span>⚡ Sorteios ao Vivo</span>
             </div>
 
             <div id="connectionStatusMsg" class="connection-status">
@@ -149,12 +158,19 @@
                 <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÉ 37 BOLAS E LEVE O JACKPOT DE R$ 1.000,00!</div>
                 <div class="round-number" id="currentRoundNumber">Nenhum sorteio ainda</div>
             </div>
-            <div class="jackpot-balls-panel" id="jackpotBallsPanel" style="display:none;">
-                <div class="jackpot-balls-label">Bolas para o Jackpot:</div>
-                <div class="jackpot-balls-grid" id="jackpotBallsGrid"></div>
-            </div>
+                <div class="jackpot-balls-panel" id="jackpotBallsPanel" style="display:none;">
+                    <div class="jackpot-balls-label">Bolas para o Jackpot:</div>
+                    <div class="jackpot-balls-grid" id="jackpotBallsGrid"></div>
+                </div>
 
-            <!-- Game Body -->
+                <!-- Premios band (Kuadra / Kina / Keno) -->
+                <div class="prizes-strip">
+                    <div class="phase-item phase-item-mini" id="phase_kuadra"><span class="phase-label">Kuadra</span> <span class="prize">💰 R$ 3</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_kina"><span class="phase-label">Kina</span> <span class="prize">💰 R$ 5</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_keno"><span class="phase-label">Bingo</span> <span class="prize">💰 R$ 7</span></div>
+                </div>
+
+                <!-- Game Body -->
             <div class="game-body">
 
                 <!-- Ball Section -->
@@ -178,11 +194,10 @@
                     </div>
                 </div>
 
-                <!-- Premios strip -->
-                <div class="prizes-strip">
-                    <div class="phase-item phase-item-mini" id="phase_kuadra"><span class="phase-label">Kuadra</span> <span class="prize">💰 R$ 3</span></div>
-                    <div class="phase-item phase-item-mini" id="phase_kina"><span class="phase-label">Kina</span> <span class="prize">💰 R$ 5</span></div>
-                    <div class="phase-item phase-item-mini" id="phase_keno"><span class="phase-label">Bingo</span> <span class="prize">💰 R$ 7</span></div>
+                <!-- My Cards -->
+                <div class="my-cards-section">
+                    <h3>📋 Minhas Cartelas <button type="button" class="cards-compact-btn" onclick="toggleCardsCompact()" title="Modo compacto">⤢</button></h3>
+                    <div class="cards-grid" id="myCardsGrid"></div>
                 </div>
 
                 <!-- Players Panel -->
@@ -191,23 +206,13 @@
                     <div class="players-panel-body">
                         <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
                         <ul class="player-list" id="playerListUI"></ul>
-                    </div>
-                </div>
-
-                <!-- Missing / Close Numbers -->
-                <div class="missing-numbers-panel" id="missingNumbersPanel">
-                    <h3 onclick="this.closest('.missing-numbers-panel').classList.toggle('collapsed')">📊 <span id="missingTitle">Cartelas próximas</span> <span class="toggle-icon">▼</span></h3>
-                    <div class="missing-numbers-body">
-                        <div class="missing-numbers-list" id="missingNumbersList">
-                            <p style="color:#6b6599;font-size:0.82em">Nenhum jogo ativo no momento.</p>
+                        <div class="players-missing" id="missingNumbersPanel">
+                            <h4 class="players-missing-title">📊 <span id="missingTitle">Cartelas próximas</span></h4>
+                            <div class="missing-numbers-list" id="missingNumbersList">
+                                <p style="color:#6b6599;font-size:0.82em">Nenhum jogo ativo no momento.</p>
+                            </div>
                         </div>
                     </div>
-                </div>
-
-                <!-- My Cards -->
-                <div class="my-cards-section">
-                    <h3>📋 Minhas Cartelas</h3>
-                    <div class="cards-grid" id="myCardsGrid"></div>
                 </div>
 
                 <!-- Game Log -->
@@ -230,11 +235,11 @@
                 <!-- Grid de Seções -->
                 <div class="admin-grid">
 
-                    <!-- Card: Gerenciar Fichas -->
+                    <!-- Card: Gerenciar Créditos -->
                     <div class="admin-card-section">
                         <div class="admin-card-head">
                             <span class="admin-card-icon">💰</span>
-                            <span class="admin-card-title">Gerenciar Fichas</span>
+                            <span class="admin-card-title">Créditos (sacável)</span>
                         </div>
                         <div class="admin-card-body">
                             <label class="admin-label">Jogador:</label>
@@ -245,8 +250,8 @@
                             <label class="admin-label">Valor (fichas):</label>
                             <input type="number" id="adminChipAmount" class="input-field" value="5000">
                             <div class="admin-btn-row">
-                                <button class="btn btn-sm btn-add" onclick="executeAdminAction('add')">➕ Adicionar</button>
-                                <button class="btn btn-sm btn-remove" onclick="executeAdminAction('remove')">➖ Retirar</button>
+                                <button class="btn btn-sm btn-add" onclick="executeAdminAction('add')">💰 Crédito +</button>
+                                <button class="btn btn-sm btn-remove" onclick="executeAdminAction('remove')">💰 Crédito −</button>
                             </div>
                         </div>
                     </div>
@@ -265,15 +270,18 @@
                         </div>
                     </div>
 
-                    <!-- Card: Modo Teste -->
+                    <!-- Card: Bônus -->
                     <div class="admin-card-section card-yellow">
                         <div class="admin-card-head">
-                            <span class="admin-card-icon">🧪</span>
-                            <span class="admin-card-title">Modo Teste</span>
+                            <span class="admin-card-icon">🎁</span>
+                            <span class="admin-card-title">Bônus (NÃO sacável)</span>
                         </div>
                         <div class="admin-card-body">
-                            <p class="admin-info-text">Quando LIGADO: apenas créditos admin podem ser sacados. Quando DESLIGADO: só ganhos em jogos.</p>
-                            <button class="btn btn-sm btn-success" id="btnModoTeste" onclick="alternarModoTeste()" style="width:100%">🔄 Carregando…</button>
+                            <p class="admin-info-text">Bônus NÃO pode ser sacado. Serve apenas para o jogador comprar cartelas.</p>
+                            <div class="admin-btn-row">
+                                <button class="btn btn-sm btn-add" onclick="addBonusSelecionado()" style="background:#10b981">🎁 Bônus +</button>
+                                <button class="btn btn-sm btn-remove" onclick="removerBonusSelecionado()">🎁 Bônus −</button>
+                            </div>
                         </div>
                     </div>
 
@@ -357,6 +365,15 @@
                     <div id="adminTransacoesList"><p class="admin-empty">Nenhuma transação encontrada.</p></div>
                 </div>
 
+                <!-- Barra de todos os jogadores reais -->
+                <div class="admin-players-bar" id="adminPlayersBarWrap" style="margin-top:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+                    <div class="admin-tab-header">
+                        <h4>👥 Todos os Jogadores (Bônus / Créditos / Depositado)</h4>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarBarraJogadores()">🔄</button>
+                    </div>
+                    <div id="adminPlayersBar" style="overflow-x:auto;font-size:0.8em">Carregando...</div>
+                </div>
+
                 <!-- Botão Voltar -->
                 <div style="text-align:center;margin-top:20px">
                     <button class="btn btn-primary" onclick="fecharAdminScreen()">⬅️ Voltar ao Jogo</button>
@@ -382,8 +399,8 @@
             <h2>💰 Depósito via PIX</h2>
             <div class="regra-deposito">
                 ⚠️ <strong>Valor mínimo de depósito: R$ 10,00.</strong><br>
-                O valor depositado <strong>não pode ser sacado</strong>. Só pode ser usado para comprar cartelas.
-                Você só tem direito a saque dos valores <strong>ganhos</strong> nas fases Kuadra, Kina ou Keno.
+                Depósitos e Bônus <strong>NÃO podem ser sacados</strong> (só servem para comprar cartelas).<br>
+                Podem ser sacados: <strong>Créditos concedidos pelo admin</strong> + <strong>Prêmios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).
                 Saque mínimo: R$ 10,00.
             </div>
             <div class="pix-form">
@@ -413,7 +430,7 @@
             <h2>💵 Solicitar Saque</h2>
             <div class="regra-deposito">
                 ⚠️ <strong>Saque mínimo: R$ 10,00.</strong><br>
-                <span id="saqueRegra">Apenas <strong>Ganhos em Jogo (Kuadra, Kina, Keno)</strong> podem ser sacados.</span><br>
+                <span id="saqueRegra">Podem ser sacados: <strong>Créditos (admin)</strong> + <strong>Prêmios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).</span><br>
                 Depósitos e Bônus <span style="color:#ef4444;font-weight:700;font-size:1.05em">NÃO PODEM SER SACADOS</span>.<br>
                 Saldo sacável: <strong id="saqueSaldo">R$ 0,00</strong>
             </div>
@@ -444,8 +461,8 @@
     </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-    <script src="game-logic.js?v=10"></script>
-    <script src="network.js?v=10"></script>
+<script src="game-logic.js?v=18"></script>
+<script src="network.js?v=17"></script>
     <script>
         // Auto-login se tiver sessao valida
         (async function() {

@@ -1253,15 +1253,20 @@ app.get('/api/admin/usuarios-com-saldo', (req, res) => {
 // Admin - Dar bônus de fichas para usuário
 app.post('/api/admin/usuario/bonus', async (req, res) => {
     try {
-        const { cpf, bonus } = req.body;
-        if (!cpf || !bonus || bonus <= 0) {
-            return res.status(400).json({ error: 'CPF e bônus válido são obrigatórios.' });
+        const { cpf, nome, bonus } = req.body;
+        if ((!cpf && !nome) || !bonus || bonus <= 0) {
+            return res.status(400).json({ error: 'Identificador (CPF ou nome) e bônus válido são obrigatórios.' });
         }
-        const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
-
         const usuarios = carregarUsuarios();
         const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
-        const usuario = usuariosArray.find(u => String(u.cpf).padStart(11, '0') === cpfLimpo);
+        let usuario = null;
+        if (cpf) {
+            const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
+            usuario = usuariosArray.find(u => String(u.cpf).padStart(11, '0') === cpfLimpo);
+        } else {
+            const key = String(nome).toLowerCase().trim();
+            usuario = usuariosArray.find(u => (u.nomeCompleto || '').toLowerCase().trim() === key);
+        }
         if (!usuario) {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
         }
@@ -1283,6 +1288,63 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
         res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips });
     } catch (err) {
         console.error('[API] Erro ao conceder bônus:', err);
+        res.status(500).json({ error: 'Erro interno.' });
+    }
+});
+
+// Admin - Retirar (remover) bônus de fichas do usuário
+app.post('/api/admin/usuario/remover-bonus', async (req, res) => {
+    try {
+        const { cpf, nome, bonus } = req.body;
+        if ((!cpf && !nome) || !bonus || bonus <= 0) {
+            return res.status(400).json({ error: 'Identificador (CPF ou nome) e bônus válido são obrigatórios.' });
+        }
+        const usuarios = carregarUsuarios();
+        const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
+        let usuario = null;
+        if (cpf) {
+            const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
+            usuario = usuariosArray.find(u => String(u.cpf).padStart(11, '0') === cpfLimpo);
+        } else {
+            const key = String(nome).toLowerCase().trim();
+            usuario = usuariosArray.find(u => (u.nomeCompleto || '').toLowerCase().trim() === key);
+        }
+        if (!usuario) {
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+
+        const key = usuario.nomeCompleto.toLowerCase().trim();
+        const fichasStore = db.getFichasStore();
+        if (!fichasStore[key]) fichasStore[key] = { chips: engine.INITIAL_CHIPS, winnings: 0 };
+        const bonusGivenStore = db.getBonusGivenStore();
+        const atual = bonusGivenStore[key] || 0;
+        const remover = Math.min(atual, parseInt(bonus));
+        bonusGivenStore[key] = atual - remover;
+        await db.setBonusGivenStore(bonusGivenStore);
+
+        // Reflete a remoção também no saldo total (chips)
+        fichasStore[key].chips = Math.max(0, fichasStore[key].chips - remover);
+        await db.setFichasStore(fichasStore);
+
+        // Sincroniza jogador conectado na sala
+        gameRooms.forEach(room => {
+            const player = Array.from(room.players.values()).find(p =>
+                !p.isBot && (p.name || '').toLowerCase().trim() === key
+            );
+            if (player) {
+                player.chips = fichasStore[key].chips;
+                broadcast(room, {
+                    type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
+                    currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive, gameEnded: room.gameEnded,
+                    currentRound: room.currentRound, jackpot: room.jackpot, autoStartSeconds: room.autoStartSeconds
+                });
+            }
+        });
+
+        console.log(`[BONUS] Removido ${remover} fichas de bônus de ${usuario.nomeCompleto} via painel admin`);
+        res.json({ success: true, bonusRemovido: remover, bonusRestante: bonusGivenStore[key], novoSaldo: fichasStore[key].chips });
+    } catch (err) {
+        console.error('[API] Erro ao remover bônus:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
 });
@@ -1545,26 +1607,15 @@ app.post('/api/solicitar-saque', asyncHandler(async (req, res) => {
         const fichasNecessarias = valor * 1000;
         const c = getChips(nome);
         const adminCred = getAdminCreditos(nome);
-        
-        // MODO TESTE: só créditos admin são sacáveis | MODO NORMAL: só ganhos (winnings)
-        let saldoSacavel;
-        if (modoTesteSaque) {
-            saldoSacavel = adminCred;
-            console.log('[SAQUE DEBUG] MODO TESTE LIGADO - saldo sacável = adminCredits apenas');
-        } else {
-            saldoSacavel = c.winnings;
-            console.log('[SAQUE DEBUG] MODO TESTE DESLIGADO - saldo sacável = winnings apenas');
-        }
+
+        // REGRA DE SAQUE:
+        // SACAVEL = Creditos concedidos pelo admin + Premios ganhos (Kuadra/Kina/Keno/Jackpot)
+        // NAO SACAVEL = Depositos e Bonus
+        const saldoSacavel = adminCred + c.winnings;
         console.log('[SAQUE DEBUG] Balances:', { chips: c.chips, winnings: c.winnings, adminCred, saldoSacavel, fichasNecessarias });
-        
+
         if (saldoSacavel < fichasNecessarias) {
-            let mensagemErro;
-            if (modoTesteSaque) {
-                mensagemErro = 'Créditos admin insuficientes para saque.';
-            } else {
-                mensagemErro = 'Saldo sacável insuficiente. Só é permitido sacar ganhos (Kuadra/Kina/Keno).';
-            }
-            return res.status(400).json({ error: mensagemErro });
+            return res.status(400).json({ error: 'Saldo sacavel insuficiente. Podem ser sacados apenas: Creditos (admin) e Premios ganhos (Kuadra/Kina/Keno/Jackpot). Depositos e Bonus NAO podem ser sacados.' });
         }
 
         const saques = db.getSaques();
@@ -1591,22 +1642,14 @@ app.post('/api/solicitar-saque', asyncHandler(async (req, res) => {
         });
         await db.setTransacoes(transacoes);
 
-        // Dedução do saldo + sincronização com jogadores em memória
-        let novoChips, novoWinnings, novoAdminCred;
-        if (modoTesteSaque) {
-            // MODO TESTE: deduz apenas dos adminCredits
-            novoAdminCred = adminCred - fichasNecessarias;
-            novoChips = c.chips - fichasNecessarias;
-            novoWinnings = c.winnings;
-            await setAdminCreditos(nome, novoAdminCred);
-            await setChips(nome, novoChips, novoWinnings);
-        } else {
-            // MODO NORMAL: deduz apenas dos winnings (ganhos)
-            novoChips = c.chips - fichasNecessarias;
-            novoWinnings = c.winnings - fichasNecessarias;
-            novoAdminCred = adminCred;
-            await setChips(nome, novoChips, novoWinnings);
-        }
+        // Deducao do saldo sacavel (primeiro dos ganhos, depois dos creditos admin)
+        const doWinnings = Math.min(c.winnings, fichasNecessarias);
+        const doAdmin = fichasNecessarias - doWinnings;
+        const novoChips = c.chips - fichasNecessarias;
+        const novoWinnings = c.winnings - doWinnings;
+        const novoAdminCred = adminCred - doAdmin;
+        await setChips(nome, novoChips, novoWinnings);
+        await setAdminCreditos(nome, novoAdminCred);
 
         // Notifica admin por email
         const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
@@ -1804,6 +1847,25 @@ async function findOrCreateAsaasCustomer(nome, cpf, email) {
 }
 
 // Deposito - Criar PIX
+// Registra o mapeamento paymentId -> jogador para o webhook do Asaas confirmar o depósito
+function registrarRecargaPendente(nome, cpf, valor, paymentId) {
+    try {
+        const recargas = db.getRecargas();
+        recargas.push({
+            nome: nome || '',
+            cpf: cpf ? String(cpf).replace(/\D/g, '').padStart(11, '0') : '',
+            valor,
+            paymentId,
+            sincronizado: false,
+            origem: 'asaas',
+            data: new Date().toISOString()
+        });
+        db.setRecargas(recargas);
+    } catch (e) {
+        console.error('[RECARGA] Erro ao registrar mapeamento:', e.message);
+    }
+}
+
 app.post('/api/criar-pix', async (req, res) => {
     try {
         const { valor, nome, cpf, email } = req.body;
@@ -1812,6 +1874,7 @@ app.post('/api/criar-pix', async (req, res) => {
         }
         if (!ASAAS_API_KEY) {
             const paymentId = 'sim_' + Date.now();
+            registrarRecargaPendente(nome, cpf, valor, paymentId);
             return res.json({
                 copyPaste: '00020126580014br.gov.bcb.pix0136simulado' + Date.now(),
                 qrCode: 'simulado',
@@ -1839,6 +1902,7 @@ app.post('/api/criar-pix', async (req, res) => {
         });
 
         if (payment && payment.id) {
+            registrarRecargaPendente(nome, cpfLimpo, valor, payment.id);
             let copyPaste = '';
             let qrCode = '';
             try {
@@ -1897,50 +1961,75 @@ app.get('/api/status-pix/:paymentId', async (req, res) => {
 });
 
 // Confirmar recarga (após PIX aprovado)
+// Lógica compartilhada de confirmação de recarga (usada pelo frontend e pelo webhook Asaas)
+async function processarConfirmacaoRecarga(nome, valor, paymentId) {
+    const fichas = Math.round(valor * 1000);
+
+    // Idempotência: evita creditar 2x (webhook + polling do frontend)
+    if (paymentId) {
+        const recargas = db.getRecargas();
+        const recarga = recargas.find(r => r.paymentId === paymentId);
+        if (recarga && recarga.sincronizado) {
+            return { success: true, jaCreditado: true, fichas: 0, bonusConcedido: 0, primeiroDeposito: false };
+        }
+    }
+
+    // Bônus de 10% apenas no primeiro depósito (uma vez por usuário)
+    const bonusStore = db.getBonusPrimeiroDeposito();
+    const keyNome = (nome || '').toLowerCase().trim();
+    const jaTemBonus = !!bonusStore[keyNome];
+    const bonus = jaTemBonus ? 0 : Math.round(fichas * 0.10);
+    const totalFichas = fichas + bonus;
+
+    const c = getChips(nome);
+    await setChips(nome, c.chips + totalFichas, c.winnings);
+
+    // Marcar que este usuário já recebeu bônus de primeiro depósito
+    if (!jaTemBonus) {
+        await db.setBonusPrimeiroDepositoJaUsado(nome);
+    }
+
+    gameRooms.forEach(room => {
+        const player = Array.from(room.players.values()).find(p =>
+            !p.isBot && (p.name || '').toLowerCase().trim() === keyNome
+        );
+        if (player) {
+            player.chips = c.chips + totalFichas;
+            broadcast(room, {
+                type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
+                currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive,
+                gameEnded: room.gameEnded, currentRound: room.currentRound, jackpot: room.jackpot,
+                autoStartSeconds: room.autoStartSeconds
+            });
+        }
+    });
+
+    const transacoes = db.getTransacoes();
+    transacoes.push({
+        tipo: 'deposito', nome, nomeExibicao: nome, valor,
+        data: new Date().toISOString(),
+        detalhe: paymentId ? `PIX: ${paymentId}` : 'Depósito manual'
+    });
+    await db.setTransacoes(transacoes);
+
+    // Marca a recarga como sincronizada (impede duplo crédito)
+    if (paymentId) {
+        const recargas = db.getRecargas();
+        const recarga = recargas.find(r => r.paymentId === paymentId);
+        if (recarga) {
+            recarga.sincronizado = true;
+            await db.setRecargas(recargas);
+        }
+    }
+
+    return { success: true, fichas: totalFichas, bonusConcedido: bonus, primeiroDeposito: !jaTemBonus };
+}
+
 app.post('/api/confirmar-recarga', async (req, res) => {
     try {
         const { nome, valor, paymentId } = req.body;
-        const fichas = Math.round(valor * 1000);
-
-        // Bonus de 10% apenas no primeiro depósito (uma vez por usuário)
-        const bonusStore = db.getBonusPrimeiroDeposito();
-        const keyNome = (nome || '').toLowerCase().trim();
-        const jaTemBonus = !!bonusStore[keyNome];
-        const bonus = jaTemBonus ? 0 : Math.round(fichas * 0.10);
-        const totalFichas = fichas + bonus;
-
-        const c = getChips(nome);
-        await setChips(nome, c.chips + totalFichas, c.winnings);
-
-        // Marcar que este usuário já recebeu bônus de primeiro depósito
-        if (!jaTemBonus) {
-            await db.setBonusPrimeiroDepositoJaUsado(nome);
-        }
-
-        gameRooms.forEach(room => {
-            const player = Array.from(room.players.values()).find(p =>
-                !p.isBot && (p.name || '').toLowerCase().trim() === (nome || '').toLowerCase().trim()
-            );
-            if (player) {
-                player.chips = c.chips + totalFichas;
-                broadcast(room, {
-                    type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
-                    currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive,
-                    gameEnded: room.gameEnded, currentRound: room.currentRound, jackpot: room.jackpot,
-                    autoStartSeconds: room.autoStartSeconds
-                });
-            }
-        });
-
-        const transacoes = db.getTransacoes();
-        transacoes.push({
-            tipo: 'deposito', nome, nomeExibicao: nome, valor,
-            data: new Date().toISOString(),
-            detalhe: paymentId ? `PIX: ${paymentId}` : 'Depósito manual'
-        });
-        await db.setTransacoes(transacoes);
-
-        res.json({ success: true, fichas: totalFichas, bonusConcedido: bonus, primeiroDeposito: !jaTemBonus });
+        const r = await processarConfirmacaoRecarga(nome, valor, paymentId);
+        res.json(r);
     } catch (err) {
         res.status(500).json({ error: 'Erro ao confirmar recarga.' });
     }
@@ -2016,7 +2105,26 @@ app.post('/api/salvar-historico', async (req, res) => {
 app.post('/api/asaas/webhook', express.json({ type: 'application/json' }), (req, res) => {
     try {
         const event = req.body;
-        console.log('[ASAAS WEBHOOK] Evento recebido:', event.event, JSON.stringify(event).slice(0, 500));
+        console.log('[ASAAS WEBHOOK] Evento recebido:', (event && event.event) || '?', JSON.stringify(event).slice(0, 500));
+
+        const ev = (event && event.event) || '';
+        const pagamento = (event && (event.payment || event.data)) || {};
+        const paymentId = pagamento.id || (pagamento.payment && pagamento.payment.id);
+        const status = pagamento.status;
+        const aprovado = ev.includes('PAYMENT_RECEIVED') || ev.includes('PAYMENT_CONFIRMED') ||
+            ev.includes('PAYMENT_CREDITED') || ['RECEIVED', 'CONFIRMED', 'RECEIVED_IN_CASH'].includes(status);
+
+        if (aprovado && paymentId) {
+            const recargas = db.getRecargas();
+            const recarga = recargas.find(r => r.paymentId === paymentId);
+            if (recarga && !recarga.sincronizado) {
+                processarConfirmacaoRecarga(recarga.nome, recarga.valor, paymentId)
+                    .then(r => console.log('[ASAAS WEBHOOK] Depósito confirmado via webhook:', recarga.nome, r))
+                    .catch(e => console.error('[ASAAS WEBHOOK] Erro ao confirmar:', e.message));
+            } else if (!recarga) {
+                console.log('[ASAAS WEBHOOK] paymentId não encontrado no mapeamento:', paymentId);
+            }
+        }
         res.sendStatus(200);
     } catch (err) {
         console.error('[ASAAS WEBHOOK] Erro:', err.message);

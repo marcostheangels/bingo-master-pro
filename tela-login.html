@@ -325,7 +325,7 @@
                 return;
             }
 
-            fetch((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : 'https://api.bingovipclub.online') + '/api/login', {
+            fetch((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : 'https://bingo-master-pro-fcty.onrender.com') + '/api/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ cpf: cpf, senha: senha })
@@ -375,7 +375,7 @@
                 return;
             }
 
-            fetch((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : 'https://api.bingovipclub.online') + '/api/register', {
+            fetch((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' ? '' : 'https://bingo-master-pro-fcty.onrender.com') + '/api/register', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ nomeCompleto: nome, cpf: cpfLimpo, email: email, senha: senha, chavePix: chavePix })

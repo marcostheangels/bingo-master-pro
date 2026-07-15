@@ -1,10 +1,10 @@
 window.API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'))
-    ? '' : 'https://api.bingovipclub.online';
+    ? '' : 'https://bingo-master-pro-fcty.onrender.com';
 window.API_FALLBACK = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.'))
     ? '' : 'https://bingo-master-pro-fcty.onrender.com';
 
-// Fallback automático: se o domínio principal do backend falhar (ex.: SSL do subdomínio
-// api.bingovipclub.online inválido), tenta o domínio padrão do Render.
+// Fallback automático: se a chamada à API_BASE falhar (erro de rede), repete
+// no API_FALLBACK. Ambos apontam para o backend funcional no Render.
 (function () {
     const _origFetch = window.fetch ? window.fetch.bind(window) : null;
     if (!_origFetch) return;
@@ -53,6 +53,10 @@ function validarCPF(cpf) {
 function mostrarAba(aba) {
     document.getElementById('authRegister').style.display = aba === 'register' ? 'block' : 'none';
     document.getElementById('authLogin').style.display = aba === 'login' ? 'block' : 'none';
+    const tL = document.getElementById('tabLogin');
+    const tR = document.getElementById('tabRegister');
+    if (tL) tL.classList.toggle('active', aba === 'login');
+    if (tR) tR.classList.toggle('active', aba === 'register');
     document.getElementById('regError').textContent = '';
     document.getElementById('loginError').textContent = '';
 }
@@ -273,6 +277,7 @@ let isHost = false;
 let gameActive = false;
 let gameEnded = false;
 let drawnBalls = [];
+let drawnBallPhase = {};
 let myCards = [];
 let allPlayers = [];
 let currentPhaseIndex = 0;
@@ -398,9 +403,9 @@ function addBotsToGame() {
 function abrirAdminScreen() {
     goToScreen('screenAdmin');
     adminAbrirAba('tabSaques');
-    carregarModoTeste();
     carregarAdminUsuariosComSaldo();
     carregarUsuariosParaExclusao();
+    carregarBarraJogadores();
 }
 function fecharAdminScreen() {
     goToScreen('screenGame');
@@ -486,6 +491,7 @@ function updatePhaseUI() {
         element.classList.toggle('phase-active', key === activePhase);
         element.classList.toggle('phase-completed', PHASE_SEQUENCE.indexOf(key) < currentPhaseIndex);
     });
+    if (typeof renderMyCards === 'function') renderMyCards();
     updateJackpotPanel();
 }
 
@@ -718,21 +724,18 @@ function renderWinnerCardHTML(cardData) {
             } else {
                 const marked = drawnBalls.includes(Number(val));
                 const isWinningNum = Number(val) === wn;
-                let bg, color;
+                let bg, color, extra = '';
                 if (isWinningNum) {
-                    bg = '#ef4444'; color = '#fff';
-                } else if (isKeno && marked) {
-                    bg = '#1e90ff'; color = '#fff';
-                } else if (marked && row === wr) {
-                    bg = '#10b981'; color = '#fff';
+                    bg = isKeno ? '#ef4444' : '#047857'; color = '#fff';
+                    extra = 'box-shadow:0 0 0 2px #fff inset;';
                 } else if (marked) {
-                    bg = 'rgba(0,0,0,0.12)'; color = '#0b091a';
+                    bg = isKeno ? '#1e90ff' : '#10b981'; color = '#fff';
                 } else if (row === wr) {
-                    bg = 'rgba(239,68,68,0.08)'; color = '#333';
+                    bg = isKeno ? 'rgba(30,144,255,0.12)' : 'rgba(16,185,129,0.15)'; color = '#0b091a';
                 } else {
                     bg = 'rgba(0,0,0,0.06)'; color = '#333';
                 }
-                grid += `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:0.9em;font-weight:700;border-radius:4px;background:${bg};color:${color}">${val}</div>`;
+                grid += `<div style="aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:0.9em;font-weight:700;border-radius:4px;background:${bg};color:${color};${extra}">${val}</div>`;
             }
         }
     }
@@ -744,7 +747,7 @@ function renderWinnerCardHTML(cardData) {
 function showPhaseCelebration(phaseKey, results) {
     const cfg = PHASE_CELEBRATIONS[phaseKey] || PHASE_CELEBRATIONS.keno;
     const overlay = document.createElement('div');
-    overlay.className = 'winner-banner-overlay';
+    overlay.className = 'winner-banner-overlay celebration-' + phaseKey;
     overlay.style.cssText = `position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,2,113,0.7);backdrop-filter:blur(8px);z-index:10000;opacity:0;transition:opacity 0.4s`;
     const names = results.map(r => (r.player ? r.player.name : r.name)).join(', ');
     const total = results.reduce((s, r) => s + (r.totalReward || 0), 0);
@@ -817,7 +820,7 @@ function showJackpotCelebration(results) {
     jackpotAudio.play().catch(() => {});
 
     const overlay = document.createElement('div');
-    overlay.className = 'winner-banner-overlay';
+    overlay.className = 'winner-banner-overlay celebration-jackpot';
     overlay.style.cssText = 'position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:rgba(0,2,113,0.75);backdrop-filter:blur(12px);z-index:10000;opacity:0;transition:opacity 0.4s';
     const names = results.map(r => (r.player ? r.player.name : r.name)).join(', ');
     const total = results.reduce((s, r) => s + (r.totalReward || 0), 0);
@@ -877,6 +880,11 @@ function getCurrentPhaseKey() {
     return PHASE_SEQUENCE[currentPhaseIndex] || 'keno';
 }
 
+function phaseOfBall(v) {
+    const n = Number(v);
+    return (drawnBallPhase && drawnBallPhase[n] != null) ? drawnBallPhase[n] : getCurrentPhaseKey();
+}
+
 function advancePhase() {
     if (currentPhaseIndex < PHASE_SEQUENCE.length - 1) {
         currentPhaseIndex += 1;
@@ -897,14 +905,9 @@ function updateChipsDisplay() {
     const saldoReais = (myChips / 1000).toFixed(2).replace('.', ',');
     const ganhoReais = (myWinnings / 1000).toFixed(2).replace('.', ',');
     const adminReais = (myAdminCredits / 1000).toFixed(2).replace('.', ',');
-    let sacavel = myWinnings;
-    let nota = '';
-    if (typeof modoTesteSaque !== 'undefined' && modoTesteSaque) {
-        sacavel = myAdminCredits;
-        nota = ' 🧪 MODO TESTE (créditos admin)';
-    }
+    const sacavel = (myAdminCredits || 0) + (myWinnings || 0);
     const sacavelReais = (sacavel / 1000).toFixed(2).replace('.', ',');
-    label.innerHTML = `R$ ${saldoReais} <span style="font-size:0.75em;color:#10b981;margin-left:4px">(Sacável: R$ ${sacavelReais}${nota})</span>`;
+    label.innerHTML = `R$ ${saldoReais} <span style="font-size:0.75em;color:#10b981;margin-left:4px">(Sacável: R$ ${sacavelReais} - Créditos + Ganhos)</span>`;
 }
 
 function speak(text) {
@@ -1207,13 +1210,10 @@ function renderMyCards() {
                     cell.className = 'card-cell';
                     cell.textContent = value;
                     if (drawnBalls.includes(Number(value))) {
-                        if (kenoCompleto && Number(value) === ultimaBola) {
-                            cell.classList.add('marked', 'keno-complete-last');
-                        } else if (kenoCompleto) {
-                            cell.classList.add('marked', 'keno-complete');
-                        } else {
-                            cell.classList.add('marked');
-                        }
+                        const ph = phaseOfBall(value);
+                        const isLast = (ultimaBola !== null && Number(value) === ultimaBola);
+                        cell.classList.add('marked', 'phase-' + ph);
+                        if (isLast) cell.classList.add('marked-last');
                     }
                 }
                 cardGrid.appendChild(cell);
@@ -1279,7 +1279,9 @@ function resetGame() {
     gameActive = false;
     gameEnded = false;
     drawnBalls = [];
+    drawnBallPhase = {};
     currentPhaseIndex = 0;
+    lastSpokenPhaseKey = null;
 
     // Limpa TODAS as cartelas (humanos e bots) e reembolsa apenas humanos
     allPlayers.forEach(player => {
@@ -1334,7 +1336,11 @@ function syncDrawnGrid() {
     if (!grid) return;
     drawnBalls.forEach(ball => {
         const cell = grid.querySelector(`.dgrid-cell[data-num="${ball}"]`);
-        if (cell) cell.classList.add('drawn');
+        if (cell) {
+            const ph = drawnBallPhase[ball] || getCurrentPhaseKey();
+            drawnBallPhase[ball] = ph;
+            cell.classList.add('drawn', 'phase-' + ph);
+        }
     });
 }
 
@@ -1545,7 +1551,9 @@ function applyDrawnBall(ball) {
         const cell = grid.querySelector(`.dgrid-cell[data-num="${ball}"]`);
         if (cell) {
             const isWinner = typeof window.__ultimaBolaVencedora !== 'undefined' && Number(ball) === Number(window.__ultimaBolaVencedora);
-            cell.classList.add('drawn');
+            const ph = getCurrentPhaseKey();
+            drawnBallPhase[ball] = ph;
+            cell.classList.add('drawn', 'phase-' + ph);
             if (isWinner) cell.classList.add('winner');
         }
     }
@@ -1611,6 +1619,14 @@ function playNarration(ballNumber) {
     audio.volume = 0.7;
     lastNarrationAudio = audio;
     audio.play().catch(() => {});
+}
+
+let lastSpokenPhaseKey = null;
+function announcePhaseDraw() {
+    const phase = getCurrentPhaseKey();
+    if (phase === lastSpokenPhaseKey) return;
+    lastSpokenPhaseKey = phase;
+    playSound('winner', phase);
 }
 
 function playSound(type, phase) {
@@ -1796,6 +1812,41 @@ function getRandomCardTheme() {
 }
 
 // Override renderMyCards to support themes
+let cardsCompact = false;
+function toggleCardsCompact() {
+    cardsCompact = !cardsCompact;
+    const sec = document.querySelector('.my-cards-section');
+    if (sec) sec.classList.toggle('compact', cardsCompact);
+}
+
+function countPhaseMarks(card, balls) {
+    const phase = getCurrentPhaseKey();
+    const target = phase === 'kuadra' ? 4 : phase === 'kina' ? 5 : 15;
+    let bestMarks = 0, bestRow = -1;
+    if (phase === 'keno') {
+        const all = card.flat().filter(v => v !== '');
+        bestMarks = all.filter(v => balls.includes(Number(v))).length;
+    } else {
+        for (let r = 0; r < 3; r++) {
+            const m = card[r].filter(v => v !== '' && balls.includes(Number(v))).length;
+            if (m > bestMarks) { bestMarks = m; bestRow = r; }
+        }
+    }
+    return { marks: bestMarks, target, bestRow };
+}
+
+function getMissingInPhase(card, prog) {
+    const phase = getCurrentPhaseKey();
+    if (prog.marks >= prog.target) return [];
+    if (phase === 'keno') {
+        return card.flat().filter(v => v !== '' && !drawnBalls.includes(Number(v))).map(Number);
+    }
+    if (prog.bestRow >= 0) {
+        return card[prog.bestRow].filter(v => v !== '' && !drawnBalls.includes(Number(v))).map(Number);
+    }
+    return [];
+}
+
 const _origRenderMyCards = renderMyCards;
 renderMyCards = function() {
     const grid = document.getElementById('myCardsGrid');
@@ -1812,6 +1863,11 @@ renderMyCards = function() {
     }
 
     const sortedCards = [...myCards].sort((a, b) => getCardProgress(b) - getCardProgress(a));
+
+    const phase = getCurrentPhaseKey();
+    const phaseInfo = (typeof PHASES !== 'undefined' && PHASES[phase]) ? PHASES[phase] : null;
+    const phasePrize = phaseInfo ? (phaseInfo.reward / 1000) : 0;
+    const phaseLabel = phaseInfo ? phaseInfo.label : phase;
 
     sortedCards.forEach((cardData, index) => {
         const card = cardData.numbers;
@@ -1834,18 +1890,38 @@ renderMyCards = function() {
                 : closePhase.phase === 'kuadra' ? '🔥 Quase Kuadra' : closePhase.phase === 'kina' ? '🔥 Quase Kina' : '🔥 Quase Bingo'
             : '';
 
+        const isTop = index === 0;
+        const isWon = awardLabels.length > 0;
+        const prog = countPhaseMarks(card, drawnBalls);
+        const missingList = getMissingInPhase(card, prog);
+        const pct = Math.min(100, Math.round((prog.marks / prog.target) * 100));
+        const hitMe = lastDrawnBall !== null && card.flat().includes(lastDrawnBall);
+
         const cardBox = document.createElement('div');
-        cardBox.className = `bingo-card${closePhase ? ' card-close' : ''} theme-${cardData.theme}`;
-        const titleText = awardLabels.length ? '' : `Cartela #${index + 1}`;
-        cardBox.innerHTML = `<div class="card-title">${titleText}${awardLabels.length ? ' - ' + awardLabels.join(', ') : ''}</div>`;
-        if (closeLabel) {
-            cardBox.innerHTML += `<div class="card-badge">${closeLabel}</div>`;
+        cardBox.className = `bingo-card${closePhase && !isWon ? ' card-close' : ''}${isWon ? ' card-won' : ''}${isTop ? ' card-top' : ''}${hitMe ? ' card-flash' : ''} theme-${cardData.theme}`;
+
+        let header = `<div class="card-head">`;
+        header += `<span class="card-title">${awardLabels.length ? '🏆 ' + awardLabels.join(' + ') : 'Cartela #' + (index + 1)}</span>`;
+        header += `<span class="card-prize">💰 R$ ${phasePrize.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>`;
+        header += `</div>`;
+        if (isTop) header += `<div class="card-top-ribbon">★ MAIS PERTO</div>`;
+        if (closeLabel) header += `<div class="card-badge">${closeLabel}</div>`;
+
+        let progText = '';
+        if (!isWon) {
+            progText = `<div class="card-progress"><div class="card-progress-bar"><div class="card-progress-fill" style="width:${pct}%"></div></div>`;
+            progText += `<div class="card-progress-text">${phaseLabel} ${prog.marks}/${prog.target}`;
+            if (missingList.length) {
+                progText += ' &middot; ⚡ faltam: ' + missingList.map(n => `<span class="miss-ball">${n}</span>`).join(' ');
+            }
+            progText += `</div></div>`;
         }
+        cardBox.innerHTML = header + progText;
 
         const cardGrid = document.createElement('div');
         cardGrid.className = 'card-grid';
 
-        const currentPhase = getCurrentPhaseKey();
+        const currentPhase = phase;
         const wonKuadra = cardData.awards.kuadra && currentPhase === 'kuadra';
         const wonKina = cardData.awards.kina && currentPhase === 'kina';
         const wonKeno = cardData.awards.keno;
@@ -1864,7 +1940,6 @@ renderMyCards = function() {
             }
         }
 
-        const ultimaBola = drawnBalls.length ? drawnBalls[drawnBalls.length - 1] : null;
         const winningBall = typeof window.__ultimaBolaVencedora !== 'undefined' ? Number(window.__ultimaBolaVencedora) : null;
 
         for (let row = 0; row < 3; row++) {
@@ -1877,16 +1952,10 @@ renderMyCards = function() {
                     cell.className = 'card-cell';
                     cell.textContent = value;
                     if (drawnBalls.includes(Number(value))) {
+                        const ph = phaseOfBall(value);
                         const isWinningBall = winningBall !== null && Number(value) === winningBall;
-                        const isWinningRow = (wonKuadra || wonKina) && row === winningRow;
-
-                        if (wonKeno) {
-                            cell.classList.add(isWinningBall ? 'marked-blue-last' : 'marked-blue');
-                        } else if (isWinningRow) {
-                            cell.classList.add(isWinningBall ? 'marked-last' : 'marked-blue');
-                        } else {
-                            cell.classList.add('marked');
-                        }
+                        cell.classList.add('marked', 'phase-' + ph);
+                        if (isWinningBall) cell.classList.add('marked-last');
                     }
                 }
                 cardGrid.appendChild(cell);
@@ -1896,7 +1965,7 @@ renderMyCards = function() {
         cardBox.appendChild(cardGrid);
         const codigoEl = document.createElement('div');
         codigoEl.className = 'card-codigo';
-        codigoEl.textContent = '';
+        codigoEl.textContent = cardData.codigo ? ('ID: ' + cardData.codigo) : '';
         cardBox.appendChild(codigoEl);
         grid.appendChild(cardBox);
     });
@@ -1930,6 +1999,7 @@ drawNextBall = function() {
     animateBallDraw(() => {
         drawnBalls.push(ball);
         playSound('draw');
+        announcePhaseDraw();
         speak(`${ball}`);
         addLog(`Número sorteado: ${ball}`);
         applyDrawnBall(ball);
@@ -2143,15 +2213,8 @@ function computarNumerosFaltando() {
     return Object.values(playersMap).sort((a, b) => a.totalMissing - b.totalMissing);
 }
 
-function renderMissingNumbersPanel() {
-    const panel = document.getElementById('missingNumbersList');
-    if (!panel) return;
-
+function computeCloseCalls() {
     const phaseIdx = typeof currentPhaseIndex !== 'undefined' ? currentPhaseIndex : 0;
-    const phaseName = phaseIdx === 0 ? 'Kuadra' : phaseIdx === 1 ? 'Kina' : 'Keno';
-    const titleEl = document.getElementById('missingTitle');
-    if (titleEl) titleEl.textContent = 'Cartelas faltando 1 bola ' + phaseName;
-
     const filtered = [];
 
     (allPlayers || []).forEach(p => {
@@ -2209,6 +2272,19 @@ function renderMissingNumbersPanel() {
 
         filtered.push({ nome: pName, arrKua, arrKin, arrKen, kuadraCount, kinaCount, kenoCount });
     });
+
+    return { phaseIdx, filtered };
+}
+
+function renderMissingNumbersPanel() {
+    const panel = document.getElementById('missingNumbersList');
+    const { phaseIdx, filtered } = computeCloseCalls();
+
+    const phaseName = phaseIdx === 0 ? 'Kuadra' : phaseIdx === 1 ? 'Kina' : 'Keno';
+    const titleEl = document.getElementById('missingTitle');
+    if (titleEl) titleEl.textContent = 'Cartelas faltando 1 bola ' + phaseName;
+
+    if (!panel) return;
 
     if (!filtered.length) {
         panel.innerHTML = '<p style="color:#6b6599;font-size:0.82em">Ninguém com 1 bola de diferença.</p>';
@@ -2489,6 +2565,7 @@ function restaurarEstadoHost() {
     } else {
         if (gameEnded) {
             drawnBalls = [];
+            drawnBallPhase = {};
             currentPhaseIndex = 0;
             gameEnded = false;
             renderizarTabuleiroRestaurado();
@@ -2776,34 +2853,18 @@ async function verificarRecargas() {
 
 // ==================== SAQUE ====================
 function abrirModalSaque() {
-    fetch(API_BASE + '/api/admin/modo-teste')
-        .then(r => r.json())
-        .then(d => {
-            modoTesteSaque = !!(d && d.ligado);
-        })
-        .catch(() => {})
-        .finally(() => {
-            let saldoSacavel = myWinnings;
-            let nota = '';
-            const regraEl = document.getElementById('saqueRegra');
-            if (modoTesteSaque) {
-                saldoSacavel = myAdminCredits;
-                nota = ' 🧪 MODO TESTE: apenas créditos admin disponíveis para saque';
-                if (regraEl) regraEl.innerHTML = '<strong>Créditos Admin</strong> podem ser sacados (Modo Teste).';
-            } else {
-                nota = ' (apenas ganhos em jogos - Kuadra/Kina/Keno)';
-                if (regraEl) regraEl.innerHTML = 'Apenas <strong>Ganhos em Jogo (Kuadra, Kina, Keno)</strong> podem ser sacados.';
-            }
-            document.getElementById('saqueSaldo').textContent = 'R$ ' + (saldoSacavel / 1000).toFixed(2).replace('.', ',') + nota;
-            document.getElementById('saqueValor').value = 10;
-            const msgEl = document.getElementById('saqueMsg');
-            if (saldoSacavel < 10000) {
-                msgEl.innerHTML = '<p class="saque-erro" style="color:#ef4444;font-size:0.85em">⚠️ Saldo sacável insuficiente. Saldo sacável: R$ ' + (saldoSacavel / 1000).toFixed(2).replace('.', ',') + '</p>';
-            } else {
-                msgEl.innerHTML = '';
-            }
-            document.getElementById('modalSaque').style.display = 'flex';
-        });
+    const saldoSacavel = (myAdminCredits || 0) + (myWinnings || 0);
+    const regraEl = document.getElementById('saqueRegra');
+    if (regraEl) regraEl.innerHTML = 'Podem ser sacados: <strong>Créditos (admin)</strong> + <strong>Prêmios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).';
+    document.getElementById('saqueSaldo').textContent = 'R$ ' + (saldoSacavel / 1000).toFixed(2).replace('.', ',');
+    document.getElementById('saqueValor').value = 10;
+    const msgEl = document.getElementById('saqueMsg');
+    if (saldoSacavel < 10000) {
+        msgEl.innerHTML = '<p class="saque-erro" style="color:#ef4444;font-size:0.85em">⚠️ Saldo sacável insuficiente. Saldo sacável: R$ ' + (saldoSacavel / 1000).toFixed(2).replace('.', ',') + '</p>';
+    } else {
+        msgEl.innerHTML = '';
+    }
+    document.getElementById('modalSaque').style.display = 'flex';
 }
 
 async function solicitarSaque() {
@@ -2812,12 +2873,12 @@ async function solicitarSaque() {
     const tipoChave = document.getElementById('saqueTipoChave').value;
 
     if (!valor || valor < 10) {
-        showToast('Valor mínimo para saque: R$ 10,00. Somente valores ganhos podem ser sacados.', 'warning', 5000);
+        showToast('Valor mínimo para saque: R$ 10,00. Podem ser sacados apenas Créditos (admin) e Prêmios ganhos.', 'warning', 5000);
         return;
     }
 
     const fichasNecessarias = valor * 1000;
-    const saldoDisponivel = modoTesteSaque ? myAdminCredits : myWinnings;
+    const saldoDisponivel = (myAdminCredits || 0) + (myWinnings || 0);
     if (saldoDisponivel < fichasNecessarias) {
         const msgEl = document.getElementById('saqueMsg');
         if (msgEl) msgEl.innerHTML = '<p class="saque-erro" style="color:#ef4444;font-size:0.9em">⚠️ Saldo sacável insuficiente. Saldo sacável: R$ ' + (saldoDisponivel / 1000).toFixed(2).replace('.', ',') + '</p>';
@@ -2847,18 +2908,17 @@ async function solicitarSaque() {
         console.log('[SAQUE FRONTEND] Response data:', data);
 
         if (data.success) {
-            if (modoTesteSaque) {
-                myAdminCredits -= fichasNecessarias;
-            } else {
-                myWinnings -= fichasNecessarias;
-            }
+            const doW = Math.min(myWinnings || 0, fichasNecessarias);
+            const doA = fichasNecessarias - doW;
+            myWinnings = Math.max(0, (myWinnings || 0) - doW);
+            myAdminCredits = Math.max(0, (myAdminCredits || 0) - doA);
             myChips = Math.max(0, myChips - fichasNecessarias);
             saveWinnings();
             if (typeof saveAdminCredits === 'function') saveAdminCredits();
             if (typeof saveChips === 'function') saveChips(myName, myChips);
             if (typeof updateChipsDisplay === 'function') updateChipsDisplay();
             document.getElementById('saqueMsg').innerHTML = '<p class="saque-sucesso">✅ Solicitação enviada! O administrador processará em breve.</p>';
-            const saldoRestante = modoTesteSaque ? myAdminCredits : myWinnings;
+            const saldoRestante = (myAdminCredits || 0) + (myWinnings || 0);
             document.getElementById('saqueSaldo').textContent = 'R$ ' + (saldoRestante / 1000).toFixed(2).replace('.', ',');
 
             // Notifica host se for guest
@@ -2928,6 +2988,7 @@ function sairDaConta() {
     myWinnings = 0;
     allPlayers = [];
     drawnBalls = [];
+    drawnBallPhase = {};
     currentPhaseIndex = 0;
     gameActive = false;
     gameEnded = false;

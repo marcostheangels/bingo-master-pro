@@ -1,12 +1,20 @@
 // CONFIGURAÇÃO DO BACKEND (servidor autoritativo)
 // Local: ws://<host>:3000 (server.js). Produção (GitHub Pages / domínio próprio): aponte para o seu backend.
 const IS_LOCAL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' || window.location.hostname.startsWith('192.168.');
+
+// O WebSocket DEVE usar o MESMO servidor da API (API_BASE), senão o "auth"
+// do login falha (sessão criada num servidor, validada em outro) e o jogador
+// fica preso na tela de login. Deriva o host do WS a partir de API_BASE.
+function wsBaseFromApi() {
+    const base = (typeof API_BASE !== 'undefined' && API_BASE) ? API_BASE : '';
+    if (IS_LOCAL) return window.location.hostname;
+    if (!base) return 'bingo-master-pro-fcty.onrender.com';
+    return base.replace(/^https?:\/\//, '').replace(/\/+$/, '');
+}
+const WS_WS_PROTO = (typeof API_BASE !== 'undefined' && API_BASE && API_BASE.startsWith('https')) ? 'wss' : 'ws';
 const WS_CANDIDATES = IS_LOCAL
     ? [`ws://${window.location.hostname}:3000`]
-    : [
-          `wss://api.bingovipclub.online`,
-          `wss://bingo-master-pro-fcty.onrender.com`
-      ];
+    : [`${WS_WS_PROTO}://${wsBaseFromApi()}`];
 let wsCandidateIndex = 0;
 let wsOpened = false;
 function currentWsUrl() {
@@ -311,6 +319,12 @@ function handleSocketMessage(raw) {
         return;
     }
 
+        if (message.type === 'auth_error') {
+            console.warn('[AUTH] Falha na autenticação do WebSocket:', message.message);
+            setStatusMessage('Sessão não validada no chat — entrando mesmo assim.', 'info');
+            return;
+        }
+
         if (message.type === 'connected') {
             // Sync modoTesteSaque from server
             if (message.modoTeste !== undefined) {
@@ -334,7 +348,7 @@ function handleSocketMessage(raw) {
             if (isMarcosName(myName)) {
                 const btn = document.getElementById('btnAdminOpen');
                 if (btn) btn.style.display = '';
-                setTimeout(() => { carregarModoTeste(); carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); }, 300);
+                setTimeout(() => { carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); carregarBarraJogadores(); }, 300);
             }
             document.getElementById('btnSacar').style.display = '';
             document.getElementById('btnDeposit').style.display = '';
@@ -347,7 +361,7 @@ function handleSocketMessage(raw) {
             }
         }
 
-        if (message.role === 'guest' && myRole === 'guest') {
+        if (message.role === 'guest' || (message.role === 'spectator' && myRole === 'guest')) {
             myId = message.id || myId;
             myRoomId = message.roomId || myRoomId;
             updateConnectionBadge(true);
@@ -362,7 +376,7 @@ function handleSocketMessage(raw) {
             if (souDono) {
                 const btn = document.getElementById('btnAdminOpen');
                 if (btn) btn.style.display = '';
-                setTimeout(() => { carregarModoTeste(); carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); }, 300);
+                setTimeout(() => { carregarAdminUsuariosComSaldo(); carregarUsuariosParaExclusao(); carregarBarraJogadores(); }, 300);
             }
         }
 
@@ -825,30 +839,24 @@ function mostrarSaldoJogador(data) {
     const adminCreditsReais = (adminCredRaw / 1000).toFixed(2).replace('.', ',');
     const bonusGivenReais = ((data.bonusGiven || 0) / 1000).toFixed(2).replace('.', ',');
     const depositosReais = ((data.depositos || 0) / 1000).toFixed(2).replace('.', ',');
-    
-    let saqueDisponivel;
-    if (typeof modoTesteSaque !== 'undefined' && modoTesteSaque) {
-        saqueDisponivel = adminCreditsReais;
-    } else {
-        saqueDisponivel = winningsReais;
-    }
-    
+    const sacavel = adminCredRaw + (data.winnings || 0);
+    const sacavelReais = (sacavel / 1000).toFixed(2).replace('.', ',');
+
     const balanceDiv = document.getElementById('adminPlayerBalance');
     if (!balanceDiv) return;
-    
+
     balanceDiv.innerHTML = `
         <div style="margin:4px 0"><strong>${data.nomeCompleto || data.name}</strong></div>
         <div style="margin:2px 0">💰 Saldo total: <strong>R$ ${chipsReais}</strong></div>
-        <div style="margin:2px 0">💰 Depósitos: <strong>R$ ${depositosReais}</strong></div>
-        <div style="margin:2px 0">🏆 Ganhos (Kuadra/Kina/Keno): <strong>R$ ${winningsReais}</strong></div>
-        <div style="margin:2px 0">🎁 Créditos admin: <strong>R$ ${adminCreditsReais}</strong></div>
-        <div style="margin:2px 0">🎁 Bônus admin: <strong>R$ ${bonusGivenReais}</strong></div>
-        <div style="margin:6px 0;padding:6px;background:rgba(59,130,246,0.1);border-radius:4px;border:1px solid rgba(59,130,246,0.3)">
-            💸 Saldo sacável: <strong>R$ ${saqueDisponivel}</strong>
-            ${(typeof modoTesteSaque !== 'undefined' && modoTesteSaque) ? ' 🧪 MODO TESTE (créditos admin)' : ' (apenas ganhos)'}
+        <div style="margin:2px 0">💰 Depósitos: <strong>R$ ${depositosReais}</strong> <span style="color:#6b6599">(não sacável)</span></div>
+        <div style="margin:2px 0">🏆 Ganhos (Kuadra/Kina/Keno): <strong>R$ ${winningsReais}</strong> <span style="color:#10b981">(sacável)</span></div>
+        <div style="margin:2px 0">🎁 Créditos admin: <strong>R$ ${adminCreditsReais}</strong> <span style="color:#10b981">(sacável)</span></div>
+        <div style="margin:2px 0">🎁 Bônus: <strong>R$ ${bonusGivenReais}</strong> <span style="color:#fbbf24">(não sacável)</span></div>
+        <div style="margin:6px 0;padding:6px;background:rgba(16,185,129,0.12);border-radius:4px;border:1px solid rgba(16,185,129,0.35)">
+            💸 Saldo sacável: <strong>R$ ${sacavelReais}</strong> (Créditos admin + Ganhos)
         </div>
         <div style="font-size:0.75em;color:#6b6599;margin-top:4px">
-            Mínimo saque: R$ 10,00 | ${(typeof modoTesteSaque !== 'undefined' && modoTesteSaque) ? 'Apenas créditos admin são sacáveis no modo teste. Depósitos e ganhos não são.' : 'Apenas ganhos em jogos são sacáveis. Depósitos, créditos admin e bônus não são.'}
+            Mínimo saque: R$ 10,00 | Apenas Créditos (admin) e Ganhos são sacáveis. Depósitos e Bônus não.
         </div>
     `;
 }
@@ -1030,9 +1038,8 @@ function updatePlayerListUI() {
     sortedPlayers.forEach((p, index) => {
         const li = document.createElement('li');
         const hostIcon = p.isHost ? '👑 ' : '';
-        const winningsDisplay = (p.winnings || 0) > 0 ? ` 🏆 R$${(p.winnings / 1000).toFixed(2).replace('.', ',')}` : '';
-        const chipsReais = (p.chips / 1000).toFixed(2).replace('.', ',');
-        li.innerHTML = `<span>${hostIcon}${p.name} (${p.cards ? p.cards.length : 0} cartela${p.cards && p.cards.length === 1 ? '' : 's'})</span><span class="player-chips"><span class="conta-label">Dinheiro na conta</span>R$ ${chipsReais}</span>`;
+        const cardCount = p.cards ? p.cards.length : 0;
+        li.innerHTML = `<span>${hostIcon}${p.name}</span><span class="player-cards">${cardCount} cartela${cardCount === 1 ? '' : 's'}</span>`;
         list.appendChild(li);
     });
 
@@ -1146,6 +1153,107 @@ function darBonusUsuario(cpf, nome) {
         hideSpinner();
         showToast('Erro de conexão: ' + err.message, 'error', 6000);
     });
+}
+
+function addBonusSelecionado() {
+    const select = document.getElementById('adminPlayerSelect');
+    const amountInput = document.getElementById('adminChipAmount');
+    if (!select || !amountInput) return;
+    const nome = select.value;
+    const valor = parseInt(amountInput.value, 10);
+    if (!nome || isNaN(valor) || valor <= 0) {
+        showToast('Escolha um jogador e um valor válido.', 'warning', 3000);
+        return;
+    }
+    showSpinner('Concedendo bônus...');
+    fetch(API_BASE + '/api/admin/usuario/bonus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, bonus: valor })
+    })
+    .then(r => r.json())
+    .then(r => {
+        hideSpinner();
+        if (r.success) {
+            showToast(`✅ Bônus de ${valor.toLocaleString('pt-BR')} concedido para "${nome}"!`, 'success', 6000);
+            carregarAdminUsuariosComSaldo();
+            carregarBarraJogadores();
+        } else {
+            showToast('Erro: ' + (r.error || 'Erro'), 'error', 6000);
+        }
+    })
+    .catch(err => { hideSpinner(); showToast('Erro de conexão: ' + err.message, 'error', 6000); });
+}
+
+function removerBonusSelecionado() {
+    const select = document.getElementById('adminPlayerSelect');
+    const amountInput = document.getElementById('adminChipAmount');
+    if (!select || !amountInput) return;
+    const nome = select.value;
+    const valor = parseInt(amountInput.value, 10);
+    if (!nome || isNaN(valor) || valor <= 0) {
+        showToast('Escolha um jogador e um valor válido.', 'warning', 3000);
+        return;
+    }
+    if (!confirm(`Remover ${valor} de BÔNUS de "${nome}"?`)) return;
+    showSpinner('Removendo bônus...');
+    fetch(API_BASE + '/api/admin/usuario/remover-bonus', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nome, bonus: valor })
+    })
+    .then(r => r.json())
+    .then(r => {
+        hideSpinner();
+        if (r.success) {
+            showToast(`🎁 Bônus removido de "${nome}" (restante: ${r.bonusRestante}).`, 'success', 6000);
+            carregarAdminUsuariosComSaldo();
+            carregarBarraJogadores();
+        } else {
+            showToast('Erro: ' + (r.error || 'Erro'), 'error', 6000);
+        }
+    })
+    .catch(err => { hideSpinner(); showToast('Erro de conexão: ' + err.message, 'error', 6000); });
+}
+
+function carregarBarraJogadores() {
+    const div = document.getElementById('adminPlayersBar');
+    if (!div) return;
+    div.innerHTML = 'Carregando...';
+    fetch(API_BASE + '/api/admin/usuarios-com-saldo')
+        .then(r => r.json())
+        .then(usuarios => {
+            const reais = (usuarios || []).filter(u => !u.isBot);
+            if (reais.length === 0) { div.innerHTML = '<p style="color:#a0a0b0">Nenhum jogador real.</p>'; return; }
+            const f = n => 'R$ ' + (Number(n) / 1000).toFixed(2).replace('.', ',');
+            let html = '<table style="width:100%;border-collapse:collapse;min-width:540px">';
+            html += '<thead><tr style="text-align:left;color:#cbd5e1;border-bottom:1px solid rgba(255,255,255,0.15)">' +
+                '<th style="padding:5px 6px">Jogador</th>' +
+                '<th style="padding:5px 6px">Créd.Admin</th>' +
+                '<th style="padding:5px 6px">Ganhos</th>' +
+                '<th style="padding:5px 6px">Bônus</th>' +
+                '<th style="padding:5px 6px">Depositado</th>' +
+                '<th style="padding:5px 6px">Sacável</th>' +
+                '</tr></thead><tbody>';
+            reais.forEach(u => {
+                const cred = u.adminCreditos || 0;
+                const gan = u.winnings || 0;
+                const bon = u.bonusGiven || 0;
+                const dep = u.depositos || 0;
+                const sac = cred + gan;
+                html += `<tr style="border-bottom:1px solid rgba(255,255,255,0.06)">` +
+                    `<td style="padding:5px 6px">${u.nomeCompleto || u.name || '?'}</td>` +
+                    `<td style="padding:5px 6px;color:#10b981">${f(cred)}</td>` +
+                    `<td style="padding:5px 6px;color:#10b981">${f(gan)}</td>` +
+                    `<td style="padding:5px 6px;color:#fbbf24">${f(bon)}</td>` +
+                    `<td style="padding:5px 6px;color:#cbd5e1">${f(dep)}</td>` +
+                    `<td style="padding:5px 6px;color:#38bdf8;font-weight:700">${f(sac)}</td>` +
+                    `</tr>`;
+            });
+            html += '</tbody></table>';
+            div.innerHTML = html;
+        })
+        .catch(() => { div.innerHTML = '<p style="color:#ef4444">Erro ao carregar.</p>'; });
 }
 
 function carregarAdminUsuariosComSaldo() {

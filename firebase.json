@@ -25,7 +25,9 @@
       "test_*.js",
       "api_fix.js",
       "debug_old.js",
-      "*.json",
+      "package.json",
+      "package-lock.json",
+      "db.json",
       "*.md",
       "*.txt",
       "*.ps1",
@@ -33,21 +35,11 @@
       "*.bmp",
       "*.jpg",
       "*.png",
-      "*.mp3",
       "*.wav",
       "print.jpg",
       "Novo Documento de Texto.txt",
       "Nova Imagem de Bitmap*",
-      "Desenvolvimento do Bingo Master Pro*",
-      "bruxa-do-71-e-vc-satanas.mp3",
-      "chaves_3.mp3",
-      "keno.mp3",
-      "kina.mp3",
-      "kuadra.mp3",
-      "lobby-male.mp3",
-      "match-male.mp3",
-      "prizes-uni-mix.mp3",
-      "balls/**"
+      "Desenvolvimento do Bingo Master Pro*"
     ]
   }
 }
