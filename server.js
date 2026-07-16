@@ -1137,7 +1137,8 @@ async function handleAction(ws, room, action, payload) {
             try {
                 const usuariosCred = carregarUsuarios();
                 const listaCred = Array.isArray(usuariosCred) ? usuariosCred : Object.values(usuariosCred);
-                const cpfAlvo = (target && target.cpf ? String(target.cpf).replace(/\D/g, '').padStart(11, '0') : '') ||
+                const cpfAlvo = (payload.targetCpf ? String(payload.targetCpf).replace(/\D/g, '').padStart(11, '0') : '') ||
+                                (target && target.cpf ? String(target.cpf).replace(/\D/g, '').padStart(11, '0') : '') ||
                                 (payload.targetId && /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(payload.targetId) ? payload.targetId.replace(/\D/g, '').padStart(11, '0') : '');
                 const nomeAlvoNorm = (targetName || payload.targetId || '').toLowerCase().trim();
                 const uCred = listaCred.find(u =>
@@ -1145,6 +1146,7 @@ async function handleAction(ws, room, action, payload) {
                     (u.nomeCompleto || '').toLowerCase().trim() === nomeAlvoNorm ||
                     (nomeAlvoNorm && (u.nomeCompleto || '').toLowerCase().includes(nomeAlvoNorm))
                 );
+                console.log('[CREDITO EMAIL] targetName=', targetName, 'cpfAlvo=', cpfAlvo, 'achouUsuario=', !!uCred, 'email=', uCred ? uCred.email : null);
                 if (uCred && uCred.email) {
                     const valorReaisCred = amount / 1000;
                     const operacao = payload.mode === 'remove' ? 'removido' : 'creditado';

@@ -900,15 +900,16 @@ function executeAdminAction(action) {
     if (!select || !amountInput) return;
 
     const selectedId = select.value;
+    const selectedCpf = select.selectedOptions && select.selectedOptions[0] ? (select.selectedOptions[0].dataset.cpf || '') : '';
     const amount = parseInt(amountInput.value, 10);
-    dbgWarn('[DEBUG executeAdminAction]', { selectedId, amount, action, socketReady });
+    dbgWarn('[DEBUG executeAdminAction]', { selectedId, selectedCpf, amount, action, socketReady });
     if (!selectedId || isNaN(amount) || amount <= 0) {
         showToast('Escolha um jogador e insira um valor válido.', 'warning', 3000);
         return;
     }
 
     if (typeof sendAction === 'function') {
-        sendAction('adminChips', { targetId: selectedId, amount, mode: action });
+        sendAction('adminChips', { targetId: selectedId, targetCpf: selectedCpf, amount, mode: action });
     }
     if (typeof addLog === 'function') addLog(`Administrador ${action === 'remove' ? 'retirou' : 'adicionou'} ${amount.toLocaleString('pt-BR')} fichas.`);
     
@@ -1603,6 +1604,7 @@ function carregarAdminUsuariosComSaldo() {
             usuarios.filter(u => u.isBot !== true).forEach(u => {
                 const option = document.createElement('option');
                 option.value = u.nomeCompleto;
+                option.dataset.cpf = u.cpf || '';
                 const saldo = (u.chips / 1000).toFixed(2).replace('.', ',');
                 const ganhos = (u.winnings / 1000).toFixed(2).replace('.', ',');
                 const credAdmin = (u.adminCreditos / 1000).toFixed(2).replace('.', ',');
