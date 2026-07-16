@@ -82,20 +82,35 @@ if (SMTP_PASS && nodemailer) {
     })();
 }
 
-async function enviarEmailSendGrid(to, subject, html) {
+async function enviarEmailSendGrid(to, subject, html, unsubscribeUrl) {
     if (!SENDGRID_API_KEY) return false;
     try {
+        const headers = {
+            'Authorization': 'Bearer ' + SENDGRID_API_KEY,
+            'Content-Type': 'application/json'
+        };
+        const messageId = '<' + Date.now() + '.' + Math.random().toString(36).slice(2) + '@bingovipclub.shop>';
+        const extraHeaders = [
+            { key: 'Message-ID', value: messageId },
+            { key: 'Precedence', value: 'bulk' },
+            { key: 'X-Auto-Response-Suppress', value: 'All' },
+            { key: 'List-Id', value: '<bingovipclub.shop>' }
+        ];
+        if (unsubscribeUrl) {
+            extraHeaders.push({ key: 'List-Unsubscribe', value: '<' + unsubscribeUrl + '>' });
+            extraHeaders.push({ key: 'List-Unsubscribe-Post', value: 'List-Unsubscribe=One-Click' });
+        }
         const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
             method: 'POST',
-            headers: {
-                'Authorization': 'Bearer ' + SENDGRID_API_KEY,
-                'Content-Type': 'application/json'
-            },
+            headers,
             body: JSON.stringify({
-                personalizations: [{ to: [{ email: to }] }],
+                personalizations: [{ to: [{ email: to }], headers: extraHeaders.reduce((o, h) => { o[h.key] = h.value; return o; }, {}) }],
                 from: { email: 'contato@bingovipclub.shop', name: 'BingoVipClub' },
+                reply_to: { email: 'contato@bingovipclub.shop', name: 'BingoVipClub' },
                 subject,
-                content: [{ type: 'text/html', value: html }]
+                content: [{ type: 'text/html', value: html }],
+                headers: extraHeaders.reduce((o, h) => { o[h.key] = h.value; return o; }, {}),
+                asm: { group_id: 1 }
             })
         });
         if (!res.ok) {
@@ -114,24 +129,30 @@ const SITE_URL = process.env.SITE_URL || 'https://bingo-vip-club-e8164.web.app';
 
 async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     const valorFmt = valorReais.toFixed(2).replace('.', ',');
+    const unsubscribeUrl = SITE_URL + '/unsubscribe?email=' + encodeURIComponent(emailUsuario);
     const htmlJogador = `
-        <div style="background:#fff;font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto">
-            <div style="background:#0a0a2e;text-align:center;padding:20px 16px">
-                <div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div>
-            </div>
-            <div style="padding:24px">
-                <div style="font-size:18px;color:#333;margin:0 0 12px 0">Ola ${nomeUsuario},</div>
-                <p style="font-size:14px;color:#555;line-height:1.5;margin:0 0 10px 0">Seu saldo foi atualizado. Acesse sua conta para conferir as novidades.</p>
-                <div style="text-align:center;margin:20px 0">
-                    <a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:12px 32px;border-radius:6px;font-weight:bold;font-size:14px">Acessar Conta</a>
+        <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+            <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                <div style="background:#0a0a2e;text-align:center;padding:22px 16px">
+                    <div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div>
+                    <div style="color:#9aa0c0;font-size:12px;margin-top:4px">Bingo online e credenciado</div>
                 </div>
-            </div>
-            <div style="background:#f5f5f5;padding:14px 24px;text-align:center;border-top:1px solid #e5e5e5">
-                <p style="color:#999;font-size:11px;margin:2px 0">BingoVipClub</p>
+                <div style="padding:28px 24px">
+                    <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${nomeUsuario},</div>
+                    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Temos uma novidade para a sua conta. Um bônus de <strong style="color:#10b981">R$ ${valorFmt}</strong> em fichas foi creditado e já está disponível para você usar nas salas de bingo.</p>
+                    <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">Acesse sua conta para conferir o saldo atualizado e aproveitar. Se tiver dúvidas, responda este email que nossa equipe responde.</p>
+                    <div style="text-align:center;margin:8px 0 4px">
+                        <a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acessar minha conta</a>
+                    </div>
+                </div>
+                <div style="background:#f5f5f7;padding:16px 24px;text-align:center;border-top:1px solid #ececf0">
+                    <p style="color:#999;font-size:11px;margin:2px 0">BingoVipClub · Este é um email transacional da sua conta.</p>
+                    <p style="color:#bbb;font-size:11px;margin:2px 0"><a href="${unsubscribeUrl}" style="color:#999;text-decoration:underline">Cancelar inscrição</a></p>
+                </div>
             </div>
         </div>
     `;
-    const assunto = 'Sua conta no BingoVipClub foi atualizada';
+    const assunto = 'Seu bônus de R$ ' + valorFmt + ' chegou, ' + nomeUsuario + '!';
 
     let enviado = false;
     if (transporter) {
@@ -140,14 +161,15 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
                 from: '"BingoVipClub" <' + SMTP_USER + '>',
                 to: emailUsuario,
                 subject: assunto,
-                html: htmlJogador
+                html: htmlJogador,
+                headers: { 'List-Unsubscribe': '<' + unsubscribeUrl + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
             });
             enviado = true;
             console.log('[EMAIL] Enviado via SMTP (Gmail)! ID:', info.messageId);
         } catch (e) { console.error('[EMAIL] SMTP falhou, tentando alternativas:', e.message); }
     }
     if (!enviado && SENDGRID_API_KEY) {
-        enviado = await enviarEmailSendGrid(emailUsuario, assunto, htmlJogador);
+        enviado = await enviarEmailSendGrid(emailUsuario, assunto, htmlJogador, unsubscribeUrl);
     }
     if (!enviado && RESEND_API_KEY) {
         try {
@@ -158,7 +180,8 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
                     from: 'BingoVipClub <contato@bingovipclub.shop>',
                     to: [emailUsuario],
                     subject: assunto,
-                    html: htmlJogador
+                    html: htmlJogador,
+                    headers: { 'List-Unsubscribe': '<' + unsubscribeUrl + '>' }
                 })
             });
             if (res.ok) {
@@ -2538,6 +2561,10 @@ app.post('/api/asaas/webhook', express.json({ type: 'application/json' }), (req,
 app.get('/api/asaas/webhook-url', (req, res) => {
     const baseUrl = req.protocol + '://' + req.get('host');
     res.json({ url: baseUrl + '/api/asaas/webhook' });
+});
+
+app.get('/unsubscribe', (req, res) => {
+    res.send('<html><body style="font-family:Arial,sans-serif;text-align:center;padding:60px;color:#333"><h2 style="color:#10b981">Inscrição cancelada</h2><p>Você não receberá mais emails do BingoVipClub.</p><p><a href="' + (SITE_URL) + '" style="color:#10b981">Voltar ao site</a></p></body></html>');
 });
 
 async function iniciarServidor() {
