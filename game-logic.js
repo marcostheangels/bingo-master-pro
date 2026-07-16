@@ -3268,6 +3268,24 @@ goToScreen = function(screenId) {
 function sairDaConta() {
     if (!confirm('Tem certeza que deseja sair da sua conta?')) return;
 
+    if (drawAudioCtx) {
+        try { drawAudioCtx.close(); } catch (e) {}
+        drawAudioCtx = null;
+    }
+    if (kuadraSound) { try { kuadraSound.stop(); } catch (e) {} kuadraSound = null; }
+    if (kinaSound) { try { kinaSound.stop(); } catch (e) {} kinaSound = null; }
+    if (bingoSound) { try { bingoSound.stop(); } catch (e) {} bingoSound = null; }
+    if (jackpotAudio) { try { jackpotAudio.pause(); } catch (e) {} jackpotAudio = null; }
+    if (lastNarrationAudio) { try { lastNarrationAudio.pause(); } catch (e) {} lastNarrationAudio = null; }
+    if (confettiAnimId) { cancelAnimationFrame(confettiAnimId); confettiAnimId = null; }
+    confettiPieces = [];
+    const confettiCanvas = document.getElementById('confettiCanvas');
+    if (confettiCanvas) {
+        const ctx = confettiCanvas.getContext('2d');
+        if (ctx) ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+    }
+    document.querySelectorAll('.winner-banner-overlay, .keno-ranking-overlay').forEach(o => o.remove());
+
     localStorage.removeItem('bingo_session_token');
     localStorage.removeItem('bingo_meu_cpf');
     localStorage.removeItem('bingo_last_name');
