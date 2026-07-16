@@ -1659,9 +1659,9 @@ body.admin-mode .admin-screen-wrapper * {
     animation: countdownPulse 1.5s ease-in-out infinite;
     background: rgba(11, 9, 26, 0.85);
     border: 2px solid rgba(255, 255, 0, 0.25);
-    border-radius: 32px;
-    padding: 30px 60px;
-    box-shadow: 0 0 80px rgba(255, 255, 0, 0.08);
+    border-radius: 24px;
+    padding: 16px 36px;
+    box-shadow: 0 0 60px rgba(255, 255, 0, 0.08);
     backdrop-filter: blur(4px);
     -webkit-backdrop-filter: blur(4px);
 }
@@ -1671,22 +1671,22 @@ body.admin-mode .admin-screen-wrapper * {
 }
 
 .countdown-label {
-    font-size: 1.3em;
+    font-size: 0.95em;
     font-weight: 700;
     color: rgba(255,255,255,0.7);
-    letter-spacing: 3px;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
 }
 
 .countdown-timer {
-    font-size: 7em;
+    font-size: 3.2em;
     font-weight: 900;
     font-family: 'Courier New', monospace;
     color: #ffff00;
-    text-shadow: 0 0 40px rgba(255,255,0,0.3), 0 0 80px rgba(255,255,0,0.15);
+    text-shadow: 0 0 30px rgba(255,255,0,0.3), 0 0 60px rgba(255,255,0,0.15);
     line-height: 1.1;
-    letter-spacing: 4px;
+    letter-spacing: 3px;
 }
 .countdown-hint { font-size: 0.85em; color: rgba(255,255,255,0.4); font-weight: 400; margin-top: 6px; }
 

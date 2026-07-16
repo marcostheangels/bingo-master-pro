@@ -1181,17 +1181,29 @@ function carregarCadastrosAdmin() {
 }
 
 function excluirUsuarioAdmin(cpf, nome) {
-    if (!confirm(`⚠️ ATENÇÃO: Tem certeza que deseja EXCLUIR COMPLETAMENTE o usuário "${nome}" (CPF: ${cpf})?\n\nIsso vai apagar PERMANENTEMENTE:\n• Cadastro do usuário\n• Saldo (fichas)\n• Ganhos (winnings)\n• Créditos admin\n• Saques pendentes/pagos\n• Transações\n• Histórico de recargas\n\nO jogador poderá se cadastrar novamente com o mesmo CPF.\n\nDigitar "EXCLUIR" para confirmar:`)) {
-        return;
-    }
-    
-    const confirmText = prompt('Digite "EXCLUIR" para confirmar a exclusão permanente:');
-    if (confirmText !== 'EXCLUIR') {
-        showToast('Exclusão cancelada: texto de confirmação incorreto.', 'warning', 4000);
+    const overlay = document.getElementById('excluirModalOverlay');
+    const msgEl = document.getElementById('excluirModalMsg');
+    const inputEl = document.getElementById('excluirModalInput');
+    const btnExcluir = document.getElementById('excluirModalBtn');
+    const btnCancel = document.getElementById('excluirModalCancelBtn');
+    if (!overlay || !msgEl || !inputEl || !btnExcluir || !btnCancel) {
+        showToast('Erro: modal de exclusão não encontrado.', 'error', 4000);
         return;
     }
 
-    showSpinner('Excluindo usuário...');
+    inputEl.value = '';
+    msgEl.innerHTML = 'Tem certeza que deseja <b style="color:#ef4444">EXCLUIR COMPLETAMENTE</b> o jogador "' + (nome || '') + '"?<br><span style="font-size:12px;color:#94a3b8">Isso apaga cadastro, saldo, saques, transações e histórico.</span>';
+    overlay.style.display = 'flex';
+    inputEl.focus();
+
+    const fechar = () => { overlay.style.display = 'none'; };
+    const confirmar = () => {
+        if (inputEl.value.trim().toUpperCase() !== 'EXCLUIR') {
+            showToast('Digite EXCLUIR para confirmar.', 'warning', 4000);
+            return;
+        }
+        fechar();
+        showSpinner('Excluindo usuário...');
     const spinnerTimeout = setTimeout(hideSpinner, 8000);
     
     adminFetch(API_BASE + '/api/admin/usuario/excluir', {
@@ -1216,12 +1228,18 @@ function excluirUsuarioAdmin(cpf, nome) {
         clearTimeout(spinnerTimeout);
         showToast('Erro de conexão: ' + err.message, 'error', 6000);
     });
+    };
+
+    btnExcluir.onclick = confirmar;
+    btnCancel.onclick = fechar;
+    inputEl.onkeydown = (e) => { if (e.key === 'Enter') confirmar(); };
 }
 
 function darBonusUsuario(cpf, nome) {
     const valor = 5000;
-    if (!confirm(`🎁 Conceder bônus de R$ 5,00 (${valor.toLocaleString('pt-BR')} fichas) para "${nome}"?`)) return;
-    
+    confirmModal(`🎁 Conceder bônus de R$ 5,00 (${valor.toLocaleString('pt-BR')} fichas) para "${nome}"?`).then(ok => {
+    if (!ok) return;
+
     showSpinner('Concedendo bônus...');
     
     adminFetch(API_BASE + '/api/admin/usuario/bonus', {
@@ -1245,6 +1263,7 @@ function darBonusUsuario(cpf, nome) {
     .catch(err => {
         hideSpinner();
         showToast('Erro de conexão: ' + err.message, 'error', 6000);
+    });
     });
 }
 
