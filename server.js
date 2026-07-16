@@ -96,6 +96,17 @@ if (SMTP_PASS && nodemailer) {
     })();
 }
 
+async function fetchWithTimeout(url, opts, ms = 10000) {
+    const controller = new AbortController();
+    const id = setTimeout(() => controller.abort(), ms);
+    try {
+        const res = await fetch(url, { ...opts, signal: controller.signal });
+        return res;
+    } finally {
+        clearTimeout(id);
+    }
+}
+
 async function enviarEmailSendGrid(to, subject, html, unsubscribeUrl) {
     if (!SENDGRID_API_KEY) return false;
     try {
@@ -114,7 +125,7 @@ async function enviarEmailSendGrid(to, subject, html, unsubscribeUrl) {
             extraHeaders.push({ key: 'List-Unsubscribe', value: '<' + unsubscribeUrl + '>' });
             extraHeaders.push({ key: 'List-Unsubscribe-Post', value: 'List-Unsubscribe=One-Click' });
         }
-        const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+        const res = await fetchWithTimeout('https://api.sendgrid.com/v3/mail/send', {
             method: 'POST',
             headers,
             body: JSON.stringify({
@@ -126,7 +137,7 @@ async function enviarEmailSendGrid(to, subject, html, unsubscribeUrl) {
                 headers: extraHeaders.reduce((o, h) => { o[h.key] = h.value; return o; }, {}),
                 asm: { group_id: 1 }
             })
-        });
+        }, 8000);
         if (!res.ok) {
             const errText = await res.text();
             throw new Error('SendGrid: ' + res.status + ' ' + errText.slice(0, 200));
@@ -183,7 +194,7 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     // 1) Resend em primeiro lugar (canal comprovado funcionando em produção)
     if (!enviado && RESEND_API_KEY) {
         try {
-            const res = await fetch('https://api.resend.com/emails', {
+            const res = await fetchWithTimeout('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -247,7 +258,7 @@ async function notificarJogador(nomeUsuario, emailUsuario, assunto, htmlCorpo) {
     let enviado = false;
     if (RESEND_API_KEY) {
         try {
-            const res = await fetch('https://api.resend.com/emails', {
+            const res = await fetchWithTimeout('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -301,11 +312,11 @@ async function enviarEmailAdmin(assunto, corpoHtml, badge) {
     }
     if (!enviado && RESEND_API_KEY) {
         try {
-            const res = await fetch('https://api.resend.com/emails', {
+            const res = await fetchWithTimeout('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ from: 'BingoVipClub <contato@bingovipclub.shop>', to: [ADMIN_EMAIL], subject: assunto, html })
-            });
+            }, 8000);
             if (res.ok) { enviado = true; } else { const t = await res.text(); console.error('[EMAIL] Resend admin erro:', res.status, t.slice(0, 200)); }
         } catch (e) { console.error('[EMAIL] Resend admin falhou:', e.message); }
     }
@@ -2265,34 +2276,35 @@ app.post('/api/solicitar-saque', async (req, res) => {
         await setChips(nome, novoChips, novoWinnings);
         await setAdminCreditos(nome, novoAdminCred);
 
-        // Notifica admin por email
-        const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-        await enviarEmailAdmin(
-            'Novo saque solicitado',
-            '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + nome + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + valor.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Chave PIX</p><p style="font-size:14px;color:#222;margin:0">' + chavePix + ' (' + (tipoChave || 'cpf') + ')</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Data</p><p style="font-size:14px;color:#222;margin:0">' + hora + '</p></div>',
-            'SAQUE'
-        );
+        // Notifica admin e jogador em segundo plano (nao bloqueia resposta)
+        setImmediate(() => {
+            const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+            enviarEmailAdmin(
+                'Novo saque solicitado',
+                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + nome + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + valor.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Chave PIX</p><p style="font-size:14px;color:#222;margin:0">' + chavePix + ' (' + (tipoChave || 'cpf') + ')</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Data</p><p style="font-size:14px;color:#222;margin:0">' + hora + '</p></div>',
+                'SAQUE'
+            ).catch(() => {});
 
-        // Notifica o jogador (email de confirmacao)
-        try {
-            const usuariosSaque = carregarUsuarios();
-            const userSaque = Array.isArray(usuariosSaque) ? usuariosSaque.find(u => u.nomeCompleto === nome) : null;
-            if (userSaque && userSaque.email) {
-                const htmlSaqueConfirmacao = `
-                    <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
-                        <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                            <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
-                            <div style="padding:28px 24px">
-                                <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${nome},</div>
-                                <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Seu saque de <strong style="color:#10b981">R$ ${valor.toFixed(2).replace('.', ',')}</strong> foi solicitado com sucesso.</p>
-                                <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">O pagamento será processado em breve pelo administrador. Você receberá outro e-mail quando for aprovado.</p>
-                                <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acompanhar</a></div>
+            try {
+                const usuariosSaque = carregarUsuarios();
+                const userSaque = Array.isArray(usuariosSaque) ? usuariosSaque.find(u => u.nomeCompleto === nome) : null;
+                if (userSaque && userSaque.email) {
+                    const htmlSaqueConfirmacao = `
+                        <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+                            <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                                <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
+                                <div style="padding:28px 24px">
+                                    <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${nome},</div>
+                                    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Seu saque de <strong style="color:#10b981">R$ ${valor.toFixed(2).replace('.', ',')}</strong> foi solicitado com sucesso.</p>
+                                    <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">O pagamento será processado em breve pelo administrador. Você receberá outro e-mail quando for aprovado.</p>
+                                    <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acompanhar</a></div>
+                                </div>
                             </div>
-                        </div>
-                    </div>`;
-                notificarJogador(nome, userSaque.email, 'Saque de R$ ' + valor.toFixed(2).replace('.', ',') + ' solicitado', htmlSaqueConfirmacao);
-            }
-        } catch (e) { console.error('[SAQUE EMAIL] Erro notificar jogador:', e.message); }
+                        </div>`;
+                    notificarJogador(nome, userSaque.email, 'Saque de R$ ' + valor.toFixed(2).replace('.', ',') + ' solicitado', htmlSaqueConfirmacao);
+                }
+            } catch (e) { console.error('[SAQUE EMAIL] Erro notificar jogador:', e.message); }
+        });
 
         // Sincroniza com o jogador na sala (se estiver conectado) + broadcast
         gameRooms.forEach(room => {
