@@ -594,14 +594,59 @@ body.admin-mode .admin-screen-wrapper * {
 
 /* Admin Cards (dynamic user list) */
 .admin-card {
-    background: rgba(0,3,152,0.5);
-    border: 1px solid rgba(255,255,0,0.15);
-    border-radius: 8px;
-    padding: 8px 10px;
-    margin: 5px 0;
-    font-size: 0.74em;
+    background: rgba(15,15,40,0.85);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 8px 0;
+    font-size: 0.85em;
     text-align: left;
-    line-height: 1.5;
+    line-height: 1.6;
+    transition: border-color 0.2s;
+}
+.admin-card.bonus-done {
+    border-color: rgba(16,185,129,0.4);
+    background: rgba(16,185,129,0.06);
+}
+.admin-card-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 8px;
+}
+.admin-card-name {
+    font-size: 1.1em;
+    font-weight: 700;
+    color: #fff;
+}
+.admin-card-info {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    color: #c8c8e0;
+    font-size: 0.9em;
+}
+.info-label {
+    color: #8888aa;
+    font-weight: 600;
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 4px;
+}
+.bonus-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(16,185,129,0.15);
+    color: #34d399;
+    font-weight: 700;
+    font-size: 0.85em;
+    padding: 8px 14px;
+    border-radius: 20px;
+    border: 1px solid rgba(16,185,129,0.3);
+    white-space: nowrap;
 }
 
 /* ==============================
@@ -1920,7 +1965,10 @@ body.admin-mode .admin-screen-wrapper * {
     .admin-filtros { flex-direction: column; align-items: stretch; gap: 8px; }
     .admin-filtros .btn-row { flex-wrap: wrap; }
     .admin-card-section { min-width: 0; }
-    .admin-card { padding: 12px; }
+    .admin-card { padding: 12px; font-size: 0.82em; }
+    .admin-card-top { flex-direction: column; align-items: stretch; }
+    .admin-card-name { font-size: 1em; }
+    .admin-card-info { font-size: 0.85em; }
     .admin-saldo-display { font-size: 1.4em; }
     .admin-info-text, .admin-warning-text { font-size: 0.8em; }
     .admin-input-row { flex-direction: column; align-items: stretch; }

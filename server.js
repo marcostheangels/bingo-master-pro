@@ -1646,8 +1646,8 @@ app.get('/api/fichas/:cpf', (req, res) => {
 // Admin - Listar usuários com bônus já concedidos
 app.get('/api/admin/usuarios-com-bonus', (req, res) => {
     try {
-        const bonusCache = db.getBonusPrimeiroDeposito();
-        res.json(Object.keys(bonusCache));
+        const bonusGiven = db.getBonusGivenStore();
+        res.json(Object.keys(bonusGiven));
     } catch (err) {
         res.json([]);
     }

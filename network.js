@@ -1151,20 +1151,23 @@ function carregarCadastrosAdmin() {
                 const key = (u.nomeCompleto || u.nome || '').toLowerCase().trim();
                 const jaTemBonus = bonusSet.has(key);
                 return `
-                <div class="admin-card" style="position:relative;padding-bottom:40px">
-                    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-                        <strong>${escapeHtml(u.nomeCompleto || u.nome || 'Sem nome')}</strong>
-                        <div style="display:flex;gap:6px">
-                            ${jaTemBonus ? '<span style="color:#10b981;font-size:0.8em">✓ Bônus dado</span>' : `<button class="btn" onclick="darBonusUsuario('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}')" style="padding:6px 12px;font-size:0.75em;background:#10b981;min-width:80px">🎁 Bônus</button>`}
-                            <button class="btn btn-remove" onclick="excluirUsuarioAdmin('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}')" style="padding:6px 12px;font-size:0.75em;min-width:80px">🗑️ Excluir</button>
+                <div class="admin-card${jaTemBonus ? ' bonus-done' : ''}" style="position:relative">
+                    <div class="admin-card-top">
+                        <div class="admin-card-name">${escapeHtml(u.nomeCompleto || u.nome || 'Sem nome')}</div>
+                        <div style="display:flex;gap:6px;flex-shrink:0">
+                            ${jaTemBonus
+                                ? '<span class="bonus-badge">✅ Bônus enviado</span>'
+                                : `<button class="btn" onclick="darBonusUsuario('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}')" style="padding:8px 16px;font-size:0.85em;background:#10b981;min-width:90px">🎁 Bônus</button>`}
+                            <button class="btn btn-remove" onclick="excluirUsuarioAdmin('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}')" style="padding:8px 16px;font-size:0.85em;min-width:90px">🗑️ Excluir</button>
                         </div>
                     </div>
-                    <div style="color:#a0a0b0;font-size:0.82em">CPF: ${escapeHtml(u.cpfFormatado || u.cpf)}</div>
-                    <div style="color:#a0a0b0;font-size:0.82em">Email: ${escapeHtml(u.email)}</div>
-                    <div style="color:#fbbf24;font-size:0.82em">Senha: ${escapeHtml(u.senha)}</div>
-                    <div style="color:#a0a0b0;font-size:0.82em">PIX: ${escapeHtml(u.chavePix)}</div>
-                    <div style="color:#6b6599;font-size:0.75em;margin-top:4px">${u.data ? new Date(u.data).toLocaleString('pt-BR') : ''}</div>
-                    <div style="color:#ef4444;font-size:0.72em;margin-top:8px;font-weight:600">⚠️ Esta ação remove TODOS os dados: usuário, fichas, ganhos, saques, transações e histórico. O jogador poderá se cadastrar novamente.</div>
+                    <div class="admin-card-info">
+                        <span><span class="info-label">CPF:</span> ${escapeHtml(u.cpfFormatado || u.cpf)}</span>
+                        <span><span class="info-label">Email:</span> ${escapeHtml(u.email)}</span>
+                        <span><span class="info-label">Senha:</span> ${escapeHtml(u.senha)}</span>
+                        <span><span class="info-label">PIX:</span> ${escapeHtml(u.chavePix)}</span>
+                        ${u.data ? `<span><span class="info-label">Data:</span> ${new Date(u.data).toLocaleString('pt-BR')}</span>` : ''}
+                    </div>
                 </div>
             `}).join('');
         })
