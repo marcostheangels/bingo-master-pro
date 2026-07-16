@@ -31,6 +31,14 @@
         <div class="spinner-text" id="spinnerText">Conectando...</div>
     </div>
     <div class="offline-banner" id="offlineBanner">🔌 Conexão perdida. Tentando reconectar...</div>
+    <div class="manutencao-banner" id="manutencaoBanner" style="display:none">
+        <span style="font-size:18px">🔧</span>
+        <div style="flex:1">
+            <div style="font-weight:700;color:#fff;font-size:14px" id="manutTitulo">Manutenção Programada</div>
+            <div style="color:#cbd5e1;font-size:12px;margin-top:2px" id="manutDetalhe"></div>
+        </div>
+        <button onclick="document.getElementById('manutencaoBanner').style.display='none'" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer">✖</button>
+    </div>
     <canvas id="confettiCanvas"></canvas>
     <div class="toast-container" id="toastContainer"></div>
     <div class="modal-overlay" id="modalOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;justify-content:center;align-items:center">
@@ -307,6 +315,28 @@
                                 <button class="btn btn-sm btn-remove" onclick="carregarUsuariosParaExclusao()" title="Recarregar">🔄</button>
                             </div>
                             <button class="btn btn-sm btn-remove" onclick="confirmarExclusaoJogador()" style="width:100%;margin-top:4px">🗑️ Excluir Selecionado</button>
+                        </div>
+                    </div>
+
+                    <!-- Card: Manutenção Programada -->
+                    <div class="admin-card-section card-blue">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">🔧</span>
+                            <span class="admin-card-title">Manutenção Programada</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <p class="admin-info-text">Avise os jogadores sobre uma manutenção. Eles verão um aviso ao entrar no site.</p>
+                            <label class="admin-label">Data (até):</label>
+                            <input type="date" id="manutData" class="input-field" />
+                            <label class="admin-label">Horário (até):</label>
+                            <input type="time" id="manutHorario" class="input-field" />
+                            <label class="admin-label">Mensagem (opcional):</label>
+                            <input type="text" id="manutMensagem" class="input-field" placeholder="Ex: Melhorias no sistema" maxlength="120" />
+                            <div class="admin-btn-row" style="margin-top:8px">
+                                <button class="btn btn-sm" style="background:#10b981;color:#fff" onclick="salvarManutencao(true)">🔔 Ativar Aviso</button>
+                                <button class="btn btn-sm btn-remove" onclick="salvarManutencao(false)">⏹️ Desativar</button>
+                            </div>
+                            <p id="manutStatus" class="admin-info-text" style="margin-top:8px"></p>
                         </div>
                     </div>
 

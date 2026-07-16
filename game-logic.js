@@ -463,6 +463,7 @@ function abrirAdminScreen() {
         adminAbrirAba('tabSaques');
         carregarAdminUsuariosComSaldo();
         carregarUsuariosParaExclusao();
+        carregarManutencaoAdmin();
         carregarBarraJogadores();
     });
 }

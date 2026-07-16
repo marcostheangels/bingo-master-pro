@@ -638,6 +638,7 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
                 if (typeof updateChipsDisplay === 'function') updateChipsDisplay();
             }
             updatePlayerListUI();
+            if (typeof exibirAvisoManutencao === 'function') exibirAvisoManutencao(data.manutencao);
             const novasBolas = data.drawnBalls || [];
             if (novasBolas.length !== oldDrawnLen) {
                 if (typeof applyBoardReset === 'function') applyBoardReset();
@@ -1720,5 +1721,67 @@ function baixarTransacoesCSV() {
         const dados = filtrarPorData(d, 'data', filtro.de, filtro.ate);
         baixarCSV(dados, 'transacoes.csv', ['tipo', 'nome', 'valor', 'data', 'detalhe']);
     }).catch(() => showToast('Erro ao baixar.', 'error', 4000));
+}
+
+// ===================== AVISO MANUTENÇÃO (JOGADOR) =====================
+function exibirAvisoManutencao(m) {
+    const banner = document.getElementById('manutencaoBanner');
+    if (!banner) return;
+    if (!m || !m.ativo) {
+        banner.style.display = 'none';
+        return;
+    }
+    const titulo = document.getElementById('manutTitulo');
+    const detalhe = document.getElementById('manutDetalhe');
+    let texto = 'O site entrará em manutenção';
+    if (m.data) texto += ' até ' + m.data;
+    if (m.horario) texto += ' às ' + m.horario;
+    if (titulo) titulo.textContent = m.mensagem ? '🔧 ' + m.mensagem : 'Manutenção Programada';
+    if (detalhe) detalhe.textContent = texto + '. Obrigado pela compreensão!';
+    banner.style.display = 'flex';
+}
+
+// ===================== MANUTENÇÃO PROGRAMADA =====================
+function carregarManutencaoAdmin() {
+    adminFetch(API_BASE + '/api/manutencao').then(r => r.json()).then(m => {
+        const dataEl = document.getElementById('manutData');
+        const horaEl = document.getElementById('manutHorario');
+        const msgEl = document.getElementById('manutMensagem');
+        const statusEl = document.getElementById('manutStatus');
+        if (dataEl && m.data) dataEl.value = m.data;
+        if (horaEl && m.horario) horaEl.value = m.horario;
+        if (msgEl && m.mensagem) msgEl.value = m.mensagem;
+        if (statusEl) {
+            statusEl.textContent = m.ativo
+                ? '✅ Aviso ATIVO até ' + (m.data || '?') + (m.horario ? ' às ' + m.horario : '')
+                : '⏹️ Nenhum aviso ativo';
+            statusEl.style.color = m.ativo ? '#10b981' : '#888';
+        }
+    }).catch(() => {});
+}
+
+function salvarManutencao(ativo) {
+    const data = document.getElementById('manutData').value || '';
+    const horario = document.getElementById('manutHorario').value || '';
+    const mensagem = document.getElementById('manutMensagem').value || '';
+    if (ativo && !data) {
+        showToast('Informe a data da manutenção.', 'warning', 4000);
+        return;
+    }
+    adminFetch(API_BASE + '/api/admin/manutencao', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data, horario, mensagem, ativo })
+    })
+    .then(r => r.json())
+    .then(r => {
+        if (r.success) {
+            showToast(ativo ? '🔔 Aviso de manutenção ativado!' : 'Aviso desativado.', ativo ? 'success' : 'info', 4000);
+            carregarManutencaoAdmin();
+        } else {
+            showToast('Erro: ' + (r.error || 'desconhecido'), 'error', 4000);
+        }
+    })
+    .catch(() => showToast('Erro de conexão.', 'error', 4000));
 }
 

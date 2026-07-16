@@ -444,7 +444,8 @@ function sendGameState(room, ws) {
         currentRound: room.currentRound,
         jackpot: room.jackpot,
         autoStartSeconds: room.autoStartSeconds,
-        totalCardsAtStart: room.totalCardsAtStart || 0
+        totalCardsAtStart: room.totalCardsAtStart || 0,
+        manutencao: db.getManutencao()
     };
     broadcast(room, msg);
 }
@@ -2040,6 +2041,22 @@ app.post('/api/admin/testar-email', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: 'Erro ao enviar email de teste: ' + err.message });
     }
+});
+
+// ===================== MANUTENÇÃO PROGRAMADA =====================
+app.post('/api/admin/manutencao', async (req, res) => {
+    try {
+        const { data, horario, mensagem, ativo } = req.body;
+        await db.setManutencao(data || '', horario || '', mensagem || '', ativo);
+        console.log('[MANUTENCAO] Configurada: ativo=' + ativo + ' data=' + data + ' horario=' + horario);
+        res.json({ success: true, manutencao: db.getManutencao() });
+    } catch (err) {
+        res.status(500).json({ error: 'Erro ao salvar manutenção: ' + err.message });
+    }
+});
+
+app.get('/api/manutencao', (req, res) => {
+    res.json(db.getManutencao());
 });
 
 app.get('/api/admin/testar-asaas', async (req, res) => {

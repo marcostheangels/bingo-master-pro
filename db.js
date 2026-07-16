@@ -14,6 +14,7 @@ let roomsStateCache = {};
 let bonusPrimeiroDepositoCache = {};
 let bonusGivenCache = {};
 let comprasPendentesCache = [];
+let manutencaoCache = { data: '', horario: '', mensagem: '', ativo: false };
 
 async function init(connectionString) {
     pool = new Pool({
@@ -31,6 +32,7 @@ async function init(connectionString) {
     await createTables();
     await loadCache();
     await loadBonusCache();
+    await loadManutencao();
 
     console.log('[DB] PostgreSQL inicializado com ' + usuariosCache.length + ' usuarios, ' + Object.keys(fichasCache).length + ' fichas, ' + saquesCache.length + ' saques, ' + transacoesCache.length + ' transacoes, ' + recargasCache.length + ' recargas, ' + historicoCache.length + ' historicos');
     return true;
@@ -155,6 +157,15 @@ async function createTables() {
         CREATE TABLE IF NOT EXISTS bonus_deposito (
             "nome" TEXT PRIMARY KEY,
             "recebeu" BOOLEAN NOT NULL DEFAULT true
+        )
+    `);
+    await pool.query(`
+        CREATE TABLE IF NOT EXISTS manutencao (
+            "id" INTEGER PRIMARY KEY DEFAULT 1,
+            "data" TEXT,
+            "horario" TEXT,
+            "mensagem" TEXT,
+            "ativo" BOOLEAN NOT NULL DEFAULT false
         )
     `);
     console.log('[DB] Tables ensured (created if not existing).');
@@ -297,6 +308,47 @@ async function loadBonusCache() {
     } catch (e) {
         console.error('[DB] Erro ao carregar bonus_deposito:', e.message);
         bonusPrimeiroDepositoCache = {};
+    }
+}
+
+async function loadManutencao() {
+    if (!pool) return;
+    try {
+        const r = await pool.query('SELECT * FROM manutencao WHERE "id"=1');
+        if (r.rows.length > 0) {
+            const row = r.rows[0];
+            manutencaoCache = {
+                data: row.data || '',
+                horario: row.horario || '',
+                mensagem: row.mensagem || '',
+                ativo: !!row.ativo
+            };
+        }
+        console.log('[DB] Manutenção carregada: ativo=' + manutencaoCache.ativo);
+    } catch (e) {
+        console.error('[DB] Erro ao carregar manutencao:', e.message);
+    }
+}
+
+function getManutencao() {
+    return manutencaoCache;
+}
+
+async function setManutencao(data, horario, mensagem, ativo) {
+    manutencaoCache = {
+        data: data || '',
+        horario: horario || '',
+        mensagem: mensagem || '',
+        ativo: !!ativo
+    };
+    if (!pool) return;
+    try {
+        await pool.query(
+            'INSERT INTO manutencao ("id","data","horario","mensagem","ativo") VALUES (1,$1,$2,$3,$4) ON CONFLICT ("id") DO UPDATE SET "data"=EXCLUDED."data","horario"=EXCLUDED."horario","mensagem"=EXCLUDED."mensagem","ativo"=EXCLUDED."ativo"',
+            [data || '', horario || '', mensagem || '', !!ativo]
+        );
+    } catch (e) {
+        console.error('[DB] Erro ao salvar manutencao:', e.message);
     }
 }
 
@@ -599,6 +651,8 @@ module.exports = {
     setBotFichas,
     getBonusGivenStore,
     setBonusGivenStore,
+    getManutencao,
+    setManutencao,
     syncBonusGivenStore,
     getComprasPendentes,
     setComprasPendentes,
