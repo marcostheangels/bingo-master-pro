@@ -1765,7 +1765,7 @@ app.post('/api/admin/usuario/credito', async (req, res) => {
             fichasStore[key] = { chips: engine.INITIAL_CHIPS, winnings: 0 };
         }
         const operacao = mode === 'remove' ? 'remover' : 'add';
-        if (operacao === 'remove') {
+        if (operacao === 'remover') {
             fichasStore[key].chips = Math.max(0, fichasStore[key].chips - valor);
         } else {
             fichasStore[key].chips += valor;
