@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
@@ -8,7 +8,7 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <title>BINGO VIP CLUB</title>
     <link rel="manifest" href="manifest.json">
-    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E??%3C/text%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎱%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.0.8/index.min.css" rel="stylesheet">
     <link rel="stylesheet" href="style.css?v=26">
     <script>
@@ -30,14 +30,14 @@
         <div class="spinner"></div>
         <div class="spinner-text" id="spinnerText">Conectando...</div>
     </div>
-    <div class="offline-banner" id="offlineBanner">?? Conex�o perdida. Tentando reconectar...</div>
+    <div class="offline-banner" id="offlineBanner">🔌 Conexão perdida. Tentando reconectar...</div>
     <div class="manutencao-banner" id="manutencaoBanner" style="display:none">
-        <span style="font-size:18px">??</span>
+        <span style="font-size:18px">🔧</span>
         <div style="flex:1">
-            <div style="font-weight:700;color:#fff;font-size:14px" id="manutTitulo">Manuten��o Programada</div>
+            <div style="font-weight:700;color:#fff;font-size:14px" id="manutTitulo">Manutenção Programada</div>
             <div style="color:#cbd5e1;font-size:12px;margin-top:2px" id="manutDetalhe"></div>
         </div>
-        <button onclick="document.getElementById('manutencaoBanner').style.display='none'" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer">?</button>
+        <button onclick="document.getElementById('manutencaoBanner').style.display='none'" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer">✖</button>
     </div>
     <canvas id="confettiCanvas"></canvas>
     <div class="toast-container" id="toastContainer"></div>
@@ -53,14 +53,14 @@
     <div class="modal-overlay" id="excluirModalOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;justify-content:center;align-items:center">
         <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:28px 32px;max-width:420px;width:90%;text-align:center">
             <div style="font-size:17px;color:#fff;font-weight:600;margin-bottom:12px" id="excluirModalMsg">Excluir jogador?</div>
-            <p style="color:#cbd5e1;font-size:13px;margin:0 0 16px">Esta a��o � irrevers�vel. Confirme abaixo:</p>
+            <p style="color:#cbd5e1;font-size:13px;margin:0 0 16px">Esta ação é irreversível. Confirme abaixo:</p>
             <div style="display:flex;gap:10px;justify-content:center">
-                <button id="excluirModalBtn" style="background:#ef4444;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">??? Excluir</button>
+                <button id="excluirModalBtn" style="background:#ef4444;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">🗑️ Excluir</button>
                 <button id="excluirModalCancelBtn" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">Cancelar</button>
             </div>
         </div>
     </div>
-    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Tela Cheia">??</button>
+    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Tela Cheia">📺</button>
 
     <!-- ===== REGISTER / LOGIN SCREEN ===== -->
     <div class="screen active" id="screenHome">
@@ -77,8 +77,8 @@
             <div class="brand">
                 <img class="brand-logo" src="bingo1.jpeg" alt="Bingo VIP Club">
                 <h1 class="brand-title">BINGO VIP CLUB</h1>
-                <p class="subtitle">Kuadra � Kina � Keno</p>
-                <span class="vip-pill">? Clube VIP</span>
+                <p class="subtitle">Kuadra • Kina • Keno</p>
+                <span class="vip-pill">★ Clube VIP</span>
             </div>
 
             <!-- TABS -->
@@ -87,7 +87,7 @@
                 <button type="button" class="auth-tab" id="tabRegister" onclick="mostrarAba('register')">Criar conta</button>
             </div>
 
-            <!-- LOGIN (padr�o) -->
+            <!-- LOGIN (padrão) -->
             <div id="authLogin">
                 <div class="auth-field">
                     <label>CPF:</label>
@@ -98,8 +98,8 @@
                     <input type="password" id="loginSenha" class="input-field" placeholder="Sua senha">
                 </div>
                 <p class="auth-error" id="loginError"></p>
-                <button class="btn-login" onclick="fazerLogin()">?? Entrar na conta</button>
-                <p class="switch-link">N�o tem conta? <a href="#" onclick="mostrarAba('register');return false">Cadastre-se gr�tis</a></p>
+                <button class="btn-login" onclick="fazerLogin()">🔑 Entrar na conta</button>
+                <p class="switch-link">Não tem conta? <a href="#" onclick="mostrarAba('register');return false">Cadastre-se grátis</a></p>
             </div>
 
             <!-- CADASTRO -->
@@ -118,7 +118,7 @@
                 </div>
                 <div class="auth-field">
                     <label>Senha:</label>
-                    <input type="password" id="regSenha" class="input-field" placeholder="M�nimo 4 caracteres">
+                    <input type="password" id="regSenha" class="input-field" placeholder="Mínimo 4 caracteres">
                 </div>
                 <div class="auth-field">
                     <label>Confirmar Senha:</label>
@@ -126,21 +126,21 @@
                 </div>
                 <div class="auth-field">
                     <label>Chave PIX (para saque):</label>
-                    <input type="text" id="regChavePix" class="input-field" placeholder="CPF, e-mail, telefone ou chave aleat�ria">
+                    <input type="text" id="regChavePix" class="input-field" placeholder="CPF, e-mail, telefone ou chave aleatória">
                 </div>
                 <p class="auth-error" id="regError"></p>
-                <button class="btn-login" onclick="registrar()">? Criar minha conta</button>
-                <p class="switch-link">J� tem conta? <a href="#" onclick="mostrarAba('login');return false">Fa�a login</a></p>
+                <button class="btn-login" onclick="registrar()">✅ Criar minha conta</button>
+                <p class="switch-link">Já tem conta? <a href="#" onclick="mostrarAba('login');return false">Faça login</a></p>
             </div>
 
             <div class="spectator-entry">
-                <button class="btn-spectador" onclick="conectarComoEspectador()">??? Assistir ao Vivo sem login</button>
+                <button class="btn-spectador" onclick="conectarComoEspectador()">👁️ Assistir ao Vivo sem login</button>
             </div>
 
             <div class="trust-row">
-                <span>?? Ambiente Seguro</span>
-                <span>?? Exclusive 18+</span>
-                <span>? Sorteios ao Vivo</span>
+                <span>🔒 Ambiente Seguro</span>
+                <span>🎯 Exclusive 18+</span>
+                <span>⚡ Sorteios ao Vivo</span>
             </div>
 
             <div id="connectionStatusMsg" class="connection-status">
@@ -153,8 +153,8 @@
     <div class="screen" id="screenGame">
         <div class="game-wrapper game-wrapper-mobile">
 
-            <!-- Bot�o Admin -->
-            <button class="btn-admin-open" id="btnAdminOpen" style="display:none" onclick="abrirAdminScreen()">?? Admin</button>
+            <!-- Botão Admin -->
+            <button class="btn-admin-open" id="btnAdminOpen" style="display:none" onclick="abrirAdminScreen()">⚙️ Admin</button>
 
             <!-- Top Bar -->
             <div class="top-bar">
@@ -166,22 +166,22 @@
                 <div class="user-info">
                     <div class="user-avatar" id="avatarIcon">B</div>
                     <span class="user-name" id="labelMyName">Jogador</span>
-                    <span class="user-chips" id="labelMyChips">?? 0 ?? 0</span>
-                    <button class="btn-deposit" onclick="abrirModalDeposito()">?? Depositar</button>
-                    <button class="btn-withdraw" id="btnSacar" onclick="abrirModalSaque()" style="display:none">?? Sacar</button>
-                    <button class="btn-logout" onclick="sairDaConta()">?? Sair</button>
-                    <button class="btn-sound" id="btnSoundToggle" onclick="alternarSom()" title="Ligar/desligar som">??</button>
-                    <button class="btn-sound" id="btnNotify" onclick="habilitarNotificacoes()" title="Ativar notifica��es">??</button>
+                    <span class="user-chips" id="labelMyChips">💰 0 🏆 0</span>
+                    <button class="btn-deposit" onclick="abrirModalDeposito()">💰 Depositar</button>
+                    <button class="btn-withdraw" id="btnSacar" onclick="abrirModalSaque()" style="display:none">💵 Sacar</button>
+                    <button class="btn-logout" onclick="sairDaConta()">🚪 Sair</button>
+                    <button class="btn-sound" id="btnSoundToggle" onclick="alternarSom()" title="Ligar/desligar som">🔊</button>
+                    <button class="btn-sound" id="btnNotify" onclick="habilitarNotificacoes()" title="Ativar notificações">🔔</button>
                 </div>
             </div>
 
             <!-- Jackpot -->
             <div class="jackpot-panel">
-                <div class="jackpot-label">?? Jackpot Acumulado</div>
+                <div class="jackpot-label">🎰 Jackpot Acumulado</div>
                 <div class="jackpot-value" id="jackpotDisplay">R$ 20,00</div>
-                <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM AT� 55 BOLAS E LEVE O JACKPOT DE R$ 20,00!</div>
+                <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÉ 55 BOLAS E LEVE O JACKPOT DE R$ 20,00!</div>
                 <div class="round-number" id="currentRoundNumber">Nenhum sorteio ainda</div>
-                <button class="btn-hall" onclick="abrirHallDaFama()">?? Hall da Fama</button>
+                <button class="btn-hall" onclick="abrirHallDaFama()">🏆 Hall da Fama</button>
             </div>
                 <div class="jackpot-balls-panel" id="jackpotBallsPanel" style="display:none;">
                     <div class="jackpot-balls-label">Bolas para o Jackpot:</div>
@@ -190,9 +190,9 @@
 
                 <!-- Premios band (Kuadra / Kina / Keno) -->
                 <div class="prizes-strip">
-                    <div class="phase-item phase-item-mini" id="phase_kuadra"><span class="phase-label">Kuadra</span> <span class="prize">?? R$ 0,30</span></div>
-                    <div class="phase-item phase-item-mini" id="phase_kina"><span class="phase-label">Kina</span> <span class="prize">?? R$ 0,40</span></div>
-                    <div class="phase-item phase-item-mini" id="phase_keno"><span class="phase-label">Bingo</span> <span class="prize">?? R$ 0,80</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_kuadra"><span class="phase-label">Kuadra</span> <span class="prize">💰 R$ 0,30</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_kina"><span class="phase-label">Kina</span> <span class="prize">💰 R$ 0,40</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_keno"><span class="phase-label">Bingo</span> <span class="prize">💰 R$ 0,80</span></div>
                 </div>
 
                 <!-- Game Body -->
@@ -202,7 +202,7 @@
                 <div class="ball-section">
                     <div class="ball-area">
                         <div class="current-ball">
-                            <p class="label">�ltima Bola</p>
+                            <p class="label">Última Bola</p>
                             <div class="ball-display" id="mainBall">-</div>
                         </div>
                         <div class="drawn-grid" id="drawnGrid"></div>
@@ -210,9 +210,9 @@
 
                     <div class="ball-actions">
                         <div class="buy-options" id="buySection">
-                            <span class="buy-label">Comprar cartelas (R$0,05 cada) <span style="color:#fbbf24;font-size:0.85em">� M�x: 40</span></span>
+                            <span class="buy-label">Comprar cartelas (R$0,05 cada) <span style="color:#fbbf24;font-size:0.85em">— Máx: 40</span></span>
                             <div style="display:flex;gap:6px;align-items:center;width:100%">
-                                <button class="btn btn-primary" onclick="ajustarQtd(-1)" style="flex:0 0 40px;padding:8px 0">-</button>
+                                <button class="btn btn-primary" onclick="ajustarQtd(-1)" style="flex:0 0 40px;padding:8px 0">−</button>
                                 <input type="number" id="buyQtyInput" value="1" min="1" max="40" style="flex:1;min-width:50px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;font-size:0.95em;text-align:center">
                                 <button class="btn btn-primary" onclick="ajustarQtd(1)" style="flex:0 0 40px;padding:8px 0">+</button>
                                 <button class="btn btn-primary" onclick="comprarCartelas()" style="flex:2">Comprar</button>
@@ -223,18 +223,18 @@
 
                 <!-- My Cards -->
                 <div class="my-cards-section">
-                    <h3>?? Minhas Cartelas <button type="button" class="cards-compact-btn" onclick="toggleCardsCompact()" title="Modo compacto">?</button></h3>
+                    <h3>📋 Minhas Cartelas <button type="button" class="cards-compact-btn" onclick="toggleCardsCompact()" title="Modo compacto">⤢</button></h3>
                     <div class="cards-grid" id="myCardsGrid"></div>
                 </div>
 
                 <!-- Players Panel -->
                 <div class="players-panel" id="playersPanel">
-                    <h3 onclick="this.closest('.players-panel').classList.toggle('collapsed')">?? Jogadores <span class="toggle-icon">?</span></h3>
+                    <h3 onclick="this.closest('.players-panel').classList.toggle('collapsed')">👥 Jogadores <span class="toggle-icon">▼</span></h3>
                     <div class="players-panel-body">
-                        <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">??? <span id="spectatorCountNum">0</span> espectadores</div>
+                        <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
                         <ul class="player-list" id="playerListUI"></ul>
                         <div class="players-missing" id="missingNumbersPanel">
-                            <h4 class="players-missing-title">?? <span id="missingTitle">Cartelas pr�ximas</span></h4>
+                            <h4 class="players-missing-title">📊 <span id="missingTitle">Cartelas próximas</span></h4>
                             <div class="missing-numbers-list" id="missingNumbersList">
                                 <p style="color:#6b6599;font-size:0.82em">Nenhum jogo ativo no momento.</p>
                             </div>
@@ -255,30 +255,30 @@
             <div class="admin-panel-content" style="width:100%;max-width:900px;margin:0 auto">
 
                 <div class="admin-header">
-                    <h3>?? Painel do Dono</h3>
-                    <button class="admin-close" onclick="fecharAdminScreen()">?</button>
+                    <h3>⚙️ Painel do Dono</h3>
+                    <button class="admin-close" onclick="fecharAdminScreen()">✖</button>
                 </div>
 
-                <!-- Grid de Se��es -->
+                <!-- Grid de Seções -->
                 <div class="admin-grid">
 
-                    <!-- Card: Gerenciar Cr�ditos -->
+                    <!-- Card: Gerenciar Créditos -->
                     <div class="admin-card-section">
                         <div class="admin-card-head">
-                            <span class="admin-card-icon">??</span>
-                            <span class="admin-card-title">Cr�ditos (sac�vel)</span>
+                            <span class="admin-card-icon">💰</span>
+                            <span class="admin-card-title">Créditos (sacável)</span>
                         </div>
                         <div class="admin-card-body">
                             <label class="admin-label">Jogador:</label>
                             <div class="admin-input-row">
                                 <select id="adminPlayerSelect" class="input-field"></select>
-                                <button class="btn btn-sm btn-refresh" onclick="carregarAdminUsuariosComSaldo()" title="Recarregar">??</button>
+                                <button class="btn btn-sm btn-refresh" onclick="carregarAdminUsuariosComSaldo()" title="Recarregar">🔄</button>
                             </div>
                             <label class="admin-label">Valor (fichas):</label>
                             <input type="number" id="adminChipAmount" class="input-field" value="5000">
                             <div class="admin-btn-row">
-                                <button class="btn btn-sm btn-add" onclick="executeAdminAction('add')">?? Cr�dito +</button>
-                                <button class="btn btn-sm btn-remove" onclick="executeAdminAction('remove')">?? Cr�dito -</button>
+                                <button class="btn btn-sm btn-add" onclick="executeAdminAction('add')">💰 Crédito +</button>
+                                <button class="btn btn-sm btn-remove" onclick="executeAdminAction('remove')">💰 Crédito −</button>
                             </div>
                         </div>
                     </div>
@@ -286,28 +286,28 @@
                     <!-- Card: Saldo do Jogador -->
                     <div class="admin-card-section card-blue">
                         <div class="admin-card-head">
-                            <span class="admin-card-icon">??</span>
+                            <span class="admin-card-icon">💳</span>
                             <span class="admin-card-title">Saldo do Jogador</span>
                         </div>
                         <div class="admin-card-body">
                             <div id="adminPlayerBalance" class="admin-saldo-display">
                                 Selecione um jogador acima.
                             </div>
-                            <button class="btn btn-sm btn-refresh" onclick="atualizarSaldoJogadorSelecionado()" style="margin-top:6px">?? Atualizar</button>
+                            <button class="btn btn-sm btn-refresh" onclick="atualizarSaldoJogadorSelecionado()" style="margin-top:6px">🔄 Atualizar</button>
                         </div>
                     </div>
 
-                    <!-- Card: B�nus -->
+                    <!-- Card: Bônus -->
                     <div class="admin-card-section card-yellow">
                         <div class="admin-card-head">
-                            <span class="admin-card-icon">??</span>
-                            <span class="admin-card-title">B�nus (N�O sac�vel)</span>
+                            <span class="admin-card-icon">🎁</span>
+                            <span class="admin-card-title">Bônus (NÃO sacável)</span>
                         </div>
                         <div class="admin-card-body">
-                            <p class="admin-info-text">B�nus N�O pode ser sacado. Serve apenas para o jogador comprar cartelas.</p>
+                            <p class="admin-info-text">Bônus NÃO pode ser sacado. Serve apenas para o jogador comprar cartelas.</p>
                             <div class="admin-btn-row">
-                                <button class="btn btn-sm btn-add" onclick="addBonusSelecionado()" style="background:#10b981">?? B�nus +</button>
-                                <button class="btn btn-sm btn-remove" onclick="removerBonusSelecionado()">?? B�nus -</button>
+                                <button class="btn btn-sm btn-add" onclick="addBonusSelecionado()" style="background:#10b981">🎁 Bônus +</button>
+                                <button class="btn btn-sm btn-remove" onclick="removerBonusSelecionado()">🎁 Bônus −</button>
                             </div>
                         </div>
                     </div>
@@ -315,36 +315,36 @@
                     <!-- Card: Excluir Jogador -->
                     <div class="admin-card-section card-red">
                         <div class="admin-card-head">
-                            <span class="admin-card-icon">???</span>
+                            <span class="admin-card-icon">🗑️</span>
                             <span class="admin-card-title">Excluir Jogador</span>
                         </div>
                         <div class="admin-card-body">
-                            <p class="admin-warning-text">?? A��o irrevers�vel!</p>
+                            <p class="admin-warning-text">⚠️ Ação irreversível!</p>
                             <div class="admin-input-row">
                                 <select id="deletePlayerSelect" class="input-field"></select>
-                                <button class="btn btn-sm btn-remove" onclick="carregarUsuariosParaExclusao()" title="Recarregar">??</button>
+                                <button class="btn btn-sm btn-remove" onclick="carregarUsuariosParaExclusao()" title="Recarregar">🔄</button>
                             </div>
-                            <button class="btn btn-sm btn-remove" onclick="confirmarExclusaoJogador()" id="btnExcluirSelecionado" style="width:100%;margin-top:4px">??? Excluir Selecionado</button>
+                            <button class="btn btn-sm btn-remove" onclick="confirmarExclusaoJogador()" id="btnExcluirSelecionado" style="width:100%;margin-top:4px">🗑️ Excluir Selecionado</button>
                         </div>
                     </div>
 
-                    <!-- Card: Manuten��o Programada -->
+                    <!-- Card: Manutenção Programada -->
                     <div class="admin-card-section card-blue">
                         <div class="admin-card-head">
-                            <span class="admin-card-icon">??</span>
-                            <span class="admin-card-title">Manuten��o Programada</span>
+                            <span class="admin-card-icon">🔧</span>
+                            <span class="admin-card-title">Manutenção Programada</span>
                         </div>
                         <div class="admin-card-body">
-                            <p class="admin-info-text">Avise os jogadores sobre uma manuten��o. Eles ver�o um aviso ao entrar no site.</p>
-                            <label class="admin-label">Data (at�):</label>
+                            <p class="admin-info-text">Avise os jogadores sobre uma manutenção. Eles verão um aviso ao entrar no site.</p>
+                            <label class="admin-label">Data (até):</label>
                             <input type="date" id="manutData" class="input-field" />
-                            <label class="admin-label">Hor�rio (at�):</label>
+                            <label class="admin-label">Horário (até):</label>
                             <input type="time" id="manutHorario" class="input-field" />
                             <label class="admin-label">Mensagem (opcional):</label>
                             <input type="text" id="manutMensagem" class="input-field" placeholder="Ex: Melhorias no sistema" maxlength="120" />
                             <div class="admin-btn-row" style="margin-top:8px">
-                                <button class="btn btn-sm" style="background:#10b981;color:#fff" onclick="salvarManutencao(true)">?? Ativar Aviso</button>
-                                <button class="btn btn-sm btn-remove" onclick="salvarManutencao(false)">?? Desativar</button>
+                                <button class="btn btn-sm" style="background:#10b981;color:#fff" onclick="salvarManutencao(true)">🔔 Ativar Aviso</button>
+                                <button class="btn btn-sm btn-remove" onclick="salvarManutencao(false)">⏹️ Desativar</button>
                             </div>
                             <p id="manutStatus" class="admin-info-text" style="margin-top:8px"></p>
                         </div>
@@ -352,24 +352,24 @@
 
                 </div>
 
-                <!-- Abas de Navega��o -->
+                <!-- Abas de Navegação -->
                 <div class="admin-tabs">
-                    <button class="admin-tab active" data-tab="tabSaques" onclick="adminAbrirAba('tabSaques')">?? Saques Pendentes</button>
-                    <button class="admin-tab" data-tab="tabUsuarios" onclick="adminAbrirAba('tabUsuarios')">?? Usu�rios</button>
-                    <button class="admin-tab" data-tab="tabHistorico" onclick="adminAbrirAba('tabHistorico')">?? Hist�rico</button>
-                    <button class="admin-tab" data-tab="tabTransacoes" onclick="adminAbrirAba('tabTransacoes')">?? Transa��es</button>
-                    <button class="admin-tab" data-tab="tabAntifraude" onclick="adminAbrirAba('tabAntifraude')">??? Anti-fraude</button>
+                    <button class="admin-tab active" data-tab="tabSaques" onclick="adminAbrirAba('tabSaques')">💵 Saques Pendentes</button>
+                    <button class="admin-tab" data-tab="tabUsuarios" onclick="adminAbrirAba('tabUsuarios')">📋 Usuários</button>
+                    <button class="admin-tab" data-tab="tabHistorico" onclick="adminAbrirAba('tabHistorico')">📜 Histórico</button>
+                    <button class="admin-tab" data-tab="tabTransacoes" onclick="adminAbrirAba('tabTransacoes')">💳 Transações</button>
+                    <button class="admin-tab" data-tab="tabAntifraude" onclick="adminAbrirAba('tabAntifraude')">🛡️ Anti-fraude</button>
                 </div>
 
-                <!-- Conte�do das Abas -->
+                <!-- Conteúdo das Abas -->
                 <div class="admin-tab-content" id="tabSaques">
                     <div class="admin-tab-header">
-                        <h4>?? Saques Pendentes</h4>
+                        <h4>💵 Saques Pendentes</h4>
                         <div class="admin-tab-actions">
-                            <button class="btn btn-sm btn-refresh" onclick="carregarSaquesAdmin()">??</button>
-                                <button class="btn btn-sm btn-primary" onclick="testarEmailAdmin()">?? Email</button>
-                                <button class="btn btn-sm btn-primary" onclick="testarAsaasAdmin()" style="background:#0d9488">?? Asaas</button>
-                                <button class="btn btn-sm btn-primary" onclick="mostrarWebhookUrl()" style="background:#6366f1">?? Webhook</button>
+                            <button class="btn btn-sm btn-refresh" onclick="carregarSaquesAdmin()">🔄</button>
+                                <button class="btn btn-sm btn-primary" onclick="testarEmailAdmin()">✉️ Email</button>
+                                <button class="btn btn-sm btn-primary" onclick="testarAsaasAdmin()" style="background:#0d9488">💳 Asaas</button>
+                                <button class="btn btn-sm btn-primary" onclick="mostrarWebhookUrl()" style="background:#6366f1">🔗 Webhook</button>
                         </div>
                     </div>
                     <div id="adminSaquesList"><p class="admin-empty">Nenhum saque pendente.</p></div>
@@ -377,22 +377,22 @@
 
                 <div class="admin-tab-content" id="tabUsuarios" style="display:none">
                     <div class="admin-tab-header">
-                        <h4>?? Usu�rios</h4>
-                        <button class="btn btn-sm btn-refresh" onclick="carregarCadastrosAdmin()">??</button>
+                        <h4>📋 Usuários</h4>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarCadastrosAdmin()">🔄</button>
                     </div>
                     <div id="adminCadastrosList"><p class="admin-empty">Carregando...</p></div>
                 </div>
 
                 <div class="admin-tab-content" id="tabHistorico" style="display:none">
                     <div class="admin-tab-header">
-                        <h4>?? Hist�rico de Sorteios</h4>
+                        <h4>📜 Histórico de Sorteios</h4>
                     </div>
                     <div class="admin-filtros">
                         <label>De:</label>
                         <input type="date" id="filtroHistDe" class="input-field input-field-sm">
-                        <label>At�:</label>
+                        <label>Até:</label>
                         <input type="date" id="filtroHistAte" class="input-field input-field-sm">
-                        <button class="btn btn-sm btn-refresh" onclick="carregarHistoricoAdmin()">??</button>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarHistoricoAdmin()">🔍</button>
                         <button class="btn btn-sm btn-download" onclick="baixarHistoricoCSV()">CSV</button>
                         <button class="btn btn-sm btn-download" onclick="baixarHistoricoJSON()">JSON</button>
                     </div>
@@ -401,41 +401,41 @@
 
                 <div class="admin-tab-content" id="tabTransacoes" style="display:none">
                     <div class="admin-tab-header">
-                        <h4>?? Transa��es</h4>
+                        <h4>💳 Transações</h4>
                     </div>
                     <div class="admin-filtros">
                         <label>De:</label>
                         <input type="date" id="filtroTransDe" class="input-field input-field-sm">
-                        <label>At�:</label>
+                        <label>Até:</label>
                         <input type="date" id="filtroTransAte" class="input-field input-field-sm">
-                        <button class="btn btn-sm btn-refresh" onclick="carregarTransacoesAdmin()">??</button>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarTransacoesAdmin()">🔍</button>
                         <button class="btn btn-sm btn-download" onclick="baixarTransacoesCSV()">CSV</button>
                         <button class="btn btn-sm btn-download" onclick="baixarTransacoesJSON()">JSON</button>
                     </div>
-                    <div id="adminTransacoesList"><p class="admin-empty">Nenhuma transa��o encontrada.</p></div>
+                    <div id="adminTransacoesList"><p class="admin-empty">Nenhuma transação encontrada.</p></div>
                 </div>
 
                 <div class="admin-tab-content" id="tabAntifraude" style="display:none">
                     <div class="admin-tab-header">
-                        <h4>??? Contas Suspeitas (mesma impress�o digital)</h4>
-                        <button class="btn btn-sm btn-refresh" onclick="carregarAntiFraude()">??</button>
+                        <h4>🛡️ Contas Suspeitas (mesma impressão digital)</h4>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarAntiFraude()">🔄</button>
                     </div>
-                    <p class="admin-info-text">Grupos de contas que compartilham o mesmo dispositivo (poss�vel multi-conta para abuso de b�nus/jackpot).</p>
+                    <p class="admin-info-text">Grupos de contas que compartilham o mesmo dispositivo (possível multi-conta para abuso de bônus/jackpot).</p>
                     <div id="adminAntiFraudeList"><p class="admin-empty">Carregando...</p></div>
                 </div>
 
                 <!-- Barra de todos os jogadores reais -->
                 <div class="admin-players-bar" id="adminPlayersBarWrap" style="margin-top:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px">
                     <div class="admin-tab-header">
-                        <h4>?? Todos os Jogadores (B�nus / Cr�ditos / Depositado)</h4>
-                        <button class="btn btn-sm btn-refresh" onclick="carregarBarraJogadores()">??</button>
+                        <h4>👥 Todos os Jogadores (Bônus / Créditos / Depositado)</h4>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarBarraJogadores()">🔄</button>
                     </div>
                     <div id="adminPlayersBar" style="overflow-x:auto;font-size:0.8em">Carregando...</div>
                 </div>
 
-                <!-- Bot�o Voltar -->
+                <!-- Botão Voltar -->
                 <div style="text-align:center;margin-top:20px">
-                    <button class="btn btn-primary" onclick="fecharAdminScreen()">?? Voltar ao Jogo</button>
+                    <button class="btn btn-primary" onclick="fecharAdminScreen()">⬅️ Voltar ao Jogo</button>
                 </div>
 
             </div>
@@ -445,7 +445,7 @@
     <!-- ===== COUNTDOWN OVERLAY ===== -->
     <div class="countdown-overlay" id="countdownOverlay">
         <div class="countdown-content">
-            <div class="countdown-label">?? PR�XIMO SORTEIO EM</div>
+            <div class="countdown-label">🔄 PRÓXIMO SORTEIO EM</div>
             <div class="countdown-timer" id="countdownTimer">2:30</div>
             <div class="countdown-hint">Compre suas cartelas enquanto aguarda!</div>
         </div>
@@ -454,13 +454,13 @@
     <!-- ===== MODAL PIX ===== -->
     <div class="modal-overlay" id="modalPix" style="display:none">
         <div class="modal-content">
-            <button class="modal-close" onclick="fecharModal('modalPix')">?</button>
-            <h2>?? Dep�sito via PIX</h2>
+            <button class="modal-close" onclick="fecharModal('modalPix')">✖</button>
+            <h2>💰 Depósito via PIX</h2>
             <div class="regra-deposito">
-                ?? <strong>Valor m�nimo de dep�sito: R$ 10,00.</strong><br>
-                Dep�sitos e B�nus <strong>N�O podem ser sacados</strong> (s� servem para comprar cartelas).<br>
-                Podem ser sacados: <strong>Cr�ditos concedidos pelo admin</strong> + <strong>Pr�mios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).
-                Saque m�nimo: R$ 10,00.
+                ⚠️ <strong>Valor mínimo de depósito: R$ 10,00.</strong><br>
+                Depósitos e Bônus <strong>NÃO podem ser sacados</strong> (só servem para comprar cartelas).<br>
+                Podem ser sacados: <strong>Créditos concedidos pelo admin</strong> + <strong>Prêmios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).
+                Saque mínimo: R$ 10,00.
             </div>
             <div class="pix-form">
                 <label>Valor (R$):</label>
@@ -471,10 +471,10 @@
                 <div class="pix-qr-container">
                     <img id="pixQrCode" src="" alt="QR Code PIX" style="width:200px;height:200px;background:#fff;">
                 </div>
-                <p class="pix-instruction">Escaneie o QR Code ou copie o c�digo abaixo para pagar</p>
+                <p class="pix-instruction">Escaneie o QR Code ou copie o código abaixo para pagar</p>
                 <div class="pix-copy-area">
                     <input type="text" id="pixCopyText" readonly>
-                    <button class="btn btn-primary" onclick="copiarPix()">?? Copiar</button>
+                    <button class="btn btn-primary" onclick="copiarPix()">📋 Copiar</button>
                 </div>
                 <p class="pix-status" id="pixStatus">Aguardando pagamento...</p>
                 <div class="pix-loader" id="pixLoader"></div>
@@ -485,14 +485,14 @@
     <!-- ===== MODAL SAQUE ===== -->
     <div class="modal-overlay" id="modalSaque" style="display:none">
         <div class="modal-content">
-            <button class="modal-close" onclick="fecharModal('modalSaque')">?</button>
-            <h2>?? Solicitar Saque</h2>
-            <button class="btn-hall" style="margin-left:auto" onclick="abrirMinhasEstatisticas()">?? Minhas Estat�sticas</button>
+            <button class="modal-close" onclick="fecharModal('modalSaque')">✖</button>
+            <h2>💵 Solicitar Saque</h2>
+            <button class="btn-hall" style="margin-left:auto" onclick="abrirMinhasEstatisticas()">📊 Minhas Estatísticas</button>
             <div class="regra-deposito">
-                ?? <strong>Saque m�nimo: R$ 10,00.</strong><br>
-                <span id="saqueRegra">Podem ser sacados: <strong>Cr�ditos (admin)</strong> + <strong>Pr�mios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).</span><br>
-                Dep�sitos e B�nus <span style="color:#ef4444;font-weight:700;font-size:1.05em">N�O PODEM SER SACADOS</span>.<br>
-                Saldo sac�vel: <strong id="saqueSaldo">R$ 0,00</strong>
+                ⚠️ <strong>Saque mínimo: R$ 10,00.</strong><br>
+                <span id="saqueRegra">Podem ser sacados: <strong>Créditos (admin)</strong> + <strong>Prêmios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).</span><br>
+                Depósitos e Bônus <span style="color:#ef4444;font-weight:700;font-size:1.05em">NÃO PODEM SER SACADOS</span>.<br>
+                Saldo sacável: <strong id="saqueSaldo">R$ 0,00</strong>
             </div>
             <div class="saque-form">
                 <label>Valor do Saque (R$):</label>
@@ -502,16 +502,16 @@
                     <option value="cpf">CPF</option>
                     <option value="email">E-mail</option>
                     <option value="telefone">Telefone</option>
-                    <option value="aleatoria">Chave Aleat�ria</option>
+                    <option value="aleatoria">Chave Aleatória</option>
                 </select>
                 <label>Chave PIX:</label>
                 <input type="text" id="saqueChave" class="input-field" placeholder="Digite sua chave PIX">
-                <button class="btn btn-success" onclick="solicitarSaque()">?? Solicitar Saque</button>
+                <button class="btn btn-success" onclick="solicitarSaque()">📤 Solicitar Saque</button>
             </div>
             <div id="saqueMsg" class="saque-msg"></div>
             <div class="meus-saques-box">
-                <div class="meus-saques-title">?? Meus saques</div>
-                <div id="meusSaquesList" class="meus-saques-list">Carregando�</div>
+                <div class="meus-saques-title">📋 Meus saques</div>
+                <div id="meusSaquesList" class="meus-saques-list">Carregando…</div>
             </div>
         </div>
     </div>
@@ -519,19 +519,19 @@
     <!-- Hall da Fama -->
     <div class="modal-overlay" id="modalHall" style="display:none">
         <div class="modal-content">
-            <button class="modal-close" onclick="fecharModal('modalHall')">?</button>
-            <h2>?? Hall da Fama</h2>
-            <p style="color:#a0a0b0;font-size:0.82em;margin-bottom:10px">�ltimos ganhadores de Kuadra, Kina e Keno.</p>
-            <div id="hallList" class="hall-list">Carregando�</div>
+            <button class="modal-close" onclick="fecharModal('modalHall')">✖</button>
+            <h2>🏆 Hall da Fama</h2>
+            <p style="color:#a0a0b0;font-size:0.82em;margin-bottom:10px">Últimos ganhadores de Kuadra, Kina e Keno.</p>
+            <div id="hallList" class="hall-list">Carregando…</div>
         </div>
     </div>
 
-    <!-- Minhas Estat�sticas -->
+    <!-- Minhas Estatísticas -->
     <div class="modal-overlay" id="modalEstatisticas" style="display:none">
         <div class="modal-content">
-            <button class="modal-close" onclick="fecharModal('modalEstatisticas')">?</button>
-            <h2>?? Minhas Estat�sticas</h2>
-            <div id="estatisticasContent" class="estatisticas-content">Carregando�</div>
+            <button class="modal-close" onclick="fecharModal('modalEstatisticas')">✖</button>
+            <h2>📊 Minhas Estatísticas</h2>
+            <div id="estatisticasContent" class="estatisticas-content">Carregando…</div>
         </div>
     </div>
 

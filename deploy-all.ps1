@@ -16,7 +16,7 @@ if (Test-Path $indexFile) {
     $content = [regex]::Replace($content, '(src="network\.js\?v=)(\d+)', {
         param($m) $m.Groups[1].Value + ([int]$m.Groups[2].Value + 1)
     })
-    Set-Content $indexFile $content -NoNewline
+    Set-Content $indexFile $content -NoNewline -Encoding utf8
     Write-Output ">>> OK (versoes incrementadas)"
 } else {
     Write-Output ">>> index.html nao encontrado, pulando bump de versao"
