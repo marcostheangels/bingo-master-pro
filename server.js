@@ -64,16 +64,20 @@ let transporter = null;
 const EMAIL_FROM = 'BingoVipClub <marcostheangels@gmail.com>';
 
 if (SMTP_PASS && nodemailer) {
-    try {
-        const dns = require('dns');
-        dns.setDefaultResultOrder('ipv4first');
-        transporter = nodemailer.createTransport({
-            host: SMTP_HOST, port: SMTP_PORT, secure: SMTP_PORT === 465,
-            auth: { user: SMTP_USER, pass: SMTP_PASS },
-            tls: { rejectUnauthorized: true }
-        });
-        console.log('[EMAIL] Transportador SMTP configurado:', SMTP_USER);
-    } catch (e) { console.log('[EMAIL] Erro SMTP:', e.message); }
+    (async () => {
+        try {
+            const dns = require('dns');
+            const ipv4 = await new Promise((resolve, reject) => {
+                dns.lookup(SMTP_HOST, { family: 4 }, (err, address) => err ? reject(err) : resolve(address));
+            });
+            transporter = nodemailer.createTransport({
+                host: ipv4, port: SMTP_PORT, secure: SMTP_PORT === 465,
+                auth: { user: SMTP_USER, pass: SMTP_PASS },
+                tls: { rejectUnauthorized: true }
+            });
+            console.log('[EMAIL] Transportador SMTP configurado:', SMTP_USER, '->', ipv4);
+        } catch (e) { console.log('[EMAIL] Erro SMTP:', e.message); }
+    })();
 }
 
 async function enviarEmailSendGrid(to, subject, html) {
