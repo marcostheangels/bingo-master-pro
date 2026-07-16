@@ -1261,6 +1261,7 @@ async function handleAction(ws, room, action, payload) {
 
     if (action === 'resetGame') {
         if (room.gameActive) return;
+        log('GAME', 'ResetGame', { sala: roomId, jogador: player ? player.name : '?' });
         pararAutoStartServer(room);
         for (const p of room.players.values()) {
             const qtd = p.cards ? p.cards.length : 0;
@@ -1281,6 +1282,7 @@ async function handleAction(ws, room, action, payload) {
     }
 
     if (action === 'undo') {
+        log('GAME', 'Undo ultima bola', { sala: roomId, jogador: player ? player.name : '?' });
         undoLastBall(room);
         return;
     }
@@ -1991,6 +1993,7 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
         const nomeUsuario = usuariosArray[usuarioIdx].nomeCompleto || usuariosArray[usuarioIdx].nome || '';
         const keyNome = (nomeUsuario || '').toLowerCase().trim();
         const keyBot = 'bot-' + keyNome.replace(/\s+/g, '-');
+        log('ADMIN', 'Usuario excluido', { nome: nomeUsuario, cpf: cpfLimpo });
         await db.deleteUsuario(cpfLimpo);
 
         // Desconectar jogador deletado (essencial, feito antes de responder)
@@ -2075,6 +2078,7 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
 app.post('/api/admin/enviar-pix', async (req, res) => {
     try {
         const { para, chavePix, valor, tipoChave, saqueId } = req.body;
+        log('ADMIN', 'EnviarPIX', { para, valor, tipoChave, saqueId });
         const saques = db.getSaques();
         
         let saqueExistente = saqueId
@@ -2125,6 +2129,32 @@ app.post('/api/admin/enviar-pix', async (req, res) => {
         }
         
         await db.setSaques(saques);
+        log('SAQUE', 'PIX enviado', { para, valor, asaasTransferId, saqueId: saqueExistente.id });
+
+        // Notifica o jogador por email
+        try {
+            const usuariosPix = carregarUsuarios();
+            const userPix = Array.isArray(usuariosPix) ? usuariosPix.find(u => u.nomeCompleto === para) : null;
+            if (userPix && userPix.email) {
+                const htmlPix = `
+                    <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+                        <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                            <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
+                            <div style="padding:28px 24px">
+                                <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${para},</div>
+                                <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Seu saque de <strong style="color:#10b981">R$ ${(valor || 0).toFixed(2).replace('.', ',')}</strong> foi pago! O PIX foi enviado para sua chave.</p>
+                                <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">O valor já deve estar disponível em sua conta bancária.</p>
+                                <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Ir para o site</a></div>
+                            </div>
+                        </div>
+                    </div>`;
+                notificarJogador(para, userPix.email, 'Saque de R$ ' + (valor || 0).toFixed(2).replace('.', ',') + ' pago!', htmlPix);
+            }
+        } catch (e) { console.error('[PIX EMAIL] Erro notificar jogador:', e.message); }
+
+        // Notifica admin
+        await enviarEmailAdmin('Saque pago', '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + para + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor pago</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + (valor || 0).toFixed(2).replace('.', ',') + '</p></div>', 'SAQUE PAGO');
+
         res.json({ success: true, saque: saqueExistente, asaasTransferId });
     } catch (err) {
         console.error('[ASAAS] Erro enviar-pix:', err.message);
@@ -2136,10 +2166,12 @@ app.post('/api/admin/enviar-pix', async (req, res) => {
 app.post('/api/admin/saque-pago', async (req, res) => {
     try {
         const { saqueId } = req.body;
+        log('ADMIN', 'SaquePago', { saqueId });
         const saques = db.getSaques();
         
         const saqueIndex = saques.findIndex(s => String(s.id) === String(saqueId));
         if (saqueIndex === -1) {
+            log('ADMIN', 'SaquePago erro', { saqueId, motivo: 'nao encontrado' });
             return res.status(404).json({ error: 'Saque não encontrado.' });
         }
         
@@ -2147,8 +2179,10 @@ app.post('/api/admin/saque-pago', async (req, res) => {
         saques[saqueIndex].dataPagamento = new Date().toISOString();
         
         await db.setSaques(saques);
+        log('ADMIN', 'SaquePago OK', { saqueId, nome: saques[saqueIndex].nome });
         res.json({ success: true, saque: saques[saqueIndex] });
     } catch (err) {
+        log('ADMIN', 'SaquePago erro', { saqueId, err: err.message });
         res.status(500).json({ error: 'Erro ao marcar saque como pago.' });
     }
 });
@@ -2238,6 +2272,27 @@ app.post('/api/solicitar-saque', async (req, res) => {
             '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + nome + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + valor.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Chave PIX</p><p style="font-size:14px;color:#222;margin:0">' + chavePix + ' (' + (tipoChave || 'cpf') + ')</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Data</p><p style="font-size:14px;color:#222;margin:0">' + hora + '</p></div>',
             'SAQUE'
         );
+
+        // Notifica o jogador (email de confirmacao)
+        try {
+            const usuariosSaque = carregarUsuarios();
+            const userSaque = Array.isArray(usuariosSaque) ? usuariosSaque.find(u => u.nomeCompleto === nome) : null;
+            if (userSaque && userSaque.email) {
+                const htmlSaqueConfirmacao = `
+                    <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+                        <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                            <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
+                            <div style="padding:28px 24px">
+                                <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${nome},</div>
+                                <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Seu saque de <strong style="color:#10b981">R$ ${valor.toFixed(2).replace('.', ',')}</strong> foi solicitado com sucesso.</p>
+                                <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">O pagamento será processado em breve pelo administrador. Você receberá outro e-mail quando for aprovado.</p>
+                                <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acompanhar</a></div>
+                            </div>
+                        </div>
+                    </div>`;
+                notificarJogador(nome, userSaque.email, 'Saque de R$ ' + valor.toFixed(2).replace('.', ',') + ' solicitado', htmlSaqueConfirmacao);
+            }
+        } catch (e) { console.error('[SAQUE EMAIL] Erro notificar jogador:', e.message); }
 
         // Sincroniza com o jogador na sala (se estiver conectado) + broadcast
         gameRooms.forEach(room => {
