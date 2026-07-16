@@ -1226,10 +1226,55 @@ function carregarCadastrosAdmin() {
         } else if (btn.classList.contains('btn-editar')) {
             editarUsuarioAdmin(cpf, nome, email, senha, pix);
         } else if (btn.classList.contains('btn-remove')) {
-            excluirUsuarioAdmin(cpf, nome);
+            excluirUsuarioAdminDireto(cpf, nome);
         }
     });
 })();
+
+// Exclusão direta via window.confirm() nativo (mesma lógica que funciona no select)
+function excluirUsuarioAdminDireto(cpf, nome) {
+    console.log('[EXCLUIR] excluirUsuarioAdminDireto cpf=', cpf, 'nome=', nome);
+    const cpfLimpo = String(cpf).replace(/\D/g, '');
+    if (!cpfLimpo) {
+        showToast('CPF inválido para exclusão.', 'error', 4000);
+        return;
+    }
+    if (!window.confirm('Tem certeza que deseja EXCLUIR COMPLETAMENTE o jogador "' + (nome || '') + '"?\n\nIsso apaga cadastro, saldo, saques, transações e histórico.')) {
+        return;
+    }
+
+    showToast('Excluindo ' + (nome || cpfLimpo) + '...', 'info', 4000);
+
+    let controller = null, signal = null;
+    try { if (typeof AbortController !== 'undefined') { controller = new AbortController(); signal = controller.signal; } } catch (e) {}
+    const fetchTimeout = setTimeout(() => { if (controller) controller.abort(); }, 12000);
+
+    adminFetch(API_BASE + '/api/admin/usuario/excluir', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf: cpfLimpo }),
+        signal: signal
+    })
+    .then(async (r) => {
+        clearTimeout(fetchTimeout);
+        let j = null;
+        try { j = await r.json(); } catch (e) { j = null; }
+        console.log('[EXCLUIR] resposta:', r.status, JSON.stringify(j));
+        if (r.ok && j && j.success) {
+            showToast('✅ Usuário "' + nome + '" excluído com sucesso!', 'success', 6000);
+            try { carregarCadastrosAdmin(); } catch (e) {}
+            try { carregarAdminUsuariosComSaldo(); } catch (e) {}
+            try { carregarUsuariosParaExclusao(); } catch (e) {}
+        } else {
+            showToast('Erro: ' + ((j && (j.error || j.erro)) || 'Falha ao excluir (HTTP ' + (r.ok ? 'desconhecido' : 'sem resposta') + ')'), 'error', 6000);
+        }
+    })
+    .catch((err) => {
+        clearTimeout(fetchTimeout);
+        console.log('[EXCLUIR] erro fetch:', err && err.message);
+        showToast(err && err.name === 'AbortError' ? 'A operação demorou muito (timeout).' : 'Erro de conexão: ' + (err && err.message ? err.message : err), 'error', 6000);
+    });
+}
 
 function excluirUsuarioAdmin(cpf, nome) {
     console.log('[EXCLUIR] excluirUsuarioAdmin chamado cpf=', cpf, 'nome=', nome);
