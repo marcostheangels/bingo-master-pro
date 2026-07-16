@@ -1073,6 +1073,17 @@ async function handleAction(ws, room, action, payload) {
             const adminCreditosFinais = isInRoom ? target.adminCredits : adminCreditsStore[key];
             await setAdminCreditos(targetName, adminCreditosFinais);
             await setChips(targetName, isInRoom ? target.chips : fichas.chips, isInRoom ? target.winnings : (fichasStore[key]?.winnings || 0));
+
+            // Notifica o admin (Marcos) sobre o crédito/admin concedido/removido
+            try {
+                const valorReaisCred = amount / 1000;
+                const operacao = payload.mode === 'remove' ? 'removido' : 'concedido';
+                await enviarEmailAdmin(
+                    'Crédito admin ' + operacao,
+                    '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + targetName + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor ' + operacao + '</p><p style="font-size:20px;color:#3b82f6;font-weight:bold;margin:0">R$ ' + valorReaisCred.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Operação</p><p style="font-size:14px;color:#222;margin:0">' + (payload.mode === 'remove' ? 'Remoção de crédito' : 'Adição de crédito') + '</p></div>',
+                    'CRÃ‰DITO ADMIN'
+                );
+            } catch (e) { console.error('[EMAIL] Falha ao notificar crédito admin:', e.message); }
         }
         
         broadcast(room, {
@@ -1608,10 +1619,19 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
 
         console.log(`[BONUS] ${bonus} fichas concedidas para ${usuario.nomeCompleto} via painel admin`);
 
+        const valorReaisBonus = parseInt(bonus) / 1000;
         if (usuario.email) {
-            const valorReais = parseInt(bonus) / 1000;
-            enviarEmailBonus(usuario.nomeCompleto, usuario.email, valorReais);
+            enviarEmailBonus(usuario.nomeCompleto, usuario.email, valorReaisBonus);
         }
+
+        // Notifica o admin (Marcos) sobre o bônus concedido
+        try {
+            await enviarEmailAdmin(
+                'Bônus concedido',
+                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + (usuario.nomeCompleto || '') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Bônus creditado</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + valorReaisBonus.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Email do jogador</p><p style="font-size:14px;color:#222;margin:0">' + (usuario.email || 'não informado') + '</p></div>',
+                'BÃ”NUS CONCEDIDO'
+            );
+        } catch (e) { console.error('[EMAIL] Falha ao notificar bônus:', e.message); }
 
         res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips, emailEnviado: !!usuario.email, emailUsuario: usuario.email || null });
     } catch (err) {
