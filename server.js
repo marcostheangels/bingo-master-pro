@@ -134,7 +134,7 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    from: 'BingoVipClub <onboarding@resend.dev>',
+                    from: 'BingoVipClub <contato@bingovipclub.shop>',
                     to: [emailUsuario],
                     subject: assunto,
                     html: htmlJogador
@@ -156,7 +156,7 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    from: 'BingoVipClub <onboarding@resend.dev>',
+                    from: 'BingoVipClub <contato@bingovipclub.shop>',
                     to: [emailUsuario],
                     subject: assunto,
                     html: htmlJogador
@@ -190,7 +190,7 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                     body: JSON.stringify({
-                        from: 'BingoVipClub <onboarding@resend.dev>',
+                        from: 'BingoVipClub <contato@bingovipclub.shop>',
                         to: [ADMIN_EMAIL],
                         subject: `✅ Bônus de R$ ${valorFmt} enviado para ${nomeUsuario}`,
                         html: adminHtml
@@ -211,7 +211,7 @@ async function enviarEmailNotificacao(assunto, texto) {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    from: 'Bingo Master Pro <onboarding@resend.dev>',
+                    from: 'BingoVipClub <contato@bingovipclub.shop>',
                     to: [ADMIN_EMAIL],
                     subject: assunto,
                     html: texto.replace(/\n/g, '<br>')

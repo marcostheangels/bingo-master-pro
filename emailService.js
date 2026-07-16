@@ -16,7 +16,7 @@ async function alertarNovoCadastro(nomeUsuario, emailUsuario) {
     }
     try {
         const data = await resend.emails.send({
-            from: 'onboarding@resend.dev', // Nota: Se você tem um domínio verificado no Resend, use o seu e-mail aqui
+            from: 'BingoVipClub <contato@bingovipclub.shop>',
             to: process.env.ADMIN_EMAIL || process.env.SMTP_USER,
             subject: '🔔 Novo Usuário Cadastrado no Bingo Master!',
             html: `
