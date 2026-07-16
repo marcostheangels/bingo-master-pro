@@ -33,26 +33,52 @@ function adminFetch(url, options) {
 function solicitarSenhaAdmin() {
     if (adminAuthToken) return Promise.resolve(true);
     return new Promise((resolve) => {
-        const senha = prompt('Painel administrativo — digite a senha mestre:');
-        if (!senha) { resolve(false); return; }
-        adminAuthToken = senha;
-        adminFetch(API_BASE + '/api/admin/usuarios-suspeitos')
-            .then(r => {
-                if (!r.ok) {
+        // Modal customizado (NAO usa prompt() nativo que trava o jogo)
+        const overlay = document.createElement('div');
+        overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;display:flex;justify-content:center;align-items:center';
+        overlay.innerHTML = `
+            <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:28px 32px;max-width:420px;width:90%;text-align:center">
+                <div style="font-size:18px;color:#fff;font-weight:600;margin-bottom:16px">🔐 Painel Administrativo</div>
+                <p style="color:#cbd5e1;font-size:13px;margin:0 0 14px">Digite a senha mestre para continuar:</p>
+                <input id="adminSenhaInput" type="password" placeholder="Senha mestre" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#fff;font-size:15px;text-align:center;margin-bottom:16px;box-sizing:border-box" />
+                <div style="display:flex;gap:10px;justify-content:center">
+                    <button id="adminSenhaOk" style="background:#10b981;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">Entrar</button>
+                    <button id="adminSenhaCancel" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">Cancelar</button>
+                </div>
+            </div>`;
+        document.body.appendChild(overlay);
+        const input = overlay.querySelector('#adminSenhaInput');
+        const fechar = () => { if (overlay.parentNode) overlay.parentNode.removeChild(overlay); };
+        const tentar = () => {
+            const senha = (input.value || '').trim();
+            if (!senha) { showToast('Digite a senha mestre.', 'warning', 4000); return; }
+            adminAuthToken = senha;
+            adminFetch(API_BASE + '/api/admin/usuarios-suspeitos')
+                .then(r => {
+                    if (!r.ok) {
+                        adminAuthToken = '';
+                        sessionStorage.removeItem('bingo_admin_token');
+                        fechar();
+                        showToast('Senha mestre incorreta.', 'error', 4000);
+                        resolve(false);
+                    } else {
+                        sessionStorage.setItem('bingo_admin_token', senha);
+                        fechar();
+                        resolve(true);
+                    }
+                })
+                .catch(() => {
                     adminAuthToken = '';
                     sessionStorage.removeItem('bingo_admin_token');
-                    alert('Senha mestre incorreta.');
+                    fechar();
+                    showToast('Erro de conexão ao validar senha.', 'error', 4000);
                     resolve(false);
-                } else {
-                    sessionStorage.setItem('bingo_admin_token', senha);
-                    resolve(true);
-                }
-            })
-            .catch(() => {
-                adminAuthToken = '';
-                sessionStorage.removeItem('bingo_admin_token');
-                resolve(false);
-            });
+                });
+        };
+        overlay.querySelector('#adminSenhaOk').onclick = tentar;
+        overlay.querySelector('#adminSenhaCancel').onclick = () => { fechar(); resolve(false); };
+        input.onkeydown = (e) => { if (e.key === 'Enter') tentar(); };
+        setTimeout(() => { try { input.focus(); } catch (e) {} }, 50);
     });
 }
 
