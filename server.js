@@ -1,5 +1,6 @@
 require('dotenv').config();
 const express = require('express');
+const path = require('path');
 const cors = require('cors');
 const crypto = require('crypto');
 const http = require('http');
@@ -126,6 +127,8 @@ async function enviarEmailSendGrid(to, subject, html, unsubscribeUrl) {
 }
 
 const SITE_URL = process.env.SITE_URL || 'https://bingo-vip-club-e8164.web.app';
+const API_URL = process.env.API_URL || 'https://bingo-master-pro-fcty.onrender.com';
+const LOGO_URL = API_URL + '/logo-bingo';
 
 async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     const valorFmt = valorReais.toFixed(2).replace('.', ',');
@@ -193,7 +196,32 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
 
     if (enviado) {
         console.log('[EMAIL] Bonus enviado para', emailUsuario);
-        const adminHtml = '<div style="font-family:Arial,sans-serif;padding:20px"><h2 style="color:#10b981">Bonus Enviado</h2><p><strong>Jogador:</strong> ' + nomeUsuario + '</p><p><strong>Email:</strong> ' + emailUsuario + '</p><p><strong>Valor:</strong> R$ ' + valorFmt + '</p></div>';
+        const adminHtml = `
+            <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+                <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                    <div style="background:#0a0a2e;text-align:center;padding:20px 16px">
+                        <img src="${LOGO_URL}" alt="BingoVipClub" style="max-width:200px;height:auto;display:inline-block" />
+                    </div>
+                    <div style="padding:28px 24px">
+                        <div style="display:inline-block;background:#10b981;color:#fff;font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px;letter-spacing:1px">BÔNUS CONCEDIDO</div>
+                        <h2 style="color:#1a1a3c;font-size:20px;margin:14px 0 18px 0">Você enviou um bônus</h2>
+                        <div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px">
+                            <p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p>
+                            <p style="font-size:16px;color:#222;font-weight:bold;margin:0">${nomeUsuario}</p>
+                        </div>
+                        <div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px">
+                            <p style="font-size:13px;color:#888;margin:0 0 4px 0">Email</p>
+                            <p style="font-size:15px;color:#222;margin:0">${emailUsuario}</p>
+                        </div>
+                        <div style="background:#ecfdf5;border-radius:8px;padding:16px 18px">
+                            <p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor creditado</p>
+                            <p style="font-size:22px;color:#10b981;font-weight:bold;margin:0">R$ ${valorFmt}</p>
+                        </div>
+                        <p style="font-size:12px;color:#aaa;text-align:center;margin:18px 0 0 0">BingoVipClub · Painel administrativo</p>
+                    </div>
+                </div>
+            </div>
+        `;
         if (transporter) {
             transporter.sendMail({
                 from: '"BingoVipClub" <' + SMTP_USER + '>',
@@ -2565,6 +2593,11 @@ app.get('/api/asaas/webhook-url', (req, res) => {
 
 app.get('/unsubscribe', (req, res) => {
     res.send('<html><body style="font-family:Arial,sans-serif;text-align:center;padding:60px;color:#333"><h2 style="color:#10b981">Inscrição cancelada</h2><p>Você não receberá mais emails do BingoVipClub.</p><p><a href="' + (SITE_URL) + '" style="color:#10b981">Voltar ao site</a></p></body></html>');
+});
+
+const LOGO_PATH = path.join(__dirname, 'bingo1.jpeg');
+app.get('/logo-bingo', (req, res) => {
+    res.sendFile(LOGO_PATH, (err) => { if (err) res.status(404).send('logo nao encontrada'); });
 });
 
 async function iniciarServidor() {
