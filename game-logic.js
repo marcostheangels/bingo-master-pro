@@ -39,6 +39,25 @@ function gerarFingerprint() {
     } catch (e) { return 'fp_unknown'; }
 }
 
+let loggedOut = false;
+
+function confirmModal(msg) {
+    return new Promise(resolve => {
+        const overlay = document.getElementById('modalOverlay');
+        const msgEl = document.getElementById('modalMessage');
+        const btnSim = document.getElementById('modalConfirmBtn');
+        const btnNao = document.getElementById('modalCancelBtn');
+        if (!overlay || !msgEl || !btnSim || !btnNao) {
+            resolve(confirm(msg));
+            return;
+        }
+        msgEl.textContent = msg;
+        overlay.style.display = 'flex';
+        btnSim.onclick = () => { overlay.style.display = 'none'; resolve(true); };
+        btnNao.onclick = () => { overlay.style.display = 'none'; resolve(false); };
+    });
+}
+
 // Fallback automático: se a chamada à API_BASE falhar (erro de rede), repete
 // no API_FALLBACK. Ambos apontam para o backend funcional no Render.
 (function () {
@@ -174,6 +193,7 @@ async function fazerLogin() {
             errEl.textContent = data.error || 'Erro ao fazer login.';
             return;
         }
+        loggedOut = false;
         minhaSessaoToken = data.sessionToken;
         meuCpf = data.cpf;
         localStorage.setItem('bingo_session_token', data.sessionToken);
@@ -3265,8 +3285,10 @@ goToScreen = function(screenId) {
 };
 
 // ==================== LOGOUT ====================
-function sairDaConta() {
-    if (!confirm('Tem certeza que deseja sair da sua conta?')) return;
+async function sairDaConta() {
+    const ok = await confirmModal('Tem certeza que deseja sair da sua conta?');
+    if (!ok) return;
+    loggedOut = true;
 
     if (drawAudioCtx) {
         try { drawAudioCtx.close(); } catch (e) {}

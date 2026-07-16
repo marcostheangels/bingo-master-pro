@@ -270,6 +270,7 @@ function scheduleReconnect() {
     reconnectAttempts++;
 
     reconnectTimeout = setTimeout(() => {
+        if (typeof loggedOut !== 'undefined' && loggedOut) return;
         const logado = (typeof minhaSessaoToken !== 'undefined' && minhaSessaoToken) || (typeof meuCpf !== 'undefined' && meuCpf);
         if (pendingConnect || logado) {
             showOfflineBanner(true);
@@ -309,10 +310,10 @@ document.addEventListener('visibilitychange', () => {
         }
         cancelReconnect();
         if (typeof clearStaleCelebrations === 'function') clearStaleCelebrations();
-        if (pendingConnect && (!socket || socket.readyState !== WebSocket.OPEN)) {
+        if (!loggedOut && pendingConnect && (!socket || socket.readyState !== WebSocket.OPEN)) {
             connectSocket();
         }
-        if (socket && socket.readyState === WebSocket.OPEN) {
+        if (!loggedOut && socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: 'ping' }));
             if (typeof requestWakeLock === 'function') requestWakeLock();
         }
