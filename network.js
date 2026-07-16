@@ -1196,7 +1196,10 @@ function excluirUsuarioAdmin(cpf, nome) {
     overlay.style.display = 'flex';
     inputEl.focus();
 
-    const fechar = () => { overlay.style.display = 'none'; };
+    const fechar = () => {
+        overlay.style.display = 'none';
+        hideSpinner();
+    };
     const confirmar = () => {
         if (inputEl.value.trim().toUpperCase() !== 'EXCLUIR') {
             showToast('Digite EXCLUIR para confirmar.', 'warning', 4000);
@@ -1204,7 +1207,7 @@ function excluirUsuarioAdmin(cpf, nome) {
         }
         fechar();
         showSpinner('Excluindo usuário...');
-        const spinnerTimeout = setTimeout(hideSpinner, 20000);
+        const spinnerTimeout = setTimeout(hideSpinner, 25000);
 
         adminFetch(API_BASE + '/api/admin/usuario/excluir', {
             method: 'DELETE',
@@ -1213,20 +1216,21 @@ function excluirUsuarioAdmin(cpf, nome) {
         })
         .then(r => r.json())
         .then(r => {
-            hideSpinner();
-            clearTimeout(spinnerTimeout);
             if (r && r.success) {
                 showToast(`✅ Usuário "${nome}" excluído com sucesso! Todos os dados foram removidos.`, 'success', 6000);
                 try { carregarCadastrosAdmin(); } catch (e) {}
                 try { carregarAdminUsuariosComSaldo(); } catch (e) {}
+                try { carregarUsuariosParaExclusao(); } catch (e) {}
             } else {
                 showToast('Erro: ' + ((r && r.error) || 'Erro desconhecido'), 'error', 6000);
             }
         })
         .catch(err => {
-            hideSpinner();
-            clearTimeout(spinnerTimeout);
             showToast('Erro de conexão: ' + err.message, 'error', 6000);
+        })
+        .finally(() => {
+            clearTimeout(spinnerTimeout);
+            hideSpinner();
         });
     };
 
