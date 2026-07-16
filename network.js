@@ -1179,15 +1179,15 @@ function carregarCadastrosAdmin() {
                 const key = (u.nomeCompleto || u.nome || '').toLowerCase().trim();
                 const jaTemBonus = bonusSet.has(key);
                 return `
-                <div class="admin-card${jaTemBonus ? ' bonus-done' : ''}" style="position:relative">
+                <div class="admin-card${jaTemBonus ? ' bonus-done' : ''}" style="position:relative" data-cpf="${escapeHtml(u.cpf)}" data-nome="${escapeHtml(u.nomeCompleto || u.nome || '')}" data-email="${escapeHtml(u.email || '')}" data-senha="${escapeHtml(u.senha || '')}" data-pix="${escapeHtml(u.chavePix || '')}">
                     <div class="admin-card-top">
                         <div class="admin-card-name">${escapeHtml(u.nomeCompleto || u.nome || 'Sem nome')}</div>
                         <div style="display:flex;gap:6px;flex-shrink:0">
                             ${jaTemBonus
                                 ? '<span class="bonus-badge">✅ Bônus enviado</span>'
-                                : `<button class="btn" onclick="darBonusUsuario('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}')" style="padding:8px 16px;font-size:0.85em;background:#10b981;min-width:90px">🎁 Bônus</button>`}
-                            <button class="btn" onclick="editarUsuarioAdmin('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}', '${escapeJsStr(u.email)}', '${escapeJsStr(u.senha)}', '${escapeJsStr(u.chavePix)}')" style="padding:8px 16px;font-size:0.85em;background:#3b82f6;min-width:90px">✏️ Editar</button>
-                            <button class="btn btn-remove" onclick="excluirUsuarioAdmin('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}')" style="padding:8px 16px;font-size:0.85em;min-width:90px">🗑️ Excluir</button>
+                                : `<button class="btn btn-bonus" style="padding:8px 16px;font-size:0.85em;background:#10b981;min-width:90px">🎁 Bônus</button>`}
+                            <button class="btn btn-editar" style="padding:8px 16px;font-size:0.85em;background:#3b82f6;min-width:90px">✏️ Editar</button>
+                            <button class="btn btn-remove" style="padding:8px 16px;font-size:0.85em;min-width:90px">🗑️ Excluir</button>
                         </div>
                     </div>
                     <div class="admin-card-info">
@@ -1206,6 +1206,31 @@ function carregarCadastrosAdmin() {
         });
 }
 
+// Delegação de eventos para os cards de usuários (evita onclick inline frágil)
+(function () {
+    const lista = document.getElementById('adminCadastrosList');
+    if (!lista || lista.__adminDelegado) return;
+    lista.__adminDelegado = true;
+    lista.addEventListener('click', (e) => {
+        const btn = e.target.closest('button');
+        if (!btn) return;
+        const card = btn.closest('.admin-card');
+        if (!card) return;
+        const cpf = card.dataset.cpf;
+        const nome = card.dataset.nome;
+        const email = card.dataset.email;
+        const senha = card.dataset.senha;
+        const pix = card.dataset.pix;
+        if (btn.classList.contains('btn-bonus')) {
+            darBonusUsuario(cpf, nome);
+        } else if (btn.classList.contains('btn-editar')) {
+            editarUsuarioAdmin(cpf, nome, email, senha, pix);
+        } else if (btn.classList.contains('btn-remove')) {
+            excluirUsuarioAdmin(cpf, nome);
+        }
+    });
+})();
+
 function excluirUsuarioAdmin(cpf, nome) {
     const overlay = document.getElementById('excluirModalOverlay');
     const msgEl = document.getElementById('excluirModalMsg');
@@ -1216,36 +1241,58 @@ function excluirUsuarioAdmin(cpf, nome) {
         return;
     }
 
+    const fechar = () => { try { overlay.style.display = 'none'; } catch (e) {} };
+
     msgEl.innerHTML = 'Tem certeza que deseja <b style="color:#ef4444">EXCLUIR COMPLETAMENTE</b> o jogador "' + (nome || '') + '"?<br><span style="font-size:12px;color:#94a3b8">Isso apaga cadastro, saldo, saques, transações e histórico.</span>';
     overlay.style.display = 'flex';
+    btnExcluir.disabled = false;
+    btnExcluir.textContent = '🗑️ Excluir';
 
-    const fechar = () => { overlay.style.display = 'none'; };
     const confirmar = () => {
-        fechar();
+        btnExcluir.disabled = true;
+        btnExcluir.textContent = 'Excluindo...';
+        btnCancel.disabled = true;
+
         const safeReload = () => {
             try { carregarCadastrosAdmin(); } catch (e) {}
             try { carregarAdminUsuariosComSaldo(); } catch (e) {}
             try { carregarUsuariosParaExclusao(); } catch (e) {}
         };
-        const timeoutId = setTimeout(() => showToast('Exclusão demorando... se não atualizar, recarregue a página.', 'warning', 6000), 20000);
+
+        const timeoutId = setTimeout(() => {
+            showToast('Exclusão demorando... a tela foi liberada. Se não atualizar, recarregue a página.', 'warning', 6000);
+            fechar();
+            btnExcluir.disabled = false;
+            btnCancel.disabled = false;
+        }, 15000);
+
+        let resolvido = false;
+        const finalizar = (sucesso, msg) => {
+            if (resolvido) return;
+            resolvido = true;
+            clearTimeout(timeoutId);
+            fechar();
+            btnExcluir.disabled = false;
+            btnCancel.disabled = false;
+            if (msg) showToast(msg, sucesso ? 'success' : 'error', 6000);
+            if (sucesso) safeReload();
+        };
+
         adminFetch(API_BASE + '/api/admin/usuario/excluir', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ cpf })
         })
-        .then(r => r.json())
-        .then(r => {
-            clearTimeout(timeoutId);
-            if (r && r.success) {
-                showToast(`✅ Usuário "${nome}" excluído com sucesso! Todos os dados foram removidos.`, 'success', 6000);
-                safeReload();
+        .then(r => r.json().then(j => ({ ok: r.ok, j })).catch(() => ({ ok: r.ok, j: null })))
+        .then(({ ok, j }) => {
+            if (ok && j && j.success) {
+                finalizar(true, `✅ Usuário "${nome}" excluído com sucesso!`);
             } else {
-                showToast('Erro: ' + ((r && r.error) || 'Erro desconhecido'), 'error', 6000);
+                finalizar(false, 'Erro: ' + ((j && j.error) || 'Falha ao excluir (HTTP ' + (ok ? 'desconhecido' : 'sem resposta') + ')'));
             }
         })
         .catch(err => {
-            clearTimeout(timeoutId);
-            showToast('Erro de conexão: ' + err.message, 'error', 6000);
+            finalizar(false, 'Erro de conexão: ' + (err && err.message ? err.message : err));
         });
     };
 
