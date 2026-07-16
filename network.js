@@ -1615,7 +1615,7 @@ function carregarUsuariosParaExclusao() {
         });
 }
 
-// Admin - Excluir jogador selecionado (usa o modal bonito de confirmação)
+// Admin - Excluir jogador selecionado (usa window.confirm nativo - funciona sem travamento)
 function confirmarExclusaoJogador() {
     console.log('[EXCLUIR] confirmarExclusaoJogador chamado');
     const select = document.getElementById('deletePlayerSelect');
@@ -1632,79 +1632,46 @@ function confirmarExclusaoJogador() {
     const nome = selectedOption.dataset.nome || selectedOption.textContent || '';
     console.log('[EXCLUIR] jogador selecionado:', cpf, nome);
 
-    abrirModalExclusao(cpf, nome, selectedOption);
-}
-
-// Modal bonito de confirmação de exclusão (robusto, não trava em sequência)
-function abrirModalExclusao(cpf, nome, selectedOption) {
-    const overlay = document.getElementById('excluirModalOverlay');
-    const msgEl = document.getElementById('excluirModalMsg');
-    const btnExcluir = document.getElementById('excluirModalBtn');
-    const btnCancel = document.getElementById('excluirModalCancelBtn');
-    if (!overlay || !msgEl || !btnExcluir || !btnCancel) {
-        showToast('Erro: modal de exclusão não encontrado.', 'error', 4000);
+    if (!window.confirm('Tem certeza que deseja EXCLUIR COMPLETAMENTE o jogador "' + nome + '"?\n\nIsso apaga cadastro, saldo, saques, transações e histórico.')) {
         return;
     }
 
-    msgEl.innerHTML = 'Tem certeza que deseja <b style="color:#ef4444">EXCLUIR COMPLETAMENTE</b> o jogador "' + (nome || '') + '"?<br><span style="font-size:12px;color:#94a3b8">Isso apaga cadastro, saldo, saques, transações e histórico.</span>';
-    overlay.style.display = 'flex';
+    const btn = document.getElementById('btnExcluirSelecionado');
+    if (btn) { btn.disabled = true; btn.textContent = 'Excluindo...'; }
+    showToast('Excluindo ' + nome + '...', 'info', 4000);
 
-    const fechar = () => { try { overlay.style.display = 'none'; } catch (e) {} };
-    overlay.onclick = (e) => { if (e.target === overlay) fechar(); };
+    let controller = null, signal = null;
+    try { if (typeof AbortController !== 'undefined') { controller = new AbortController(); signal = controller.signal; } } catch (e) {}
+    const fetchTimeout = setTimeout(() => { if (controller) controller.abort(); }, 12000);
 
-    btnExcluir.disabled = false;
-    btnExcluir.textContent = '🗑️ Excluir';
-    btnCancel.disabled = false;
-
-    // Remove handlers antigos para evitar duplo-binding
-    btnExcluir.onclick = null;
-    btnCancel.onclick = null;
-
-    btnCancel.onclick = fechar;
-
-    btnExcluir.onclick = () => {
-        btnExcluir.disabled = true;
-        btnExcluir.textContent = 'Excluindo...';
-        btnCancel.disabled = true;
-
-        showToast('Excluindo ' + (nome || cpf) + '...', 'info', 4000);
-
-        let controller = null, signal = null;
-        try { if (typeof AbortController !== 'undefined') { controller = new AbortController(); signal = controller.signal; } } catch (e) {}
-        const fetchTimeout = setTimeout(() => { if (controller) controller.abort(); }, 12000);
-
-        adminFetch(API_BASE + '/api/admin/usuario/excluir', {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cpf: cpf }),
-            signal: signal
-        })
-        .then(async (r) => {
-            clearTimeout(fetchTimeout);
-            let j = null;
-            try { j = await r.json(); } catch (e) { j = null; }
-            console.log('[EXCLUIR] resposta:', r.status, JSON.stringify(j));
-            fechar();
-            btnExcluir.disabled = false;
-            btnCancel.disabled = false;
-            if (r.ok && j && j.success) {
-                try { if (selectedOption && selectedOption.parentNode) selectedOption.remove(); } catch (e) {}
-                showToast('✅ Usuário "' + nome + '" excluído com sucesso!', 'success', 6000);
-                try { carregarCadastrosAdmin(); } catch (e) {}
-                try { carregarAdminUsuariosComSaldo(); } catch (e) {}
-            } else {
-                showToast('Erro: ' + ((j && (j.error || j.erro)) || 'Falha ao excluir (HTTP ' + (r.ok ? 'desconhecido' : 'sem resposta') + ')'), 'error', 6000);
-            }
-        })
-        .catch((err) => {
-            clearTimeout(fetchTimeout);
-            console.log('[EXCLUIR] erro fetch:', err && err.message);
-            fechar();
-            btnExcluir.disabled = false;
-            btnCancel.disabled = false;
-            showToast(err && err.name === 'AbortError' ? 'A operação demorou muito (timeout).' : 'Erro de conexão: ' + (err && err.message ? err.message : err), 'error', 6000);
-        });
-    };
+    adminFetch(API_BASE + '/api/admin/usuario/excluir', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf: cpf }),
+        signal: signal
+    })
+    .then(async (r) => {
+        clearTimeout(fetchTimeout);
+        let j = null;
+        try { j = await r.json(); } catch (e) { j = null; }
+        console.log('[EXCLUIR] resposta:', r.status, JSON.stringify(j));
+        if (r.ok && j && j.success) {
+            try { selectedOption.remove(); } catch (e) {}
+            showToast('✅ Usuário "' + nome + '" excluído com sucesso!', 'success', 6000);
+            try { carregarCadastrosAdmin(); } catch (e) {}
+            try { carregarAdminUsuariosComSaldo(); } catch (e) {}
+        } else {
+            showToast('Erro: ' + ((j && (j.error || j.erro)) || 'Falha ao excluir (HTTP ' + (r.ok ? 'desconhecido' : 'sem resposta') + ')'), 'error', 6000);
+        }
+    })
+    .catch((err) => {
+        clearTimeout(fetchTimeout);
+        console.log('[EXCLUIR] erro fetch:', err && err.message);
+        showToast(err && err.name === 'AbortError' ? 'A operação demorou muito (timeout).' : 'Erro de conexão: ' + (err && err.message ? err.message : err), 'error', 6000);
+    })
+    .finally(() => {
+        if (btn) { btn.disabled = false; btn.textContent = '🗑️ Excluir Selecionado'; }
+    });
 }
 
 function adminAbrirAba(tabId) {
