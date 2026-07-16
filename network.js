@@ -1204,30 +1204,30 @@ function excluirUsuarioAdmin(cpf, nome) {
         }
         fechar();
         showSpinner('Excluindo usuário...');
-    const spinnerTimeout = setTimeout(hideSpinner, 8000);
-    
-    adminFetch(API_BASE + '/api/admin/usuario/excluir', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf })
-    })
-    .then(r => r.json())
-    .then(r => {
-        hideSpinner();
-        clearTimeout(spinnerTimeout);
-        if (r && r.success) {
-            showToast(`✅ Usuário "${nome}" excluído com sucesso! Todos os dados foram removidos.`, 'success', 6000);
-            try { carregarCadastrosAdmin(); } catch (e) {}
-            try { carregarAdminUsuariosComSaldo(); } catch (e) {}
-        } else {
-            showToast('Erro: ' + ((r && r.error) || 'Erro desconhecido'), 'error', 6000);
-        }
-    })
-    .catch(err => {
-        hideSpinner();
-        clearTimeout(spinnerTimeout);
-        showToast('Erro de conexão: ' + err.message, 'error', 6000);
-    });
+        const spinnerTimeout = setTimeout(hideSpinner, 20000);
+
+        adminFetch(API_BASE + '/api/admin/usuario/excluir', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ cpf })
+        })
+        .then(r => r.json())
+        .then(r => {
+            hideSpinner();
+            clearTimeout(spinnerTimeout);
+            if (r && r.success) {
+                showToast(`✅ Usuário "${nome}" excluído com sucesso! Todos os dados foram removidos.`, 'success', 6000);
+                try { carregarCadastrosAdmin(); } catch (e) {}
+                try { carregarAdminUsuariosComSaldo(); } catch (e) {}
+            } else {
+                showToast('Erro: ' + ((r && r.error) || 'Erro desconhecido'), 'error', 6000);
+            }
+        })
+        .catch(err => {
+            hideSpinner();
+            clearTimeout(spinnerTimeout);
+            showToast('Erro de conexão: ' + err.message, 'error', 6000);
+        });
     };
 
     btnExcluir.onclick = confirmar;
