@@ -8,6 +8,7 @@ const https = require('https');
 const WebSocket = require('ws');
 const engine = require('./engine');
 const db = require('./db');
+const { log } = require('./logger');
 let nodemailer = null;
 try { nodemailer = require('nodemailer'); } catch (e) { console.log('[EMAIL] nodemailer não disponível.'); }
 
@@ -34,6 +35,19 @@ function validarValorSaque(v) {
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+
+// Request logging middleware
+app.use((req, res, next) => {
+    const start = Date.now();
+    res.on('finish', () => {
+        const dur = Date.now() - start;
+        if (req.path.startsWith('/api/')) {
+            log('REQ', req.method + ' ' + req.path, { status: res.statusCode, dur: dur + 'ms', ip: req.ip });
+        }
+    });
+    next();
+});
+
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
@@ -535,6 +549,7 @@ function pararAutoStartServer(room) {
 
 function iniciarNovaRodada(room) {
     if (room.gameActive) return;
+    log('GAME', 'Rodada iniciada', { sala: room.id, round: room.currentRound + 1 });
     liquidarComprasSala(room.id);
     room.currentRound++;
     room.drawnBalls = [];
@@ -654,6 +669,7 @@ async function sortearProximaBola(room) {
         
         if (winners.length > 0) {
             const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
+            log('GAME', 'Vencedores', { qtd: winners.length, fase: phaseKey, vencedores: winners.map(w => ({ nome: w.player.name, premio: w.phaseLabel })) });
             const humanCards = playersArr.filter(p => !p.isBot).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
             const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, humanCards, room.jackpot);
 
@@ -1177,6 +1193,7 @@ async function handleAction(ws, room, action, payload) {
 
     if (action === 'buyCards') {
         if (!player) return;
+        log('GAME', 'Compra cartelas', { jogador: player.name, qty: payload.qty, sala: data.roomId });
         if (room.gameActive) {
             if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: 'O sorteio já iniciou. Não é possível comprar cartelas agora.' }));
             return;
@@ -1262,6 +1279,7 @@ async function handleAction(ws, room, action, payload) {
     }
 
     if (action === 'startNow') {
+        log('GAME', 'StartNow', { jogador: player ? player.name : '?', sala: roomId });
         if (!room.gameActive) {
             pararAutoStartServer(room);
             iniciarNovaRodada(room);
@@ -1311,7 +1329,7 @@ wss.on('connection', (ws) => {
             }
             sessoesAtivas.set(ws.cpf, { ws, sessionToken, nome: user.nomeCompleto });
             ws.send(JSON.stringify({ type: 'auth_ok', nome: user.nomeCompleto, cpf: ws.cpf }));
-            console.log(`[AUTH] ${user.nomeCompleto} conectado. Sessoes ativas: ${sessoesAtivas.size}`);
+            log('AUTH', 'Conectado', { nome: user.nomeCompleto, sessoes: sessoesAtivas.size });
             return;
         }
 
@@ -1410,7 +1428,7 @@ wss.on('connection', (ws) => {
             const existing = sessoesAtivas.get(cpf);
             if (existing && existing.ws === ws) {
                 sessoesAtivas.delete(cpf);
-                console.log(`[AUTH] ${cpf} desconectado. Sessoes ativas: ${sessoesAtivas.size}`);
+                log('AUTH', 'Desconectado', { sessoes: sessoesAtivas.size });
             }
         }
         if (!roomId || !gameRooms.has(roomId)) return;
@@ -1426,6 +1444,7 @@ wss.on('connection', (ws) => {
 app.post('/api/register', async (req, res) => {
     try {
         let { nomeCompleto, cpf, email, senha, chavePix, fingerprint } = req.body;
+        log('REGISTER', 'Tentativa cadastro', { nome: nomeCompleto, cpf: cpf ? cpf.replace(/.(?=.{4})/g, '*') : null, email });
         if (!nomeCompleto || !cpf || !email || !senha || !chavePix) {
             return res.status(400).json({ error: 'Preencha todos os campos.' });
         }
@@ -1501,8 +1520,8 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
     try {
-        console.log('-> Dados recebidos no login:', req.body);
         let { cpf, senha } = req.body;
+        log('LOGIN', 'Tentativa login', { cpf: cpf ? cpf.replace(/.(?=.{4})/g, '*') : null });
         if (!cpf || !senha) {
             return res.status(400).json({ error: 'CPF e senha são obrigatórios.' });
         }
@@ -1511,17 +1530,17 @@ app.post('/api/login', async (req, res) => {
             return res.status(400).json({ error: 'CPF inválido' });
         }
         cpf = cpfNormalizado;
-        console.log('-> CPF limpo para busca:', cpf);
         senha = String(senha);
         const usuarios = carregarUsuarios();
         const user = usuarios.find(u => String(u.cpf).padStart(11, '0') === cpf && u.senha === senha);
         if (!user) {
+            log('LOGIN', 'Falha - CPF/senha incorretos', { cpf: cpf.replace(/.(?=.{4})/g, '*') });
             return res.status(400).json({ error: 'CPF ou senha incorretos.' });
         }
         const sessionToken = crypto.randomBytes(24).toString('hex');
         user.sessionToken = sessionToken;
         await salvarUsuarios(usuarios);
-        console.log(`[LOGIN] ${user.nomeCompleto} (${user.cpfFormatado})`);
+        log('LOGIN', 'Sucesso', { nome: user.nomeCompleto, cpf: cpf.replace(/.(?=.{4})/g, '*') });
         res.json({ success: true, sessionToken, nome: user.nomeCompleto, cpf });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -2136,7 +2155,7 @@ const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, ne
 app.post('/api/solicitar-saque', async (req, res) => {
  try {
     const { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
-    console.log('[SAQUE DEBUG] Recebido:', { nome, valor, chavePix, tipoChave, hasToken: !!sessionToken });
+    log('SAQUE', 'Solicitado', { nome, valor, hasToken: !!sessionToken });
     if (!nome || !valor || !chavePix) {
         return res.status(400).json({ error: 'Parâmetros incompletos.' });
     }
@@ -2234,7 +2253,7 @@ app.post('/api/solicitar-saque', async (req, res) => {
                 if (ws.readyState === WebSocket.OPEN) ws.send(notif);
             });
         });
-        console.log(`[SAQUE] ${nome} solicitou saque de R$ ${valor.toFixed(2)} via ${tipoChave || 'cpf'}: ${chavePix}`);
+        log('SAQUE', 'Aprovado', { nome, valor: valor.toFixed(2), id: novoSaque.id });
 
         res.json({ success: true, saqueId: novoSaque.id });
     } catch (err) {
@@ -2421,6 +2440,7 @@ app.post('/api/criar-pix', async (req, res) => {
         if (!valor || valor < 0.50) {
             return res.status(400).json({ error: 'Valor mínimo: R$0,50' });
         }
+        log('PIX', 'Solicitado', { nome, cpf: cpf ? cpf.replace(/.(?=.{4})/g, '*') : null, valor });
         if (!ASAAS_API_KEY) {
             const paymentId = 'sim_' + Date.now();
             registrarRecargaPendente(nome, cpf, valor, paymentId);
@@ -2543,6 +2563,7 @@ app.get('/api/status-pix/:paymentId', async (req, res) => {
 // Confirmar recarga (após PIX aprovado)
 // Lógica compartilhada de confirmação de recarga (usada pelo frontend e pelo webhook Asaas)
 async function processarConfirmacaoRecarga(nome, valor, paymentId) {
+    log('DEPOSITO', 'Confirmado', { nome, valor, paymentId });
     const fichas = Math.round(valor * 1000);
 
     // Idempotência: evita creditar 2x (webhook + polling do frontend)
@@ -2669,6 +2690,7 @@ app.post('/api/registrar-premio', async (req, res) => {
     try {
         const { nome, valor, fase } = req.body;
         if (!nome || !valor) return res.json({ success: true });
+        log('GAME', 'Premio registrado', { nome, valor, fase });
         const transacoes = db.getTransacoes();
         transacoes.push({
             id: Date.now() + Math.floor(Math.random() * 1000),
