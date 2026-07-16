@@ -84,7 +84,7 @@ async function enviarEmailSendGrid(to, subject, html) {
             },
             body: JSON.stringify({
                 personalizations: [{ to: [{ email: to }] }],
-                from: { email: 'contato@bingovipclub.shop', name: 'BingoVipClub' },
+                from: { email: 'marcostheangels@gmail.com', name: 'BingoVipClub' },
                 subject,
                 content: [{ type: 'text/html', value: html }]
             })
