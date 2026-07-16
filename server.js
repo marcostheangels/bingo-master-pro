@@ -57,7 +57,7 @@ process.on('unhandledRejection', (reason) => {
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
-const SMTP_PORT = parseInt(process.env.SMTP_PORT || '465', 10);
+const SMTP_PORT = parseInt(process.env.SMTP_PORT || '587', 10);
 const SMTP_USER = process.env.SMTP_USER || ADMIN_EMAIL;
 const SMTP_PASS = process.env.SMTP_PASS;
 let transporter = null;
@@ -71,7 +71,9 @@ if (SMTP_PASS && nodemailer) {
                 dns.lookup(SMTP_HOST, { family: 4 }, (err, address) => err ? reject(err) : resolve(address));
             });
             transporter = nodemailer.createTransport({
-                host: ipv4, port: SMTP_PORT, secure: SMTP_PORT === 465,
+                host: ipv4, port: SMTP_PORT,
+                secure: SMTP_PORT === 465,
+                requireTLS: SMTP_PORT === 587,
                 auth: { user: SMTP_USER, pass: SMTP_PASS },
                 tls: { rejectUnauthorized: true, servername: SMTP_HOST }
             });
