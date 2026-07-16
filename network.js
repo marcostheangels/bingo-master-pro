@@ -1209,32 +1209,25 @@ function carregarCadastrosAdmin() {
 function excluirUsuarioAdmin(cpf, nome) {
     const overlay = document.getElementById('excluirModalOverlay');
     const msgEl = document.getElementById('excluirModalMsg');
-    const inputEl = document.getElementById('excluirModalInput');
     const btnExcluir = document.getElementById('excluirModalBtn');
     const btnCancel = document.getElementById('excluirModalCancelBtn');
-    if (!overlay || !msgEl || !inputEl || !btnExcluir || !btnCancel) {
+    if (!overlay || !msgEl || !btnExcluir || !btnCancel) {
         showToast('Erro: modal de exclusão não encontrado.', 'error', 4000);
         return;
     }
 
-    inputEl.value = '';
     msgEl.innerHTML = 'Tem certeza que deseja <b style="color:#ef4444">EXCLUIR COMPLETAMENTE</b> o jogador "' + (nome || '') + '"?<br><span style="font-size:12px;color:#94a3b8">Isso apaga cadastro, saldo, saques, transações e histórico.</span>';
     overlay.style.display = 'flex';
-    inputEl.focus();
 
-    const fechar = () => {
-        overlay.style.display = 'none';
-        hideSpinner();
-    };
+    const fechar = () => { overlay.style.display = 'none'; };
     const confirmar = () => {
-        if (inputEl.value.trim().toUpperCase() !== 'EXCLUIR') {
-            showToast('Digite EXCLUIR para confirmar.', 'warning', 4000);
-            return;
-        }
         fechar();
-        showSpinner('Excluindo usuário...');
-        const spinnerTimeout = setTimeout(hideSpinner, 25000);
-
+        const safeReload = () => {
+            try { carregarCadastrosAdmin(); } catch (e) {}
+            try { carregarAdminUsuariosComSaldo(); } catch (e) {}
+            try { carregarUsuariosParaExclusao(); } catch (e) {}
+        };
+        const timeoutId = setTimeout(() => showToast('Exclusão demorando... se não atualizar, recarregue a página.', 'warning', 6000), 20000);
         adminFetch(API_BASE + '/api/admin/usuario/excluir', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
@@ -1242,27 +1235,22 @@ function excluirUsuarioAdmin(cpf, nome) {
         })
         .then(r => r.json())
         .then(r => {
+            clearTimeout(timeoutId);
             if (r && r.success) {
                 showToast(`✅ Usuário "${nome}" excluído com sucesso! Todos os dados foram removidos.`, 'success', 6000);
-                try { carregarCadastrosAdmin(); } catch (e) {}
-                try { carregarAdminUsuariosComSaldo(); } catch (e) {}
-                try { carregarUsuariosParaExclusao(); } catch (e) {}
+                safeReload();
             } else {
                 showToast('Erro: ' + ((r && r.error) || 'Erro desconhecido'), 'error', 6000);
             }
         })
         .catch(err => {
+            clearTimeout(timeoutId);
             showToast('Erro de conexão: ' + err.message, 'error', 6000);
-        })
-        .finally(() => {
-            clearTimeout(spinnerTimeout);
-            hideSpinner();
         });
     };
 
     btnExcluir.onclick = confirmar;
     btnCancel.onclick = fechar;
-    inputEl.onkeydown = (e) => { if (e.key === 'Enter') confirmar(); };
 }
 
 function darBonusUsuario(cpf, nome) {

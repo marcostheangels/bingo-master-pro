@@ -53,8 +53,7 @@
     <div class="modal-overlay" id="excluirModalOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;justify-content:center;align-items:center">
         <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:28px 32px;max-width:420px;width:90%;text-align:center">
             <div style="font-size:17px;color:#fff;font-weight:600;margin-bottom:12px" id="excluirModalMsg">Excluir jogador?</div>
-            <p style="color:#cbd5e1;font-size:13px;margin:0 0 16px">Esta ação é irreversível. Digite <b style="color:#fbbf24">EXCLUIR</b> para confirmar:</p>
-            <input type="text" id="excluirModalInput" placeholder="Digite EXCLUIR" style="width:100%;padding:10px 14px;border-radius:8px;border:1px solid rgba(255,255,255,0.2);background:rgba(255,255,255,0.05);color:#fff;font-size:15px;text-align:center;margin-bottom:16px;box-sizing:border-box" />
+            <p style="color:#cbd5e1;font-size:13px;margin:0 0 16px">Esta ação é irreversível. Confirme abaixo:</p>
             <div style="display:flex;gap:10px;justify-content:center">
                 <button id="excluirModalBtn" style="background:#ef4444;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">🗑️ Excluir</button>
                 <button id="excluirModalCancelBtn" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">Cancelar</button>
@@ -325,7 +324,7 @@
                                 <select id="deletePlayerSelect" class="input-field"></select>
                                 <button class="btn btn-sm btn-remove" onclick="carregarUsuariosParaExclusao()" title="Recarregar">🔄</button>
                             </div>
-                            <button class="btn btn-sm btn-remove" onclick="confirmarExclusaoJogador()" style="width:100%;margin-top:4px">🗑️ Excluir Selecionado</button>
+                            <button class="btn btn-sm btn-remove" onclick="confirmarExclusaoJogador()" id="btnExcluirSelecionado" style="width:100%;margin-top:4px">🗑️ Excluir Selecionado</button>
                         </div>
                     </div>
 
