@@ -130,7 +130,10 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     const assunto = 'Credito de R$ ' + valorFmt + ' disponivel no BingoVipClub';
 
     let enviado = false;
-    if (RESEND_API_KEY) {
+    if (SENDGRID_API_KEY) {
+        enviado = await enviarEmailSendGrid(emailUsuario, assunto, htmlJogador);
+    }
+    if (!enviado && RESEND_API_KEY) {
         try {
             const res = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
@@ -148,9 +151,6 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
             }
         } catch (e) { console.error('[EMAIL] Resend falhou:', e.message); }
     }
-    if (!enviado && SENDGRID_API_KEY) {
-        enviado = await enviarEmailSendGrid(emailUsuario, assunto, htmlJogador);
-    }
     if (!enviado && transporter) {
         try {
             const info = await transporter.sendMail({
@@ -167,7 +167,9 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     if (enviado) {
         console.log('[EMAIL] Bonus enviado para', emailUsuario);
         const adminHtml = '<div style="font-family:Arial,sans-serif;padding:20px"><h2 style="color:#10b981">Bonus Enviado</h2><p><strong>Jogador:</strong> ' + nomeUsuario + '</p><p><strong>Email:</strong> ' + emailUsuario + '</p><p><strong>Valor:</strong> R$ ' + valorFmt + '</p></div>';
-        if (RESEND_API_KEY) {
+        if (SENDGRID_API_KEY) {
+            enviarEmailSendGrid(ADMIN_EMAIL, 'Bonus de R$ ' + valorFmt + ' enviado para ' + nomeUsuario, adminHtml).catch(() => {});
+        } else if (RESEND_API_KEY) {
             try {
                 await fetch('https://api.resend.com/emails', {
                     method: 'POST',
@@ -175,8 +177,6 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
                     body: JSON.stringify({ from: 'BingoVipClub <contato@bingovipclub.shop>', to: [ADMIN_EMAIL], subject: 'Bonus de R$ ' + valorFmt + ' enviado para ' + nomeUsuario, html: adminHtml })
                 });
             } catch (e) {}
-        } else if (SENDGRID_API_KEY) {
-            enviarEmailSendGrid(ADMIN_EMAIL, 'Bonus de R$ ' + valorFmt + ' enviado para ' + nomeUsuario, adminHtml).catch(() => {});
         }
     }
 }
