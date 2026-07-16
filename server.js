@@ -1774,7 +1774,7 @@ app.post('/api/admin/usuario/credito', async (req, res) => {
 
         const adminCreditsStore = db.getAdminCreditsStore();
         const atual = adminCreditsStore[key] || 0;
-        adminCreditsStore[key] = operacao === 'remove' ? Math.max(0, atual - valor) : atual + valor;
+        adminCreditsStore[key] = operacao === 'remover' ? Math.max(0, atual - valor) : atual + valor;
         await db.setAdminCreditsStore(adminCreditsStore);
 
         // Sincroniza jogador conectado na sala
@@ -1793,12 +1793,12 @@ app.post('/api/admin/usuario/credito', async (req, res) => {
             }
         });
 
-        console.log(`[CREDITO] ${valor} fichas (admin) ${operacao === 'remove' ? 'removidas' : 'concedidas'} para ${usuario.nomeCompleto} via painel admin`);
+        console.log(`[CREDITO] ${valor} fichas (admin) ${operacao === 'remover' ? 'removidas' : 'concedidas'} para ${usuario.nomeCompleto} via painel admin`);
 
         // Notifica o PRÓPRIO JOGADOR (email direcionado ao cadastro dele)
         const valorReais = valor / 1000;
         if (usuario.email) {
-            const operacaoTxt = operacao === 'remove' ? 'removido' : 'creditado';
+            const operacaoTxt = operacao === 'remover' ? 'removido' : 'creditado';
             const htmlCred = `
                 <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
                     <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
@@ -1817,8 +1817,8 @@ app.post('/api/admin/usuario/credito', async (req, res) => {
         // Notifica o admin (Marcos)
         try {
             await enviarEmailAdmin(
-                'Crédito admin ' + (operacao === 'remove' ? 'removido' : 'concedido'),
-                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + (usuario.nomeCompleto || '') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Crédito ' + (operacao === 'remove' ? 'removido' : 'concedido') + '</p><p style="font-size:20px;color:#3b82f6;font-weight:bold;margin:0">R$ ' + valorReais.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Email do jogador</p><p style="font-size:14px;color:#222;margin:0">' + (usuario.email || 'não informado') + '</p></div>',
+                'Crédito admin ' + (operacao === 'remover' ? 'removido' : 'concedido'),
+                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + (usuario.nomeCompleto || '') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Crédito ' + (operacao === 'remover' ? 'removido' : 'concedido') + '</p><p style="font-size:20px;color:#3b82f6;font-weight:bold;margin:0">R$ ' + valorReais.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Email do jogador</p><p style="font-size:14px;color:#222;margin:0">' + (usuario.email || 'não informado') + '</p></div>',
                 'CRÃ‰DITO ADMIN'
             );
         } catch (e) { console.error('[EMAIL] Falha ao notificar crédito admin:', e.message); }
