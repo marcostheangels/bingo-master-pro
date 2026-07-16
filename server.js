@@ -1737,6 +1737,99 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
     }
 });
 
+// Admin - Dar crédito admin (sacável) para usuário - MESMA LÓGICA DO BÔNUS (acha por CPF/nome no banco)
+app.post('/api/admin/usuario/credito', async (req, res) => {
+    try {
+        const { cpf, nome, credito, mode } = req.body;
+        const valor = parseInt(credito || req.body.valor || 0, 10);
+        if ((!cpf && !nome) || !valor || valor <= 0) {
+            return res.status(400).json({ error: 'Identificador (CPF ou nome) e crédito válido são obrigatórios.' });
+        }
+        const usuarios = carregarUsuarios();
+        const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
+        let usuario = null;
+        if (cpf) {
+            const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
+            usuario = usuariosArray.find(u => String(u.cpf).replace(/\D/g, '').padStart(11, '0') === cpfLimpo);
+        } else {
+            const key = String(nome).toLowerCase().trim();
+            usuario = usuariosArray.find(u => (u.nomeCompleto || '').toLowerCase().trim() === key);
+        }
+        if (!usuario) {
+            return res.status(404).json({ error: 'Usuário não encontrado.' });
+        }
+
+        const key = usuario.nomeCompleto.toLowerCase().trim();
+        const fichasStore = db.getFichasStore();
+        if (!fichasStore[key]) {
+            fichasStore[key] = { chips: engine.INITIAL_CHIPS, winnings: 0 };
+        }
+        const operacao = mode === 'remove' ? 'remover' : 'add';
+        if (operacao === 'remove') {
+            fichasStore[key].chips = Math.max(0, fichasStore[key].chips - valor);
+        } else {
+            fichasStore[key].chips += valor;
+        }
+        await db.setFichasStore(fichasStore);
+
+        const adminCreditsStore = db.getAdminCreditsStore();
+        const atual = adminCreditsStore[key] || 0;
+        adminCreditsStore[key] = operacao === 'remove' ? Math.max(0, atual - valor) : atual + valor;
+        await db.setAdminCreditsStore(adminCreditsStore);
+
+        // Sincroniza jogador conectado na sala
+        gameRooms.forEach(room => {
+            const player = Array.from(room.players.values()).find(p =>
+                !p.isBot && (p.name || '').toLowerCase().trim() === key
+            );
+            if (player) {
+                player.chips = fichasStore[key].chips;
+                player.adminCredits = adminCreditsStore[key];
+                broadcast(room, {
+                    type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
+                    currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive, gameEnded: room.gameEnded,
+                    currentRound: room.currentRound, jackpot: room.jackpot, autoStartSeconds: room.autoStartSeconds
+                });
+            }
+        });
+
+        console.log(`[CREDITO] ${valor} fichas (admin) ${operacao === 'remove' ? 'removidas' : 'concedidas'} para ${usuario.nomeCompleto} via painel admin`);
+
+        // Notifica o PRÓPRIO JOGADOR (email direcionado ao cadastro dele)
+        const valorReais = valor / 1000;
+        if (usuario.email) {
+            const operacaoTxt = operacao === 'remove' ? 'removido' : 'creditado';
+            const htmlCred = `
+                <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+                    <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                        <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
+                        <div style="padding:28px 24px">
+                            <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${usuario.nomeCompleto},</div>
+                            <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Um crédito de <strong style="color:#3b82f6">R$ ${valorReais.toFixed(2).replace('.', ',')}</strong> em fichas foi ${operacaoTxt} na sua conta pela administração.</p>
+                            <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">Acesse sua conta para conferir o saldo atualizado.</p>
+                            <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acessar minha conta</a></div>
+                        </div>
+                    </div>
+                </div>`;
+            await notificarJogador(usuario.nomeCompleto, usuario.email, 'Crédito de R$ ' + valorReais.toFixed(2).replace('.', ',') + ' na sua conta', htmlCred);
+        }
+
+        // Notifica o admin (Marcos)
+        try {
+            await enviarEmailAdmin(
+                'Crédito admin ' + (operacao === 'remove' ? 'removido' : 'concedido'),
+                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + (usuario.nomeCompleto || '') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Crédito ' + (operacao === 'remove' ? 'removido' : 'concedido') + '</p><p style="font-size:20px;color:#3b82f6;font-weight:bold;margin:0">R$ ' + valorReais.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Email do jogador</p><p style="font-size:14px;color:#222;margin:0">' + (usuario.email || 'não informado') + '</p></div>',
+                'CRÃ‰DITO ADMIN'
+            );
+        } catch (e) { console.error('[EMAIL] Falha ao notificar crédito admin:', e.message); }
+
+        res.json({ success: true, creditoConcedido: valor, modo: operacao, novoSaldo: fichasStore[key].chips, emailEnviado: !!usuario.email, emailUsuario: usuario.email || null });
+    } catch (err) {
+        console.error('[API] Erro ao conceder crédito:', err);
+        res.status(500).json({ error: 'Erro interno.' });
+    }
+});
+
 // Admin - Retirar (remover) bônus de fichas do usuário
 app.post('/api/admin/usuario/remover-bonus', async (req, res) => {
     try {

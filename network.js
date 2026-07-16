@@ -908,13 +908,31 @@ function executeAdminAction(action) {
         return;
     }
 
-    if (typeof sendAction === 'function') {
-        sendAction('adminChips', { targetId: selectedId, targetCpf: selectedCpf, amount, mode: action });
-    }
-    if (typeof addLog === 'function') addLog(`Administrador ${action === 'remove' ? 'retirou' : 'adicionou'} ${amount.toLocaleString('pt-BR')} fichas.`);
-    
-    // Atualiza o painel de saldo do jogador selecionado
-    setTimeout(atualizarSaldoJogadorSelecionado, 500);
+    showSpinner(action === 'remove' ? 'Removendo crédito...' : 'Concedendo crédito...');
+    adminFetch(API_BASE + '/api/admin/usuario/credito', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cpf: selectedCpf, nome: selectedId, credito: amount, mode: action })
+    })
+    .then(r => r.json())
+    .then(r => {
+        hideSpinner();
+        if (r.success) {
+            const msg = r.emailEnviado
+                ? `✅ Crédito de ${amount.toLocaleString('pt-BR')} ${action === 'remove' ? 'removido' : 'concedido'} para "${selectedId}"! E-mail enviado para ${r.emailUsuario}`
+                : `✅ Crédito de ${amount.toLocaleString('pt-BR')} ${action === 'remove' ? 'removido' : 'concedido'} para "${selectedId}"!`;
+            showToast(msg, 'success', 8000);
+            if (typeof addLog === 'function') addLog(`Administrador ${action === 'remove' ? 'retirou' : 'adicionou'} ${amount.toLocaleString('pt-BR')} fichas.`);
+            carregarAdminUsuariosComSaldo();
+            setTimeout(atualizarSaldoJogadorSelecionado, 500);
+        } else {
+            showToast('Erro: ' + (r.error || 'Erro desconhecido'), 'error', 6000);
+        }
+    })
+    .catch(err => {
+        hideSpinner();
+        showToast('Erro de conexão: ' + err.message, 'error', 6000);
+    });
 }
 
 function atualizarSaldoJogadorSelecionado() {
