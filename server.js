@@ -73,7 +73,7 @@ if (SMTP_PASS && nodemailer) {
             transporter = nodemailer.createTransport({
                 host: ipv4, port: SMTP_PORT, secure: SMTP_PORT === 465,
                 auth: { user: SMTP_USER, pass: SMTP_PASS },
-                tls: { rejectUnauthorized: true }
+                tls: { rejectUnauthorized: true, servername: SMTP_HOST }
             });
             console.log('[EMAIL] Transportador SMTP configurado:', SMTP_USER, '->', ipv4);
         } catch (e) { console.log('[EMAIL] Erro SMTP:', e.message); }
