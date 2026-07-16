@@ -1752,13 +1752,13 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
         if (usuarioIdx === -1) {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
         }
-        const nomeUsuario = usuariosArray[usuarioIdx].nomeCompleto;
+        const nomeUsuario = usuariosArray[usuarioIdx].nomeCompleto || usuariosArray[usuarioIdx].nome || '';
         usuariosArray.splice(usuarioIdx, 1);
         await salvarUsuarios(usuariosArray);
 
         const fichasStore = db.getFichasStore();
-        const keyNome = nomeUsuario.toLowerCase().trim();
-        const keyBot = 'bot-' + nomeUsuario.toLowerCase().trim().replace(/\s+/g, '-');
+        const keyNome = (nomeUsuario || '').toLowerCase().trim();
+        const keyBot = 'bot-' + keyNome.replace(/\s+/g, '-');
         if (fichasStore[keyNome]) delete fichasStore[keyNome];
         if (fichasStore[keyBot]) delete fichasStore[keyBot];
         await db.setFichasStore(fichasStore);
