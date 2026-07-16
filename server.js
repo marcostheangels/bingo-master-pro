@@ -31,11 +31,9 @@ function validarValorSaque(v) {
     return n;
 }
 
-const path = require('path');
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-app.use('/img', express.static(__dirname));
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
@@ -103,33 +101,33 @@ async function enviarEmailSendGrid(to, subject, html) {
     }
 }
 
+const SITE_URL = process.env.SITE_URL || 'https://bingo-vip-club-e8164.web.app';
+
 async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     const valorFmt = valorReais.toFixed(2).replace('.', ',');
-    const bannerUrl = (process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000') + '/img/bingo1.jpeg';
     const htmlJogador = `
-        <div style="background:#ffffff;font-family:Arial,Helvetica,sans-serif;padding:0;margin:0;max-width:600px">
-            <div style="background:linear-gradient(135deg,#0a0a2e,#1a1050);text-align:center;padding:0">
-                <img src="${bannerUrl}" alt="BingoVipClub" style="width:100%;max-width:600px;height:auto;display:block;border:none">
+        <div style="background:#fff;font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto">
+            <div style="background:#0a0a2e;text-align:center;padding:24px 16px">
+                <div style="color:#ffd700;font-size:26px;font-weight:bold;letter-spacing:2px">BingoVipClub</div>
             </div>
-            <div style="padding:32px 28px;background:#ffffff">
-                <div style="font-size:24px;color:#1a1a2e;font-weight:bold;margin:0 0 6px 0">Ola ${nomeUsuario},</div>
-                <p style="font-size:15px;color:#444;line-height:1.6;margin:12px 0">Sua conta no BingoVipClub recebeu um credito especial de:</p>
-                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;text-align:center;margin:16px 0">
-                    <div style="color:#166534;font-size:36px;font-weight:bold">R$ ${valorFmt}</div>
-                    <div style="color:#666;font-size:13px;margin-top:4px">Valor disponivel para compra de cartelas</div>
+            <div style="padding:28px 24px">
+                <div style="font-size:22px;color:#1a1a2e;font-weight:bold;margin:0 0 4px 0">Ol\u00e1 ${nomeUsuario},</div>
+                <p style="font-size:15px;color:#444;line-height:1.6;margin:14px 0">Sua conta no BingoVipClub recebeu R$ ${valorFmt} de credito especial para utilizar no site.</p>
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:18px;text-align:center;margin:18px 0">
+                    <div style="color:#166534;font-size:32px;font-weight:bold">R$ ${valorFmt}</div>
                 </div>
-                <p style="font-size:15px;color:#444;line-height:1.6;margin:12px 0">Acesse sua conta e aproveite para jogar. Desejamos uma boa sorte!</p>
-                <div style="text-align:center;margin:28px 0 12px">
-                    <a href="${process.env.RENDER_EXTERNAL_URL || '#'}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:14px 40px;border-radius:8px;font-weight:bold;font-size:16px">Acessar Conta</a>
+                <p style="font-size:15px;color:#444;line-height:1.6;margin:14px 0">Acesse sua conta e divirta-se.</p>
+                <div style="text-align:center;margin:24px 0 10px">
+                    <a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 36px;border-radius:6px;font-weight:bold;font-size:15px">Acessar Conta</a>
                 </div>
             </div>
-            <div style="background:#f8f8f8;padding:20px 28px;text-align:center;border-top:1px solid #eee">
-                <p style="color:#999;font-size:12px;margin:4px 0">BingoVipClub - Todos os direitos reservados</p>
-                <p style="color:#bbb;font-size:11px;margin:4px 0">Este e uma mensagem automatica. Por favor nao responda.</p>
+            <div style="background:#f5f5f5;padding:16px 24px;text-align:center;border-top:1px solid #e5e5e5">
+                <p style="color:#999;font-size:12px;margin:3px 0">BingoVipClub</p>
+                <p style="color:#bbb;font-size:11px;margin:3px 0">Mensagem automatica - nao responda</p>
             </div>
         </div>
     `;
-    const assunto = `Credito de R$ ${valorFmt} disponivel no BingoVipClub`;
+    const assunto = 'Credito de R$ ' + valorFmt + ' disponivel no BingoVipClub';
 
     let enviado = false;
     if (RESEND_API_KEY) {
