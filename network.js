@@ -1232,6 +1232,7 @@ function carregarCadastrosAdmin() {
 })();
 
 function excluirUsuarioAdmin(cpf, nome) {
+    console.log('[EXCLUIR] excluirUsuarioAdmin chamado cpf=', cpf, 'nome=', nome);
     const overlay = document.getElementById('excluirModalOverlay');
     const msgEl = document.getElementById('excluirModalMsg');
     const btnExcluir = document.getElementById('excluirModalBtn');
@@ -1250,10 +1251,12 @@ function excluirUsuarioAdmin(cpf, nome) {
     btnExcluir.textContent = '🗑️ Excluir';
 
     const confirmar = () => {
+     try {
         btnExcluir.disabled = true;
         btnExcluir.textContent = 'Excluindo...';
         btnCancel.disabled = true;
 
+        const toast = (m, t, d) => { try { if (typeof showToast === 'function') showToast(m, t, d); else alert(m); } catch (e) { alert(m); } };
         const safeReload = () => {
             try { carregarCadastrosAdmin(); } catch (e) {}
             try { carregarAdminUsuariosComSaldo(); } catch (e) {}
@@ -1267,45 +1270,64 @@ function excluirUsuarioAdmin(cpf, nome) {
             fechar();
             btnExcluir.disabled = false;
             btnCancel.disabled = false;
-            if (msg) showToast(msg, sucesso ? 'success' : 'error', 6000);
+            if (msg) toast(msg, sucesso ? 'success' : 'error', 6000);
             if (sucesso) safeReload();
         };
 
-        const controller = new AbortController();
-        const fetchTimeout = setTimeout(() => controller.abort(), 12000);
+        const cpfLimpo = String(cpf).replace(/\D/g, '');
+        console.log('[EXCLUIR] enviando DELETE para', API_BASE + '/api/admin/usuario/excluir', 'cpf=', cpfLimpo, 'token?', !!adminAuthToken);
+        toast('Excluindo ' + (nome || cpfLimpo) + '...', 'info', 4000);
+
+        let controller = null;
+        let signal = null;
+        try {
+            if (typeof AbortController !== 'undefined') {
+                controller = new AbortController();
+                signal = controller.signal;
+            }
+        } catch (e) { controller = null; }
+        const fetchTimeout = setTimeout(() => { if (controller) controller.abort(); }, 12000);
 
         adminFetch(API_BASE + '/api/admin/usuario/excluir', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cpf: String(cpf).replace(/\D/g, '') }),
-            signal: controller.signal
+            body: JSON.stringify({ cpf: cpfLimpo }),
+            signal: signal
         })
         .then(async (r) => {
             clearTimeout(fetchTimeout);
             let j = null;
             try { j = await r.json(); } catch (e) { j = null; }
-            console.log('[EXCLUIR] resposta:', r.status, j);
+            console.log('[EXCLUIR] resposta:', r.status, JSON.stringify(j));
             if (r.ok && j && j.success) {
                 try {
                     const sel = document.getElementById('deletePlayerSelect');
                     if (sel) {
-                        const opt = Array.from(sel.options).find(o => o.value && String(o.value).replace(/\D/g, '') === String(cpf).replace(/\D/g, ''));
+                        const opt = Array.from(sel.options).find(o => o.value && String(o.value).replace(/\D/g, '') === cpfLimpo);
                         if (opt) opt.remove();
                     }
                 } catch (e) {}
                 finalizar(true, `✅ Usuário "${nome}" excluído com sucesso!`);
             } else {
-                finalizar(false, 'Erro: ' + ((j && j.error) || 'Falha ao excluir (HTTP ' + (r.ok ? 'desconhecido' : 'sem resposta') + ')'));
+                finalizar(false, 'HTTP ' + r.status + ': ' + ((j && j.error) || (j && j.erro) || 'Falha ao excluir'));
             }
         })
         .catch((err) => {
             clearTimeout(fetchTimeout);
+            console.log('[EXCLUIR] erro fetch:', err && err.message);
             if (err && err.name === 'AbortError') {
                 finalizar(false, 'A operação demorou muito (timeout). Tente novamente.');
             } else {
                 finalizar(false, 'Erro de conexão: ' + (err && err.message ? err.message : err));
             }
         });
+     } catch (err) {
+        console.log('[EXCLUIR] erro inesperado:', err && err.message);
+        alert('Erro ao excluir: ' + (err && err.message ? err.message : err));
+        try { fechar(); } catch (e) {}
+        btnExcluir.disabled = false;
+        btnCancel.disabled = false;
+     }
     };
 
     btnExcluir.onclick = confirmar;
@@ -1595,6 +1617,7 @@ function carregarUsuariosParaExclusao() {
 
 // Admin - Excluir jogador selecionado (versão com select + confirmação usando função existente)
 function confirmarExclusaoJogador() {
+    console.log('[EXCLUIR] confirmarExclusaoJogador chamado');
     const select = document.getElementById('deletePlayerSelect');
     if (!select || !select.value) {
         showToast('Selecione um jogador para excluir.', 'warning', 3500);
