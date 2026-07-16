@@ -1191,6 +1191,7 @@ function excluirUsuarioAdmin(cpf, nome) {
     }
 
     showSpinner('Excluindo usuário...');
+    const spinnerTimeout = setTimeout(hideSpinner, 8000);
     
     adminFetch(API_BASE + '/api/admin/usuario/excluir', {
         method: 'DELETE',
@@ -1200,16 +1201,18 @@ function excluirUsuarioAdmin(cpf, nome) {
     .then(r => r.json())
     .then(r => {
         hideSpinner();
-        if (r.success) {
+        clearTimeout(spinnerTimeout);
+        if (r && r.success) {
             showToast(`✅ Usuário "${nome}" excluído com sucesso! Todos os dados foram removidos.`, 'success', 6000);
-            carregarCadastrosAdmin();
-            carregarAdminUsuariosComSaldo();
+            try { carregarCadastrosAdmin(); } catch (e) {}
+            try { carregarAdminUsuariosComSaldo(); } catch (e) {}
         } else {
-            showToast('Erro: ' + (r.error || 'Erro desconhecido'), 'error', 6000);
+            showToast('Erro: ' + ((r && r.error) || 'Erro desconhecido'), 'error', 6000);
         }
     })
     .catch(err => {
         hideSpinner();
+        clearTimeout(spinnerTimeout);
         showToast('Erro de conexão: ' + err.message, 'error', 6000);
     });
 }
