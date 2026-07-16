@@ -26,14 +26,21 @@ class DiagnosticoAgent extends BaseAgent {
 
     this.log('--- Game logic ---');
     const glPath = path.join(this.projectRoot, 'game-logic.js');
+    const slPath = path.join(this.projectRoot, 'server.js');
     if (fs.existsSync(glPath)) {
       const gl = fs.readFileSync(glPath, 'utf8');
-      ['adminUpdateChips', 'sendToHost', 'function setChips('].forEach(fn => {
+      ['adminUpdateChips', 'sendToHost'].forEach(fn => {
         this.log(`game-logic.js tem ${fn}: ${gl.includes(fn)}`, gl.includes(fn) ? 'ok' : 'warn');
       });
     } else {
       this.log('game-logic.js ausente', 'error');
       allOk = false;
+    }
+    if (fs.existsSync(slPath)) {
+      const sl = fs.readFileSync(slPath, 'utf8');
+      ['setChips', 'creditarFichas'].forEach(fn => {
+        this.log(`server.js tem ${fn}: ${sl.includes(fn)}`, sl.includes(fn) ? 'ok' : 'warn');
+      });
     }
 
     this.log('--- Créditos admin x usuários ---');
