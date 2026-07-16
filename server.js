@@ -1,4 +1,4 @@
-require('dotenv').config();
+﻿require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -8,11 +8,10 @@ const https = require('https');
 const WebSocket = require('ws');
 const engine = require('./engine');
 const db = require('./db');
-const { alertarNovoCadastro } = require('./emailService');
 let nodemailer = null;
-try { nodemailer = require('nodemailer'); } catch (e) { console.log('[EMAIL] nodemailer não disponível.'); }
+try { nodemailer = require('nodemailer'); } catch (e) { console.log('[EMAIL] nodemailer nÃ£o disponÃ­vel.'); }
 
-// ===================== HELPERS DE VALIDAÇÃO / SANITIZAÇÃO =====================
+// ===================== HELPERS DE VALIDAÃ‡ÃƒO / SANITIZAÃ‡ÃƒO =====================
 function sanitizeText(str, maxLen = 40) {
     if (typeof str !== 'string') return '';
     return str
@@ -54,7 +53,7 @@ process.on('unhandledRejection', (reason) => {
     console.error('[UNHANDLED REJECTION]', reason?.message || reason);
 });
 
-// ===================== CONFIGURAÇÃO DE EMAIL (SENDGRID + RESEND + SMTP FALLBACK) =====================
+// ===================== CONFIGURAÃ‡ÃƒO DE EMAIL (SENDGRID + RESEND + SMTP FALLBACK) =====================
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
 const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
@@ -149,21 +148,21 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
                     <div style="color:#9aa0c0;font-size:12px;margin-top:4px">Bingo online e credenciado</div>
                 </div>
                 <div style="padding:28px 24px">
-                    <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${nomeUsuario},</div>
-                    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Temos uma novidade para a sua conta. Um bônus de <strong style="color:#10b981">R$ ${valorFmt}</strong> em fichas foi creditado e já está disponível para você usar nas salas de bingo.</p>
-                    <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">Acesse sua conta para conferir o saldo atualizado e aproveitar. Se tiver dúvidas, responda este email que nossa equipe responde.</p>
+                    <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">OlÃ¡ ${nomeUsuario},</div>
+                    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Temos uma novidade para a sua conta. Um bÃ´nus de <strong style="color:#10b981">R$ ${valorFmt}</strong> em fichas foi creditado e jÃ¡ estÃ¡ disponÃ­vel para vocÃª usar nas salas de bingo.</p>
+                    <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">Acesse sua conta para conferir o saldo atualizado e aproveitar. Se tiver dÃºvidas, responda este email que nossa equipe responde.</p>
                     <div style="text-align:center;margin:8px 0 4px">
                         <a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acessar minha conta</a>
                     </div>
                 </div>
                 <div style="background:#f5f5f7;padding:16px 24px;text-align:center;border-top:1px solid #ececf0">
-                    <p style="color:#999;font-size:11px;margin:2px 0">BingoVipClub · Este é um email transacional da sua conta.</p>
-                    <p style="color:#bbb;font-size:11px;margin:2px 0"><a href="${unsubscribeUrl}" style="color:#999;text-decoration:underline">Cancelar inscrição</a></p>
+                    <p style="color:#999;font-size:11px;margin:2px 0">BingoVipClub Â· Este Ã© um email transacional da sua conta.</p>
+                    <p style="color:#bbb;font-size:11px;margin:2px 0"><a href="${unsubscribeUrl}" style="color:#999;text-decoration:underline">Cancelar inscriÃ§Ã£o</a></p>
                 </div>
             </div>
         </div>
     `;
-    const assunto = 'Seu bônus de R$ ' + valorFmt + ' chegou, ' + nomeUsuario + '!';
+    const assunto = 'Seu bÃ´nus de R$ ' + valorFmt + ' chegou, ' + nomeUsuario + '!';
 
     let enviado = false;
     if (transporter) {
@@ -203,51 +202,53 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     }
     console.log('[EMAIL-DIAG] Resultado final enviado=', enviado, 'para', emailLimpo);
 
-    if (enviado) {
-        console.log('[EMAIL] Bonus enviado para', emailUsuario);
-        const adminHtml = `
-            <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
-                <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                    <div style="background:#0a0a2e;text-align:center;padding:20px 16px">
-                        <img src="${LOGO_URL}" alt="BingoVipClub" style="max-width:200px;height:auto;display:inline-block" />
-                    </div>
-                    <div style="padding:28px 24px">
-                        <div style="display:inline-block;background:#10b981;color:#fff;font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px;letter-spacing:1px">BÔNUS CONCEDIDO</div>
-                        <h2 style="color:#1a1a3c;font-size:20px;margin:14px 0 18px 0">Você enviou um bônus</h2>
-                        <div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px">
-                            <p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p>
-                            <p style="font-size:16px;color:#222;font-weight:bold;margin:0">${nomeUsuario}</p>
-                        </div>
-                        <div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px">
-                            <p style="font-size:13px;color:#888;margin:0 0 4px 0">Email</p>
-                            <p style="font-size:15px;color:#222;margin:0">${emailUsuario}</p>
-                        </div>
-                        <div style="background:#ecfdf5;border-radius:8px;padding:16px 18px">
-                            <p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor creditado</p>
-                            <p style="font-size:22px;color:#10b981;font-weight:bold;margin:0">R$ ${valorFmt}</p>
-                        </div>
-                        <p style="font-size:12px;color:#aaa;text-align:center;margin:18px 0 0 0">BingoVipClub · Painel administrativo</p>
-                    </div>
-                </div>
-            </div>
-        `;
-        if (transporter) {
-            transporter.sendMail({
-                from: '"BingoVipClub" <' + SMTP_USER + '>',
-                to: ADMIN_EMAIL,
-                subject: 'Bonus de R$ ' + valorFmt + ' enviado para ' + nomeUsuario,
-                html: adminHtml
-            }).catch(() => {});
-        } else if (SENDGRID_API_KEY) {
-            enviarEmailSendGrid(ADMIN_EMAIL, 'Bonus de R$ ' + valorFmt + ' enviado para ' + nomeUsuario, adminHtml).catch(() => {});
-        } else if (RESEND_API_KEY) {
-            fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify({ from: 'BingoVipClub <contato@bingovipclub.shop>', to: [ADMIN_EMAIL], subject: 'Bonus de R$ ' + valorFmt + ' enviado para ' + nomeUsuario, html: adminHtml })
-            }).catch(() => {});
+        if (enviado) {
+            console.log('[EMAIL] Bonus enviado para', emailUsuario);
+            enviarEmailAdmin(
+                'BÃ´nus enviado para ' + nomeUsuario,
+                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + nomeUsuario + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Email</p><p style="font-size:15px;color:#222;margin:0">' + emailUsuario + '</p></div><div style="background:#ecfdf5;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor creditado</p><p style="font-size:22px;color:#10b981;font-weight:bold;margin:0">R$ ' + valorFmt + '</p></div>',
+                'BÃ”NUS CONCEDIDO'
+            ).catch(() => {});
         }
     }
+
+async function montarEmailAdmin(assunto, corpoHtml, badge) {
+    const badgeHtml = badge ? '<div style="display:inline-block;background:#10b981;color:#fff;font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px;letter-spacing:1px;margin-bottom:14px">' + badge + '</div>' : '';
+    return `
+        <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+            <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                <div style="background:#0a0a2e;text-align:center;padding:20px 16px">
+                    <img src="${LOGO_URL}" alt="BingoVipClub" style="max-width:200px;height:auto;display:inline-block" />
+                </div>
+                <div style="padding:28px 24px">
+                    ${badgeHtml}
+                    <h2 style="color:#1a1a3c;font-size:20px;margin:0 0 18px 0">${assunto}</h2>
+                    ${corpoHtml}
+                    <p style="font-size:12px;color:#aaa;text-align:center;margin:18px 0 0 0">BingoVipClub Â· Painel administrativo</p>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+async function enviarEmailAdmin(assunto, corpoHtml, badge) {
+    const html = montarEmailAdmin(assunto, corpoHtml, badge);
+    let enviado = false;
+    if (SENDGRID_API_KEY) {
+        enviado = await enviarEmailSendGrid(ADMIN_EMAIL, assunto, html);
+    }
+    if (!enviado && RESEND_API_KEY) {
+        try {
+            const res = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ from: 'BingoVipClub <contato@bingovipclub.shop>', to: [ADMIN_EMAIL], subject: assunto, html })
+            });
+            if (res.ok) enviado = true;
+        } catch (e) { console.error('[EMAIL] Resend admin falhou:', e.message); }
+    }
+    console.log('[EMAIL] NotificaÃ§Ã£o admin:', enviado ? 'enviada' : 'FALHOU', '-', assunto);
+    return enviado;
 }
 
 async function enviarEmailNotificacao(assunto, texto) {
@@ -273,7 +274,7 @@ async function enviarEmailNotificacao(assunto, texto) {
         }
     }
     if (!transporter) {
-        console.warn('[EMAIL] Nenhum método de email configurado (Resend/SMTP). Notificação ignorada.');
+        console.warn('[EMAIL] Nenhum mÃ©todo de email configurado (Resend/SMTP). NotificaÃ§Ã£o ignorada.');
         return;
     }
     console.log('[EMAIL] Enviando via SMTP:', assunto, 'para', ADMIN_EMAIL);
@@ -332,11 +333,11 @@ const BOT_NAMES = [
     'Felipe Rodrigues', 'Marina Fernandes', 'Thiago Barbosa', 'Larissa Gomes',
     'Gustavo Ribeiro', 'Isabela Martins', 'Leonardo Carvalho', 'Vanessa Rocha',
     'Eduardo Correia', 'Tatiana Nunes', 'Vinicius Moreira', 'Aline Vieira',
-    'Diego Araujo', 'Fernanda Castro', 'Bruno Cardoso', 'Letícia Freitas',
-    'Henrique Dias', 'Patrícia Teixeira', 'Murilo Farias', 'Raquel Monteiro',
+    'Diego Araujo', 'Fernanda Castro', 'Bruno Cardoso', 'LetÃ­cia Freitas',
+    'Henrique Dias', 'PatrÃ­cia Teixeira', 'Murilo Farias', 'Raquel Monteiro',
     'Caio Mendes', 'Ana Clara Duarte', 'Igor Macedo', 'Carla Nascimento',
-    'Renan Antunes', 'Luciana Vasconcelos', 'Fábio Rezende', 'Priscila Azevedo',
-    'Nicolas Fonseca', 'Débora Peixoto', 'Otávio Guimarães', 'Bianca Albuquerque'
+    'Renan Antunes', 'Luciana Vasconcelos', 'FÃ¡bio Rezende', 'Priscila Azevedo',
+    'Nicolas Fonseca', 'DÃ©bora Peixoto', 'OtÃ¡vio GuimarÃ£es', 'Bianca Albuquerque'
 ];
 function isNomeDeBot(nome) {
     const key = (nome || '').toLowerCase().trim();
@@ -463,7 +464,7 @@ function iniciarAutoStartServer(room) {
     pararAutoStartServer(room);
     if (room.gameActive || room.gameEnded) return;
     broadcast(room, { type: 'preparingNewRound', seconds: 50 });
-    addLog(room, '⏳ Novo sorteio em 50 segundos. Compre suas cartelas!');
+    addLog(room, 'â³ Novo sorteio em 50 segundos. Compre suas cartelas!');
     room.autoStartSeconds = 60;
     console.log(`[AUTOSTART] Iniciando contagem de ${room.autoStartSeconds}s para sala ${room.id}`);
     room.autoStartTimer = setInterval(() => {
@@ -510,13 +511,13 @@ function iniciarNovaRodada(room) {
     
     const initialCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
     room.totalCardsAtStart = initialCards;
-    // Jackpot é progressivo: mantém o acumulado; só semeia o valor inicial se estiver zerado
+    // Jackpot Ã© progressivo: mantÃ©m o acumulado; sÃ³ semeia o valor inicial se estiver zerado
     if (!room.jackpot) room.jackpot = engine.JACKPOT_INITIAL;
     
     saveRoomSnapshot(room);
     sendGameState(room);
-    addLog(room, `🎯 Rodada #${room.currentRound} iniciada!`);
-    broadcast(room, { type: 'notice', text: '🎯 Nova rodada iniciada!', kind: 'success' });
+    addLog(room, `ðŸŽ¯ Rodada #${room.currentRound} iniciada!`);
+    broadcast(room, { type: 'notice', text: 'ðŸŽ¯ Nova rodada iniciada!', kind: 'success' });
     const playersArr2 = Array.from(room.players.values());
     const closeInfo = engine.computeCloseCardsForAllPlayers(playersArr2, room.currentPhaseIndex, room.drawnBalls);
     broadcast(room, { type: 'closeCards', data: closeInfo });
@@ -562,15 +563,15 @@ async function sortearProximaBola(room) {
             return;
         }
         
-        // Se a fase atual já foi ganha, não sortear mais bolas nesta fase.
-        // Em sala com humanos, a fase avança SÓ quando um humano ganha (bots não snipam o prêmio).
-        // Em sala SÓ de bots, avança pela conclusão dos próprios bots (senão a rodada travava em Kuadra).
-        // Em ambos os casos, bots NÃO recebem prêmio nem entram no Hall da Fama.
+        // Se a fase atual jÃ¡ foi ganha, nÃ£o sortear mais bolas nesta fase.
+        // Em sala com humanos, a fase avanÃ§a SÃ“ quando um humano ganha (bots nÃ£o snipam o prÃªmio).
+        // Em sala SÃ“ de bots, avanÃ§a pela conclusÃ£o dos prÃ³prios bots (senÃ£o a rodada travava em Kuadra).
+        // Em ambos os casos, bots NÃƒO recebem prÃªmio nem entram no Hall da Fama.
         const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
         const salaTemHumanos = Array.from(room.players.values()).some(p => !p.isBot && p.cards && p.cards.length > 0);
         let jaTemVencedor = false;
         room.players.forEach(p => {
-            if (p.isBot && salaTemHumanos) return; // com humanos na sala, só humanos avançam a fase
+            if (p.isBot && salaTemHumanos) return; // com humanos na sala, sÃ³ humanos avanÃ§am a fase
             (p.cards || []).forEach(c => {
                 engine.computeCardAwards(c, room.currentPhaseIndex, room.drawnBalls);
                 if (c.awards && c.awards[phaseKey]) jaTemVencedor = true;
@@ -607,18 +608,18 @@ async function sortearProximaBola(room) {
             const humanCards = playersArr.filter(p => !p.isBot).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
             const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, humanCards, room.jackpot);
 
-            // Update persistent chips/winnings (cache instantâneo, sync em background)
-            // Bots ganham no jogo (fichas/banner) para dar vida à sala, mas NÃO vão para o
-            // ledger de saque nem para o Hall da Fama (não podem sacar).
+            // Update persistent chips/winnings (cache instantÃ¢neo, sync em background)
+            // Bots ganham no jogo (fichas/banner) para dar vida Ã  sala, mas NÃƒO vÃ£o para o
+            // ledger de saque nem para o Hall da Fama (nÃ£o podem sacar).
             for (const r of results) {
                 const player = r.player;
-                if (player.isBot) continue; // bots não persistem no ledger de saque
+                if (player.isBot) continue; // bots nÃ£o persistem no ledger de saque
                 setChips(player.name, player.chips, player.winnings).catch(e => console.error('[GAME] Erro setChips winner:', e.message));
                 const transacoes = db.getTransacoes();
                 transacoes.push({
                     id: Date.now() + Math.floor(Math.random() * 1000),
                     tipo: 'premio', nome: player.name, nomeExibicao: player.name, valor: r.totalReward / 1000,
-                    data: new Date().toISOString(), detalhe: `Prêmio ${phaseKey}`
+                    data: new Date().toISOString(), detalhe: `PrÃªmio ${phaseKey}`
                 });
                 db.setTransacoes(transacoes).catch(e => console.error('[GAME] Erro setTransacoes winner:', e.message));
             }
@@ -710,7 +711,7 @@ function avancarParaProximaFase(room) {
     room.currentPhaseIndex++;
     broadcast(room, { type: 'advancePhase', currentPhaseIndex: room.currentPhaseIndex });
     sendGameState(room);
-    // Pausa antes de começar a sortear bolas da próxima fase
+    // Pausa antes de comeÃ§ar a sortear bolas da prÃ³xima fase
     room.phasePauseTimer = setTimeout(() => {
         room.phasePauseTimer = null;
         agendarProximoDraw(room);
@@ -725,7 +726,7 @@ async function salvarHistoricoSorteio(room) {
             if (card.awards.kuadra) vencedores.kuadra.push({ nome: player.name, premio: engine.PHASES.kuadra.reward });
             if (card.awards.kina) vencedores.kina.push({ nome: player.name, premio: engine.PHASES.kina.reward });
             if (card.awards.keno) {
-                // Jackpot agora pode ser de humanos OU bots (transparência). Registra para todos.
+                // Jackpot agora pode ser de humanos OU bots (transparÃªncia). Registra para todos.
                 const jackpot = room.jackpotAwarded ? (room.jackpotAwardedValue || 0) : 0;
                 vencedores.keno.push({ nome: player.name, premio: engine.PHASES.keno.reward + jackpot });
             }
@@ -741,7 +742,7 @@ async function salvarHistoricoSorteio(room) {
     const historico = db.getHistorico();
     historico.push(dados);
     await db.setHistorico(historico);
-    addLog(room, `📋 Sorteio #${room.currentRound} salvo no histórico.`);
+    addLog(room, `ðŸ“‹ Sorteio #${room.currentRound} salvo no histÃ³rico.`);
 }
 
 async function finalizarRodada(room) {
@@ -753,8 +754,8 @@ async function finalizarRodada(room) {
     
     await salvarHistoricoSorteio(room);
     sendGameState(room);
-    addLog(room, '🏁 Rodada encerrada!');
-    broadcast(room, { type: 'notice', text: '🏁 Rodada encerrada! Cartelas serão limpas...', kind: 'info' });
+    addLog(room, 'ðŸ Rodada encerrada!');
+    broadcast(room, { type: 'notice', text: 'ðŸ Rodada encerrada! Cartelas serÃ£o limpas...', kind: 'info' });
     
     // After 10s, clear cards and restart auto-start
     setTimeout(async () => {
@@ -773,8 +774,8 @@ async function finalizarRodada(room) {
         room.gameEnded = false;
         cleanUpBots(room);
         broadcast(room, { type: 'resetGame', players: sanitizePlayers(room), drawnBalls: [], currentPhaseIndex: 0, gameActive: false, gameEnded: false, totalCardsAtStart: 0 });
-        addLog(room, '🔄 Cartelas limpas. Novo sorteio em breve!');
-        broadcast(room, { type: 'notice', text: '🔄 Compre suas cartelas! Novo sorteio em 2 minutos.', kind: 'info' });
+        addLog(room, 'ðŸ”„ Cartelas limpas. Novo sorteio em breve!');
+        broadcast(room, { type: 'notice', text: 'ðŸ”„ Compre suas cartelas! Novo sorteio em 2 minutos.', kind: 'info' });
         saveRoomSnapshot(room);
         // Auto-start after 30 seconds
         setTimeout(() => iniciarAutoStartServer(room), 30000);
@@ -784,7 +785,7 @@ async function finalizarRodada(room) {
 function undoLastBall(room) {
     if (room.gameActive && room.drawnBalls.length > 0) {
         const removed = room.drawnBalls.pop();
-        addLog(room, `↩ Bola ${removed} desfeita.`);
+        addLog(room, `â†© Bola ${removed} desfeita.`);
         // Reset awards for all cards
         room.players.forEach(p => {
             (p.cards || []).forEach(card => {
@@ -853,11 +854,11 @@ function generateBotName() {
         'Felipe Rodrigues', 'Marina Fernandes', 'Thiago Barbosa', 'Larissa Gomes',
         'Gustavo Ribeiro', 'Isabela Martins', 'Leonardo Carvalho', 'Vanessa Rocha',
         'Eduardo Correia', 'Tatiana Nunes', 'Vinicius Moreira', 'Aline Vieira',
-        'Diego Araujo', 'Fernanda Castro', 'Bruno Cardoso', 'Letícia Freitas',
-        'Henrique Dias', 'Patrícia Teixeira', 'Murilo Farias', 'Raquel Monteiro',
+        'Diego Araujo', 'Fernanda Castro', 'Bruno Cardoso', 'LetÃ­cia Freitas',
+        'Henrique Dias', 'PatrÃ­cia Teixeira', 'Murilo Farias', 'Raquel Monteiro',
         'Caio Mendes', 'Ana Clara Duarte', 'Igor Macedo', 'Carla Nascimento',
-        'Renan Antunes', 'Luciana Vasconcelos', 'Fábio Rezende', 'Priscila Azevedo',
-        'Nicolas Fonseca', 'Débora Peixoto', 'Otávio Guimarães', 'Bianca Albuquerque'
+        'Renan Antunes', 'Luciana Vasconcelos', 'FÃ¡bio Rezende', 'Priscila Azevedo',
+        'Nicolas Fonseca', 'DÃ©bora Peixoto', 'OtÃ¡vio GuimarÃ£es', 'Bianca Albuquerque'
     ];
     return nomes[Math.floor(Math.random() * nomes.length)];
 }
@@ -910,7 +911,7 @@ async function creditarFichas(nome, fichas) {
         if (player) {
             player.chips = novosFichas;
             player.winnings = c.winnings;
-            console.log(`[CREDITO] ${nome}: chips ${c.chips} → ${novosFichas}`);
+            console.log(`[CREDITO] ${nome}: chips ${c.chips} â†’ ${novosFichas}`);
             broadcast(room, {
                 type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
                 currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive, gameEnded: room.gameEnded,
@@ -960,7 +961,7 @@ async function handleAction(ws, room, action, payload) {
     console.log('[ACTION]', { action, payload, clientId: ws.clientId, roomId: room.id });
     const clientId = ws.clientId;
     let player = room.players.get(clientId);
-    // Fallback: buscar pelo CPF (útil quando reconecta e clientId muda mas player permanece no map com id antigo)
+    // Fallback: buscar pelo CPF (Ãºtil quando reconecta e clientId muda mas player permanece no map com id antigo)
     if (!player && ws.cpf) {
         for (const p of room.players.values()) {
             if (p.cpf && String(p.cpf).replace(/\D/g, '').padStart(11, '0') === String(ws.cpf).replace(/\D/g, '').padStart(11, '0')) {
@@ -978,9 +979,9 @@ async function handleAction(ws, room, action, payload) {
         return;
     }
 
-    // Bloqueia ações financeiras para não autenticados (espectadores)
+    // Bloqueia aÃ§Ãµes financeiras para nÃ£o autenticados (espectadores)
     if (['buyCards', 'adminChips'].includes(action) && !ws.cpf) {
-        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'notice', text: 'Ação não permitida: faça login primeiro.' }));
+        if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'notice', text: 'AÃ§Ã£o nÃ£o permitida: faÃ§a login primeiro.' }));
         return;
     }
 
@@ -1011,13 +1012,13 @@ async function handleAction(ws, room, action, payload) {
         }
         
         if (!target) {
-            // Não encontrado na sala: tentar buscar no usuarios.json pelo nome completo
+            // NÃ£o encontrado na sala: tentar buscar no usuarios.json pelo nome completo
             const usuarios = carregarUsuarios();
             let usuario = usuarios.find(u => (u.nomeCompleto || '').toLowerCase().trim() === payload.targetId.toLowerCase().trim());
             let isBot = false;
             
             if (!usuario) {
-                // Verificar se é um bot (usar a mesma lista do topo)
+                // Verificar se Ã© um bot (usar a mesma lista do topo)
                 const matchedBot = botNamesList.find(name => name.toLowerCase().trim() === payload.targetId.toLowerCase().trim());
                 if (matchedBot) {
                     usuario = { nomeCompleto: matchedBot };
@@ -1027,9 +1028,9 @@ async function handleAction(ws, room, action, payload) {
             
             if (usuario) {
                 targetName = usuario.nomeCompleto;
-                console.log('[ADMIN CHIPS] Usuário não está na sala, usando registro:', targetName, isBot ? '(BOT)' : '');
+                console.log('[ADMIN CHIPS] UsuÃ¡rio nÃ£o estÃ¡ na sala, usando registro:', targetName, isBot ? '(BOT)' : '');
             } else {
-                console.log('[ADMIN CHIPS] Alvo não encontrado:', payload.targetId);
+                console.log('[ADMIN CHIPS] Alvo nÃ£o encontrado:', payload.targetId);
                 return;
             }
         }
@@ -1038,12 +1039,12 @@ async function handleAction(ws, room, action, payload) {
         const amount = parseInt(payload.amount, 10);
         if (isNaN(amount) || amount <= 0) return;
         
-        // Para bots, a chave no store é 'bot-nome-do-bot'
+        // Para bots, a chave no store Ã© 'bot-nome-do-bot'
         const isBotTarget = botNamesList.some(n => n.toLowerCase().trim() === targetName.toLowerCase().trim());
         const key = isBotTarget ? 'bot-' + targetName.toLowerCase().trim().replace(/\s+/g, '-') : targetName.toLowerCase().trim();
         
         if (isInRoom) {
-            // Jogador está na sala: atualizar objeto na memória
+            // Jogador estÃ¡ na sala: atualizar objeto na memÃ³ria
             if (payload.mode === 'remove') {
                 target.chips = Math.max(0, target.chips - amount);
                 target.adminCredits = Math.max(0, (target.adminCredits || 0) - amount);
@@ -1053,7 +1054,7 @@ async function handleAction(ws, room, action, payload) {
             }
             console.log('[ADMIN CHIPS] After update (in room):', { chips: target.chips, adminCredits: target.adminCredits });
         } else {
-            // Jogador NÃO está na sala: atualizar apenas stores
+            // Jogador NÃƒO estÃ¡ na sala: atualizar apenas stores
             const fichas = fichasStore[key] || { chips: engine.INITIAL_CHIPS, winnings: 0 };
             const adminCred = adminCreditsStore[key] || 0;
             if (payload.mode === 'remove') {
@@ -1084,14 +1085,14 @@ async function handleAction(ws, room, action, payload) {
     if (action === 'buyCards') {
         if (!player) return;
         if (room.gameActive) {
-            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: 'O sorteio já iniciou. Não é possível comprar cartelas agora.' }));
+            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: 'O sorteio jÃ¡ iniciou. NÃ£o Ã© possÃ­vel comprar cartelas agora.' }));
             return;
         }
         const limit = engine.getMaxCardsForPlayer(player);
         const available = limit - (player.cards ? player.cards.length : 0);
         const qty = Math.min(parseInt(payload.qty, 10) || 1, available, limit);
         if (qty <= 0) {
-            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: `Limite máximo de ${limit} cartelas por jogador.` }));
+            if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: `Limite mÃ¡ximo de ${limit} cartelas por jogador.` }));
             return;
         }
         const cost = qty * engine.CARD_COST;
@@ -1100,8 +1101,8 @@ async function handleAction(ws, room, action, payload) {
             return;
         }
         player.chips -= cost;
-        // Jackpot progressivo: só CARTELAS HUMANAS alimentam o poço (dinheiro real do depósito).
-        // Bots NÃO contribuem (suas fichas são de brincadeira). Teto de segurança JACKPOT_MAX.
+        // Jackpot progressivo: sÃ³ CARTELAS HUMANAS alimentam o poÃ§o (dinheiro real do depÃ³sito).
+        // Bots NÃƒO contribuem (suas fichas sÃ£o de brincadeira). Teto de seguranÃ§a JACKPOT_MAX.
         if (!player.isBot) {
             const base = (typeof room.jackpot === 'number' && room.jackpot > 0) ? room.jackpot : engine.JACKPOT_INITIAL;
             room.jackpot = Math.min(base + qty * engine.JACKPOT_CONTRIBUTION_PER_CARD, engine.JACKPOT_MAX);
@@ -1119,7 +1120,7 @@ async function handleAction(ws, room, action, payload) {
                 }
             }
         } catch (e) {
-            console.error('[BONUS] Erro ao descontar bônus gasto em cartelas:', e.message);
+            console.error('[BONUS] Erro ao descontar bÃ´nus gasto em cartelas:', e.message);
         }
         try {
             const compras = db.getComprasPendentes();
@@ -1190,27 +1191,27 @@ wss.on('connection', (ws) => {
         try {
             data = JSON.parse(message);
         } catch (err) {
-            ws.send(JSON.stringify({ type: 'error', message: 'Mensagem inválida.' }));
+            ws.send(JSON.stringify({ type: 'error', message: 'Mensagem invÃ¡lida.' }));
             return;
         }
 
         if (data.type === 'auth') {
             const { sessionToken, cpf } = data;
             if (!sessionToken || !cpf) {
-                ws.send(JSON.stringify({ type: 'auth_error', message: 'Sessão inválida.' }));
+                ws.send(JSON.stringify({ type: 'auth_error', message: 'SessÃ£o invÃ¡lida.' }));
                 return;
             }
             const usuarios = carregarUsuarios();
             const user = usuarios.find(u => u.sessionToken === sessionToken && String(u.cpf).padStart(11, '0') === String(cpf).replace(/\D/g, '').padStart(11, '0'));
             if (!user) {
-                ws.send(JSON.stringify({ type: 'auth_error', message: 'Sessão expirada. Faça login novamente.' }));
+                ws.send(JSON.stringify({ type: 'auth_error', message: 'SessÃ£o expirada. FaÃ§a login novamente.' }));
                 return;
             }
             ws.cpf = user.cpf;
             const existing = sessoesAtivas.get(ws.cpf);
             if (existing && existing.ws !== ws && existing.ws.readyState === WebSocket.OPEN) {
                 try {
-                    existing.ws.send(JSON.stringify({ type: 'forcedDisconnect', message: 'Você foi desconectado porque outro dispositivo acessou sua conta.' }));
+                    existing.ws.send(JSON.stringify({ type: 'forcedDisconnect', message: 'VocÃª foi desconectado porque outro dispositivo acessou sua conta.' }));
                     existing.ws.close();
                 } catch (e) {}
                 sessoesAtivas.delete(ws.cpf);
@@ -1224,7 +1225,7 @@ wss.on('connection', (ws) => {
         if (data.type === 'connect') {
             const { role, roomId, name, id } = data;
             if (!role || !roomId) {
-                ws.send(JSON.stringify({ type: 'error', message: 'Parâmetros ausentes.' }));
+                ws.send(JSON.stringify({ type: 'error', message: 'ParÃ¢metros ausentes.' }));
                 return;
             }
 
@@ -1286,7 +1287,7 @@ wss.on('connection', (ws) => {
                 console.log('[CONNECT] Iniciando auto-start...');
                 iniciarAutoStartServer(room);
             } else {
-                console.log('[CONNECT] Auto-start não iniciado devido às condições acima');
+                console.log('[CONNECT] Auto-start nÃ£o iniciado devido Ã s condiÃ§Ãµes acima');
             }
 
             const dono = String(player.cpf || '').replace(/\D/g, '').padStart(11, '0') === DONO_CPF;
@@ -1337,23 +1338,23 @@ app.post('/api/register', async (req, res) => {
         }
         nomeCompleto = sanitizeText(nomeCompleto, 60);
         if (!nomeCompleto) {
-            return res.status(400).json({ error: 'Nome inválido.' });
+            return res.status(400).json({ error: 'Nome invÃ¡lido.' });
         }
         const cpfNormalizado = normalizeCpf(cpf);
         if (!cpfNormalizado) {
-            return res.status(400).json({ error: 'CPF inválido' });
+            return res.status(400).json({ error: 'CPF invÃ¡lido' });
         }
         cpf = cpfNormalizado;
         senha = String(senha);
         if (!validarCPF(cpf)) {
-            return res.status(400).json({ error: 'CPF inválido.' });
+            return res.status(400).json({ error: 'CPF invÃ¡lido.' });
         }
         if (senha.length < 4) {
-            return res.status(400).json({ error: 'Senha deve ter no mínimo 4 caracteres.' });
+            return res.status(400).json({ error: 'Senha deve ter no mÃ­nimo 4 caracteres.' });
         }
         const usuarios = carregarUsuarios();
         if (usuarios.find(u => String(u.cpf).padStart(11, '0') === cpf)) {
-            return res.status(400).json({ error: 'CPF já cadastrado.' });
+            return res.status(400).json({ error: 'CPF jÃ¡ cadastrado.' });
         }
         const novoUsuario = {
             nomeCompleto,
@@ -1369,14 +1370,18 @@ app.post('/api/register', async (req, res) => {
         usuarios.push(novoUsuario);
         await salvarUsuarios(usuarios);
 
-        // 1️⃣ RESPONDE O JOGADOR IMEDIATAMENTE (Entra na tela sem travar!)
+        // 1ï¸âƒ£ RESPONDE O JOGADOR IMEDIATAMENTE (Entra na tela sem travar!)
         res.json({ success: true, sessionToken: novoUsuario.sessionToken, cpf, nome: nomeCompleto });
         console.log(`[REGISTER] ${nomeCompleto} (${novoUsuario.cpfFormatado}) - Conta criada`);
 
-        // 2️⃣ DISPARA O E-MAIL EM SEGUNDO PLANO
+        // 2ï¸âƒ£ DISPARA O E-MAIL EM SEGUNDO PLANO
         setImmediate(() => {
-            alertarNovoCadastro(nomeCompleto, email).catch(err => {
-                console.error('Erro na fila de execução do e-mail:', err.message);
+            enviarEmailAdmin(
+                'Novo jogador cadastrado',
+                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Nome</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + (nomeCompleto || '') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">E-mail</p><p style="font-size:15px;color:#222;margin:0">' + (email || 'nÃ£o informado') + '</p></div>',
+                'NOVO CADASTRO'
+            ).catch(err => {
+                console.error('Erro na fila de execuÃ§Ã£o do e-mail:', err.message);
             });
         });
 
@@ -1390,11 +1395,11 @@ app.post('/api/login', async (req, res) => {
         console.log('-> Dados recebidos no login:', req.body);
         let { cpf, senha } = req.body;
         if (!cpf || !senha) {
-            return res.status(400).json({ error: 'CPF e senha são obrigatórios.' });
+            return res.status(400).json({ error: 'CPF e senha sÃ£o obrigatÃ³rios.' });
         }
         const cpfNormalizado = normalizeCpf(cpf);
         if (!cpfNormalizado) {
-            return res.status(400).json({ error: 'CPF inválido' });
+            return res.status(400).json({ error: 'CPF invÃ¡lido' });
         }
         cpf = cpfNormalizado;
         console.log('-> CPF limpo para busca:', cpf);
@@ -1416,18 +1421,18 @@ app.post('/api/login', async (req, res) => {
 
 // ===================== APIs =====================
 
-// Validar sessão
+// Validar sessÃ£o
 app.post('/api/validar-sessao', (req, res) => {
     try {
         let { sessionToken, cpf } = req.body;
         if (!sessionToken || !cpf) {
-            return res.status(400).json({ error: 'Sessão inválida.' });
+            return res.status(400).json({ error: 'SessÃ£o invÃ¡lida.' });
         }
         cpf = String(cpf).replace(/\D/g, '').padStart(11, '0');
         const usuarios = carregarUsuarios();
         const user = usuarios.find(u => u.sessionToken === sessionToken && String(u.cpf).padStart(11, '0') === cpf);
         if (!user) {
-            return res.json({ valido: false, error: 'Sessão expirada.' });
+            return res.json({ valido: false, error: 'SessÃ£o expirada.' });
         }
         res.json({ valido: true, cpf: user.cpf, nome: user.nomeCompleto });
     } catch (err) {
@@ -1435,13 +1440,13 @@ app.post('/api/validar-sessao', (req, res) => {
     }
 });
 
-// ===================== AUTENTICAÇÃO DE ADMIN =====================
-// Todas as rotas /api/admin/* exigem o cabeçalho x-admin-token igual a
+// ===================== AUTENTICAÃ‡ÃƒO DE ADMIN =====================
+// Todas as rotas /api/admin/* exigem o cabeÃ§alho x-admin-token igual a
 // process.env.ADMIN_SENHA (definida no painel do Render). Sem isso -> 401.
 function verificarAdmin(req, res, next) {
     const senha = req.headers['x-admin-token'];
     if (!senha || senha !== process.env.ADMIN_SENHA) {
-        return res.status(401).json({ erro: 'Acesso negado: senha mestre inválida.' });
+        return res.status(401).json({ erro: 'Acesso negado: senha mestre invÃ¡lida.' });
     }
     next();
 }
@@ -1456,7 +1461,7 @@ app.get('/api/admin/saques', (req, res) => {
     }
 });
 
-// Admin - Listar transações
+// Admin - Listar transaÃ§Ãµes
 app.get('/api/admin/transacoes', (req, res) => {
     try {
         res.json(db.getTransacoes());
@@ -1477,7 +1482,7 @@ app.get('/api/recargas-pendentes/:nome', (req, res) => {
     }
 });
 
-// Admin - Listar usuários
+// Admin - Listar usuÃ¡rios
 app.get('/api/admin/usuarios', (req, res) => {
     try {
         const usuarios = carregarUsuarios();
@@ -1487,7 +1492,7 @@ app.get('/api/admin/usuarios', (req, res) => {
     }
 });
 
-// Admin - Listar usuários com saldo (para painel de gerenciamento de créditos)
+// Admin - Listar usuÃ¡rios com saldo (para painel de gerenciamento de crÃ©ditos)
 app.get('/api/admin/usuarios-com-saldo', (req, res) => {
     try {
         const bonusGivenStore = db.getBonusGivenStore();
@@ -1542,17 +1547,17 @@ app.get('/api/admin/usuarios-com-saldo', (req, res) => {
 
         res.json(usuariosComSaldo);
     } catch (err) {
-        console.error('[API] Erro ao buscar usuários com saldo:', err);
+        console.error('[API] Erro ao buscar usuÃ¡rios com saldo:', err);
         res.json([]);
     }
 });
 
-// Admin - Dar bônus de fichas para usuário
+// Admin - Dar bÃ´nus de fichas para usuÃ¡rio
 app.post('/api/admin/usuario/bonus', async (req, res) => {
     try {
         const { cpf, nome, bonus } = req.body;
         if ((!cpf && !nome) || !bonus || bonus <= 0) {
-            return res.status(400).json({ error: 'Identificador (CPF ou nome) e bônus válido são obrigatórios.' });
+            return res.status(400).json({ error: 'Identificador (CPF ou nome) e bÃ´nus vÃ¡lido sÃ£o obrigatÃ³rios.' });
         }
         const usuarios = carregarUsuarios();
         const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
@@ -1565,11 +1570,11 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
             usuario = usuariosArray.find(u => (u.nomeCompleto || '').toLowerCase().trim() === key);
         }
         if (!usuario) {
-            return res.status(404).json({ error: 'Usuário não encontrado.' });
+            return res.status(404).json({ error: 'UsuÃ¡rio nÃ£o encontrado.' });
         }
 
         if (usuario.isBot) {
-            return res.status(400).json({ error: 'Não é possível conceder bônus a bots.' });
+            return res.status(400).json({ error: 'NÃ£o Ã© possÃ­vel conceder bÃ´nus a bots.' });
         }
 
         const key = usuario.nomeCompleto.toLowerCase().trim();
@@ -1580,12 +1585,12 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
         fichasStore[key].chips += parseInt(bonus);
         await db.setFichasStore(fichasStore);
 
-        // Track bonus given separately (not sacável em modo normal)
+        // Track bonus given separately (not sacÃ¡vel em modo normal)
         const bonusGivenStore = db.getBonusGivenStore();
         bonusGivenStore[key] = (bonusGivenStore[key] || 0) + parseInt(bonus);
         await db.setBonusGivenStore(bonusGivenStore);
 
-        // Sincroniza jogador conectado na sala para que possa gastar o bônus em cartelas
+        // Sincroniza jogador conectado na sala para que possa gastar o bÃ´nus em cartelas
         gameRooms.forEach(room => {
             const player = Array.from(room.players.values()).find(p =>
                 !p.isBot && (p.name || '').toLowerCase().trim() === key
@@ -1609,17 +1614,17 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
 
         res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips, emailEnviado: !!usuario.email, emailUsuario: usuario.email || null });
     } catch (err) {
-        console.error('[API] Erro ao conceder bônus:', err);
+        console.error('[API] Erro ao conceder bÃ´nus:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
 });
 
-// Admin - Retirar (remover) bônus de fichas do usuário
+// Admin - Retirar (remover) bÃ´nus de fichas do usuÃ¡rio
 app.post('/api/admin/usuario/remover-bonus', async (req, res) => {
     try {
         const { cpf, nome, bonus } = req.body;
         if ((!cpf && !nome) || !bonus || bonus <= 0) {
-            return res.status(400).json({ error: 'Identificador (CPF ou nome) e bônus válido são obrigatórios.' });
+            return res.status(400).json({ error: 'Identificador (CPF ou nome) e bÃ´nus vÃ¡lido sÃ£o obrigatÃ³rios.' });
         }
         const usuarios = carregarUsuarios();
         const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
@@ -1632,7 +1637,7 @@ app.post('/api/admin/usuario/remover-bonus', async (req, res) => {
             usuario = usuariosArray.find(u => (u.nomeCompleto || '').toLowerCase().trim() === key);
         }
         if (!usuario) {
-            return res.status(404).json({ error: 'Usuário não encontrado.' });
+            return res.status(404).json({ error: 'UsuÃ¡rio nÃ£o encontrado.' });
         }
 
         const key = usuario.nomeCompleto.toLowerCase().trim();
@@ -1644,7 +1649,7 @@ app.post('/api/admin/usuario/remover-bonus', async (req, res) => {
         bonusGivenStore[key] = atual - remover;
         await db.setBonusGivenStore(bonusGivenStore);
 
-        // Reflete a remoção também no saldo total (chips)
+        // Reflete a remoÃ§Ã£o tambÃ©m no saldo total (chips)
         fichasStore[key].chips = Math.max(0, fichasStore[key].chips - remover);
         await db.setFichasStore(fichasStore);
 
@@ -1663,15 +1668,15 @@ app.post('/api/admin/usuario/remover-bonus', async (req, res) => {
             }
         });
 
-        console.log(`[BONUS] Removido ${remover} fichas de bônus de ${usuario.nomeCompleto} via painel admin`);
+        console.log(`[BONUS] Removido ${remover} fichas de bÃ´nus de ${usuario.nomeCompleto} via painel admin`);
         res.json({ success: true, bonusRemovido: remover, bonusRestante: bonusGivenStore[key], novoSaldo: fichasStore[key].chips });
     } catch (err) {
-        console.error('[API] Erro ao remover bônus:', err);
+        console.error('[API] Erro ao remover bÃ´nus:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
 });
 
-// Buscar fichas do usuário (para sincronização com servidor)
+// Buscar fichas do usuÃ¡rio (para sincronizaÃ§Ã£o com servidor)
 app.get('/api/fichas/:cpf', (req, res) => {
     try {
         const cpf = String(req.params.cpf).replace(/\D/g, '').padStart(11, '0');
@@ -1690,7 +1695,7 @@ app.get('/api/fichas/:cpf', (req, res) => {
     }
 });
 
-// Admin - Listar usuários com bônus já concedidos
+// Admin - Listar usuÃ¡rios com bÃ´nus jÃ¡ concedidos
 app.get('/api/admin/usuarios-com-bonus', (req, res) => {
     try {
         const bonusGiven = db.getBonusGivenStore();
@@ -1700,7 +1705,7 @@ app.get('/api/admin/usuarios-com-bonus', (req, res) => {
     }
 });
 
-// Admin - Editar senha ou chave PIX (versão simples)
+// Admin - Editar senha ou chave PIX (versÃ£o simples)
 app.post('/api/admin/usuarios/:cpf/edicao', async (req, res) => {
     try {
         const { cpf } = req.params;
@@ -1711,7 +1716,7 @@ app.post('/api/admin/usuarios/:cpf/edicao', async (req, res) => {
         
         const usuario = usuariosArray.find(u => String(u.cpf).padStart(11, '0') === String(cpf).replace(/\D/g, '').padStart(11, '0'));
         if (!usuario) {
-            return res.status(404).json({ error: 'Usuário não encontrado.' });
+            return res.status(404).json({ error: 'UsuÃ¡rio nÃ£o encontrado.' });
         }
         
         if (campo === 'senha') {
@@ -1731,12 +1736,12 @@ app.post('/api/admin/usuarios/:cpf/edicao', async (req, res) => {
     }
 });
 
-// Admin - Excluir usuário completamente (todos os dados)
+// Admin - Excluir usuÃ¡rio completamente (todos os dados)
 app.delete('/api/admin/usuario/excluir', async (req, res) => {
     try {
         const { cpf } = req.body;
         if (!cpf) {
-            return res.status(400).json({ error: 'CPF é obrigatório.' });
+            return res.status(400).json({ error: 'CPF Ã© obrigatÃ³rio.' });
         }
         const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
 
@@ -1744,7 +1749,7 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
         const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
         const usuarioIdx = usuariosArray.findIndex(u => String(u.cpf).padStart(11, '0') === cpfLimpo);
         if (usuarioIdx === -1) {
-            return res.status(404).json({ error: 'Usuário não encontrado.' });
+            return res.status(404).json({ error: 'UsuÃ¡rio nÃ£o encontrado.' });
         }
         const nomeUsuario = usuariosArray[usuarioIdx].nomeCompleto;
         usuariosArray.splice(usuarioIdx, 1);
@@ -1774,7 +1779,7 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
         const recargasFiltradas = recargas.filter(r => (r.nome || '').toLowerCase().trim() !== keyNome);
         await db.setRecargas(recargasFiltradas);
 
-        // Forçar logout do jogador deletado (se estiver conectado)
+        // ForÃ§ar logout do jogador deletado (se estiver conectado)
         try {
             // Tentar via sessoesAtivas (jogador autenticado por CPF)
             let desconectado = false;
@@ -1783,14 +1788,14 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
                 try {
                     sessao.ws.send(JSON.stringify({
                         type: 'accountDeleted',
-                        message: `Sua conta "${nomeUsuario}" foi removida pelo administrador. Você será desconectado.`
+                        message: `Sua conta "${nomeUsuario}" foi removida pelo administrador. VocÃª serÃ¡ desconectado.`
                     }));
                 } catch (e) {}
                 try { sessao.ws.close(); } catch (e) {}
                 desconectado = true;
             }
 
-            // Se não encontrou via sessoesAtivas, buscar nas rooms ativas (jogador na sala sem auth separado)
+            // Se nÃ£o encontrou via sessoesAtivas, buscar nas rooms ativas (jogador na sala sem auth separado)
             if (!desconectado) {
                 const keyNome = (nomeUsuario || '').toLowerCase().trim();
                 for (const room of gameRooms) {
@@ -1799,7 +1804,7 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
                             if (ws.nome && ws.nome.toLowerCase().trim() === keyNome && ws.readyState === WebSocket.OPEN) {
                                 ws.send(JSON.stringify({
                                     type: 'accountDeleted',
-                                    message: `Sua conta "${nomeUsuario}" foi removida pelo administrador. Você será desconectado.`
+                                    message: `Sua conta "${nomeUsuario}" foi removida pelo administrador. VocÃª serÃ¡ desconectado.`
                                 }));
                                 try { ws.close(); } catch (e) {}
                                 console.log(`[ADMIN EXCLUIR] Jogador "${nomeUsuario}" desconectado via room.`);
@@ -1814,15 +1819,15 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
 
             if (sessao) sessoesAtivas.delete(cpfLimpo);
         } catch (e) {
-            console.error('[ADMIN EXCLUIR] Erro ao forçar logout:', e.message);
+            console.error('[ADMIN EXCLUIR] Erro ao forÃ§ar logout:', e.message);
         }
 
-        console.log(`[ADMIN EXCLUIR] Usuário "${nomeUsuario}" (CPF: ${cpfLimpo}) excluído completamente com todos os dados`);
+        console.log(`[ADMIN EXCLUIR] UsuÃ¡rio "${nomeUsuario}" (CPF: ${cpfLimpo}) excluÃ­do completamente com todos os dados`);
 
-        res.json({ success: true, message: `Usuário "${nomeUsuario}" excluído com sucesso. Todos os dados foram removidos.` });
+        res.json({ success: true, message: `UsuÃ¡rio "${nomeUsuario}" excluÃ­do com sucesso. Todos os dados foram removidos.` });
     } catch (err) {
         console.error('[ADMIN EXCLUIR] Erro:', err);
-        res.status(500).json({ error: 'Erro interno ao excluir usuário.' });
+        res.status(500).json({ error: 'Erro interno ao excluir usuÃ¡rio.' });
     }
 });
 
@@ -1839,7 +1844,7 @@ app.post('/api/admin/enviar-pix', async (req, res) => {
         let asaasTransferId = null;
         if (chavePix && valor > 0) {
             if (!ASAAS_API_KEY) {
-                console.log('[ASAAS] AVISO: ASAAS_API_KEY não definida no painel do Render. PIX automático não enviado.');
+                console.log('[ASAAS] AVISO: ASAAS_API_KEY nÃ£o definida no painel do Render. PIX automÃ¡tico nÃ£o enviado.');
             } else {
                 try {
                     const pixKeyTypeMap = { 'cpf': 'CPF', 'email': 'EMAIL', 'telefone': 'PHONE', 'aleatoria': 'RANDOM' };
@@ -1895,7 +1900,7 @@ app.post('/api/admin/saque-pago', async (req, res) => {
         
         const saqueIndex = saques.findIndex(s => String(s.id) === String(saqueId));
         if (saqueIndex === -1) {
-            return res.status(404).json({ error: 'Saque não encontrado.' });
+            return res.status(404).json({ error: 'Saque nÃ£o encontrado.' });
         }
         
         saques[saqueIndex].status = 'pago';
@@ -1908,7 +1913,7 @@ app.post('/api/admin/saque-pago', async (req, res) => {
     }
 });
 
-// Wrapper para capturar erros de async handlers (Express 4 não pega automaticamente)
+// Wrapper para capturar erros de async handlers (Express 4 nÃ£o pega automaticamente)
 const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, next)).catch(err => {
     console.error('[ERRO] Async handler:', err.message);
     res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -1919,23 +1924,23 @@ app.post('/api/solicitar-saque', async (req, res) => {
     const { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
     console.log('[SAQUE DEBUG] Recebido:', { nome, valor, chavePix, tipoChave, hasToken: !!sessionToken });
     if (!nome || !valor || !chavePix) {
-        return res.status(400).json({ error: 'Parâmetros incompletos.' });
+        return res.status(400).json({ error: 'ParÃ¢metros incompletos.' });
     }
     const valorValidado = validarValorSaque(valor);
     if (valorValidado === null) {
-        return res.status(400).json({ error: 'Valor de saque inválido' });
+        return res.status(400).json({ error: 'Valor de saque invÃ¡lido' });
     }
     valor = valorValidado;
     if (sessionToken) {
         const usuarios = carregarUsuarios();
         const user = usuarios.find(u => u.sessionToken === sessionToken && u.nomeCompleto === nome);
-        console.log('[SAQUE DEBUG] user match:', user ? user.nomeCompleto : 'NÃO ENCONTRADO');
+        console.log('[SAQUE DEBUG] user match:', user ? user.nomeCompleto : 'NÃƒO ENCONTRADO');
         if (!user) {
-            return res.status(401).json({ error: 'Sessão inválida. Faça login novamente.' });
+            return res.status(401).json({ error: 'SessÃ£o invÃ¡lida. FaÃ§a login novamente.' });
         }
     }
     if (valor < 10) {
-        return res.status(400).json({ error: 'Valor mínimo para saque: R$ 10,00.' });
+        return res.status(400).json({ error: 'Valor mÃ­nimo para saque: R$ 10,00.' });
     }
 
         const fichasNecessarias = valor * 1000;
@@ -1988,9 +1993,10 @@ app.post('/api/solicitar-saque', async (req, res) => {
 
         // Notifica admin por email
         const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-        await enviarEmailNotificacao(
-            `💸 Novo Saque Solicitado - R$ ${valor.toFixed(2)}`,
-            `Jogador: ${nome}\nValor: R$ ${valor.toFixed(2)}\nChave PIX: ${chavePix} (${tipoChave || 'cpf'})\nData: ${hora}`
+        await enviarEmailAdmin(
+            'Novo saque solicitado',
+            '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + nome + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + valor.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Chave PIX</p><p style="font-size:14px;color:#222;margin:0">' + chavePix + ' (' + (tipoChave || 'cpf') + ')</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Data</p><p style="font-size:14px;color:#222;margin:0">' + hora + '</p></div>',
+            'SAQUE'
         );
 
         // Sincroniza com o jogador na sala (se estiver conectado) + broadcast
@@ -2027,8 +2033,8 @@ app.post('/api/solicitar-saque', async (req, res) => {
 app.post('/api/admin/testar-email', async (req, res) => {
     try {
         await enviarEmailNotificacao(
-            '🔧 Teste de Email - Bingo Master Pro',
-            `Este é um email de teste.\n\nSe você está recebendo esta mensagem, a configuração de email está funcionando corretamente!\n\nData: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`
+            'ðŸ”§ Teste de Email - Bingo Master Pro',
+            `Este Ã© um email de teste.\n\nSe vocÃª estÃ¡ recebendo esta mensagem, a configuraÃ§Ã£o de email estÃ¡ funcionando corretamente!\n\nData: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`
         );
         res.json({ success: true, message: 'Email de teste enviado para ' + ADMIN_EMAIL });
     } catch (err) {
@@ -2039,7 +2045,7 @@ app.post('/api/admin/testar-email', async (req, res) => {
 app.get('/api/admin/testar-asaas', async (req, res) => {
     try {
         if (!ASAAS_API_KEY) {
-            return res.json({ success: false, message: 'ASAAS_API_KEY não configurada nas variáveis de ambiente do Render.' });
+            return res.json({ success: false, message: 'ASAAS_API_KEY nÃ£o configurada nas variÃ¡veis de ambiente do Render.' });
         }
         const search = await asaasRequest('GET', '/finance/balance');
         if (search && search.balance !== undefined) {
@@ -2156,11 +2162,11 @@ async function findOrCreateAsaasCustomer(nome, cpf, email) {
         asaasCustomerCache.set(cpf, customer.id);
         return customer.id;
     }
-    throw new Error('Asaas não retornou id do cliente: ' + JSON.stringify(customer));
+    throw new Error('Asaas nÃ£o retornou id do cliente: ' + JSON.stringify(customer));
 }
 
 // Deposito - Criar PIX
-// Registra o mapeamento paymentId -> jogador para o webhook do Asaas confirmar o depósito
+// Registra o mapeamento paymentId -> jogador para o webhook do Asaas confirmar o depÃ³sito
 function registrarRecargaPendente(nome, cpf, valor, paymentId) {
     try {
         const recargas = db.getRecargas();
@@ -2183,7 +2189,7 @@ app.post('/api/criar-pix', async (req, res) => {
     try {
         const { valor, nome, cpf, email } = req.body;
         if (!valor || valor < 0.50) {
-            return res.status(400).json({ error: 'Valor mínimo: R$0,50' });
+            return res.status(400).json({ error: 'Valor mÃ­nimo: R$0,50' });
         }
         if (!ASAAS_API_KEY) {
             const paymentId = 'sim_' + Date.now();
@@ -2211,7 +2217,7 @@ app.post('/api/criar-pix', async (req, res) => {
             billingType: 'PIX',
             value: valor,
             dueDate,
-            description: `Depósito BINGO - ${nome}`
+            description: `DepÃ³sito BINGO - ${nome}`
         });
 
         if (payment && payment.id) {
@@ -2229,9 +2235,11 @@ app.post('/api/criar-pix', async (req, res) => {
             }
             // Notifica o admin de que um jogador gerou um PIX
             try {
-                await enviarEmailNotificacao(
-                    `📥 Novo PIX gerado - R$ ${valor.toFixed(2)}`,
-                    `Jogador: ${nome}\nValor: R$ ${valor.toFixed(2)}\nCPF: ${cpfLimpo}\nEmail: ${email || 'não informado'}\nData: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`
+                const horaPix = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+                await enviarEmailAdmin(
+                    'Novo PIX gerado',
+                    '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + nome + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + valor.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">CPF</p><p style="font-size:14px;color:#222;margin:0">' + cpfLimpo + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Email</p><p style="font-size:14px;color:#222;margin:0">' + (email || 'nÃ£o informado') + '</p></div>',
+                    'NOVO PIX'
                 );
             } catch (e) {
                 console.error('[EMAIL] Falha ao notificar PIX gerado:', e.message);
@@ -2283,12 +2291,12 @@ app.get('/api/status-pix/:paymentId', async (req, res) => {
     }
 });
 
-// Confirmar recarga (após PIX aprovado)
-// Lógica compartilhada de confirmação de recarga (usada pelo frontend e pelo webhook Asaas)
+// Confirmar recarga (apÃ³s PIX aprovado)
+// LÃ³gica compartilhada de confirmaÃ§Ã£o de recarga (usada pelo frontend e pelo webhook Asaas)
 async function processarConfirmacaoRecarga(nome, valor, paymentId) {
     const fichas = Math.round(valor * 1000);
 
-    // Idempotência: evita creditar 2x (webhook + polling do frontend)
+    // IdempotÃªncia: evita creditar 2x (webhook + polling do frontend)
     if (paymentId) {
         const recargas = db.getRecargas();
         const recarga = recargas.find(r => r.paymentId === paymentId);
@@ -2297,7 +2305,7 @@ async function processarConfirmacaoRecarga(nome, valor, paymentId) {
         }
     }
 
-    // Bônus de 10% apenas no primeiro depósito (uma vez por usuário)
+    // BÃ´nus de 10% apenas no primeiro depÃ³sito (uma vez por usuÃ¡rio)
     const bonusStore = db.getBonusPrimeiroDeposito();
     const keyNome = (nome || '').toLowerCase().trim();
     const jaTemBonus = !!bonusStore[keyNome];
@@ -2308,7 +2316,7 @@ async function processarConfirmacaoRecarga(nome, valor, paymentId) {
     const c = getChips(nome);
     await setChips(nome, c.chips + totalFichas, c.winnings);
 
-    // Marcar que este usuário já recebeu bônus de primeiro depósito
+    // Marcar que este usuÃ¡rio jÃ¡ recebeu bÃ´nus de primeiro depÃ³sito
     if (!jaTemBonus) {
         await db.setBonusPrimeiroDepositoJaUsado(nome);
     }
@@ -2333,11 +2341,21 @@ async function processarConfirmacaoRecarga(nome, valor, paymentId) {
         id: Date.now() + Math.floor(Math.random() * 1000),
         tipo: 'deposito', nome, nomeExibicao: nome, valor,
         data: new Date().toISOString(),
-        detalhe: paymentId ? `PIX: ${paymentId}` : 'Depósito manual'
+        detalhe: paymentId ? `PIX: ${paymentId}` : 'DepÃ³sito manual'
     });
     await db.setTransacoes(transacoes);
 
-    // Marca a recarga como sincronizada (impede duplo crédito)
+    // Notifica o admin de depÃ³sito confirmado
+    try {
+        const horaDep = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        await enviarEmailAdmin(
+            'DepÃ³sito confirmado',
+            '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + nome + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor depositado</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + valor.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Data</p><p style="font-size:14px;color:#222;margin:0">' + horaDep + '</p></div>',
+            'DEPÃ“SITO'
+        );
+    } catch (e) { console.error('[EMAIL] Falha ao notificar depÃ³sito:', e.message); }
+
+    // Marca a recarga como sincronizada (impede duplo crÃ©dito)
     if (paymentId) {
         const recargas = db.getRecargas();
         const recarga = recargas.find(r => r.paymentId === paymentId);
@@ -2384,7 +2402,7 @@ app.post('/api/registrar-premio', async (req, res) => {
             id: Date.now() + Math.floor(Math.random() * 1000),
             tipo: 'premio', nome, nomeExibicao: nome, valor,
             data: new Date().toISOString(),
-            detalhe: `Prêmio ${fase || ''}`
+            detalhe: `PrÃªmio ${fase || ''}`
         });
         await db.setTransacoes(transacoes);
         res.json({ success: true });
@@ -2396,7 +2414,7 @@ app.post('/api/registrar-premio', async (req, res) => {
 app.post('/api/sincronizar-recarga', async (req, res) => {
     try {
         const { paymentId } = req.body;
-        if (!paymentId) return res.status(400).json({ error: 'paymentId obrigatório' });
+        if (!paymentId) return res.status(400).json({ error: 'paymentId obrigatÃ³rio' });
         const recargas = db.getRecargas();
         const recarga = recargas.find(r => r.paymentId === paymentId);
         if (recarga) recarga.sincronizado = true;
@@ -2411,7 +2429,7 @@ app.post('/api/salvar-historico', async (req, res) => {
     try {
         const dados = req.body;
         if (!dados || !dados.numero) {
-            return res.status(400).json({ error: 'Dados inválidos.' });
+            return res.status(400).json({ error: 'Dados invÃ¡lidos.' });
         }
         const historico = carregarHistorico();
         const existente = historico.findIndex(h => h.numero === dados.numero);
@@ -2423,11 +2441,11 @@ app.post('/api/salvar-historico', async (req, res) => {
         await db.setHistorico(historico);
         res.json({ success: true });
     } catch (err) {
-        res.status(500).json({ error: 'Erro ao salvar histórico.' });
+        res.status(500).json({ error: 'Erro ao salvar histÃ³rico.' });
     }
 });
 
-// ===================== HALL DA FAMA (histórico de ranking) =====================
+// ===================== HALL DA FAMA (histÃ³rico de ranking) =====================
 app.get('/api/hall-da-fama', (req, res) => {
     try {
         const limite = Math.min(Math.max(parseInt(req.query.limite) || 20, 1), 50);
@@ -2465,7 +2483,7 @@ app.get('/api/meus-saques', (req, res) => {
         const usuarios = db.getUsuarios();
         const user = usuarios.find(u => u.sessionToken === token);
         if (!user) {
-            return res.status(401).json({ error: 'Não autorizado.' });
+            return res.status(401).json({ error: 'NÃ£o autorizado.' });
         }
         const nomeLower = (user.nomeCompleto || '').toLowerCase().trim();
         const saques = db.getSaques()
@@ -2484,14 +2502,14 @@ app.get('/api/meus-saques', (req, res) => {
     }
 });
 
-// ===================== ESTATÍSTICAS DO JOGADOR =====================
+// ===================== ESTATÃSTICAS DO JOGADOR =====================
 app.get('/api/minhas-estatisticas', (req, res) => {
     try {
         const token = req.headers['x-session-token'];
         const usuarios = db.getUsuarios();
         const user = usuarios.find(u => u.sessionToken === token);
         if (!user) {
-            return res.status(401).json({ error: 'Não autorizado.' });
+            return res.status(401).json({ error: 'NÃ£o autorizado.' });
         }
         const nomeLower = (user.nomeCompleto || '').toLowerCase().trim();
         const historico = db.getHistorico();
@@ -2519,11 +2537,11 @@ app.get('/api/minhas-estatisticas', (req, res) => {
             saldo: { chips: fichas.chips || 0, winnings: fichas.winnings || 0 }
         });
     } catch (err) {
-        res.status(500).json({ error: 'Erro ao carregar estatísticas.' });
+        res.status(500).json({ error: 'Erro ao carregar estatÃ­sticas.' });
     }
 });
 
-// ===================== ANTI-FRAUDE: USUÁRIOS SUSPEITOS =====================
+// ===================== ANTI-FRAUDE: USUÃRIOS SUSPEITOS =====================
 app.get('/api/admin/usuarios-suspeitos', (req, res) => {
     try {
         const usuarios = db.getUsuarios();
@@ -2545,7 +2563,7 @@ app.get('/api/admin/usuarios-suspeitos', (req, res) => {
             .map(fp => ({ fingerprint: fp, contas: gruposMap[fp] }));
         res.json({ success: true, grupos });
     } catch (err) {
-        res.status(500).json({ error: 'Erro ao carregar usuários suspeitos.' });
+        res.status(500).json({ error: 'Erro ao carregar usuÃ¡rios suspeitos.' });
     }
 });
 
@@ -2557,14 +2575,14 @@ app.post('/api/asaas/webhook', express.json({ type: 'application/json' }), (req,
             const h = req.headers || {};
             const provided = String(h['asaas-access-token'] || h['authorization'] || (req.query && req.query.token) || '')
                 .replace(/^Bearer\s+/i, '').trim();
-            // Só rejeita se um token foi enviado E está errado.
+            // SÃ³ rejeita se um token foi enviado E estÃ¡ errado.
             // Permite webhooks sem header de token (ex.: Asaas nem sempre envia o authToken),
-            // já que a confirmação só ocorre se o paymentId existir no nosso mapeamento.
+            // jÃ¡ que a confirmaÃ§Ã£o sÃ³ ocorre se o paymentId existir no nosso mapeamento.
             if (provided && provided !== webhookToken) {
-                console.warn('[ASAAS WEBHOOK] Token de ativação inválido. Rejeitando.');
+                console.warn('[ASAAS WEBHOOK] Token de ativaÃ§Ã£o invÃ¡lido. Rejeitando.');
                 return res.sendStatus(401);
             }
-            if (provided) console.log('[ASAAS WEBHOOK] Token de ativação validado com sucesso.');
+            if (provided) console.log('[ASAAS WEBHOOK] Token de ativaÃ§Ã£o validado com sucesso.');
         }
 
         const event = req.body;
@@ -2582,10 +2600,10 @@ app.post('/api/asaas/webhook', express.json({ type: 'application/json' }), (req,
             const recarga = recargas.find(r => r.paymentId === paymentId);
             if (recarga && !recarga.sincronizado) {
                 processarConfirmacaoRecarga(recarga.nome, recarga.valor, paymentId)
-                    .then(r => console.log('[ASAAS WEBHOOK] Depósito confirmado via webhook:', recarga.nome, r))
+                    .then(r => console.log('[ASAAS WEBHOOK] DepÃ³sito confirmado via webhook:', recarga.nome, r))
                     .catch(e => console.error('[ASAAS WEBHOOK] Erro ao confirmar:', e.message));
             } else if (!recarga) {
-                console.log('[ASAAS WEBHOOK] paymentId não encontrado no mapeamento:', paymentId);
+                console.log('[ASAAS WEBHOOK] paymentId nÃ£o encontrado no mapeamento:', paymentId);
             }
         }
         res.sendStatus(200);
@@ -2601,7 +2619,7 @@ app.get('/api/asaas/webhook-url', (req, res) => {
 });
 
 app.get('/unsubscribe', (req, res) => {
-    res.send('<html><body style="font-family:Arial,sans-serif;text-align:center;padding:60px;color:#333"><h2 style="color:#10b981">Inscrição cancelada</h2><p>Você não receberá mais emails do BingoVipClub.</p><p><a href="' + (SITE_URL) + '" style="color:#10b981">Voltar ao site</a></p></body></html>');
+    res.send('<html><body style="font-family:Arial,sans-serif;text-align:center;padding:60px;color:#333"><h2 style="color:#10b981">InscriÃ§Ã£o cancelada</h2><p>VocÃª nÃ£o receberÃ¡ mais emails do BingoVipClub.</p><p><a href="' + (SITE_URL) + '" style="color:#10b981">Voltar ao site</a></p></body></html>');
 });
 
 const LOGO_PATH = path.join(__dirname, 'bingo1.jpeg');
