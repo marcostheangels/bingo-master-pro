@@ -465,7 +465,7 @@ function iniciarAutoStartServer(room) {
     pararAutoStartServer(room);
     if (room.gameActive || room.gameEnded) return;
     broadcast(room, { type: 'preparingNewRound', seconds: 50 });
-    addLog(room, 'â³ Novo sorteio em 50 segundos. Compre suas cartelas!');
+    addLog(room, '⏳ Novo sorteio em 50 segundos. Compre suas cartelas!');
     room.autoStartSeconds = 60;
     console.log(`[AUTOSTART] Iniciando contagem de ${room.autoStartSeconds}s para sala ${room.id}`);
     room.autoStartTimer = setInterval(() => {
@@ -517,8 +517,8 @@ function iniciarNovaRodada(room) {
     
     saveRoomSnapshot(room);
     sendGameState(room);
-    addLog(room, `ðŸŽ¯ Rodada #${room.currentRound} iniciada!`);
-    broadcast(room, { type: 'notice', text: 'ðŸŽ¯ Nova rodada iniciada!', kind: 'success' });
+    addLog(room, `🎯 Rodada #${room.currentRound} iniciada!`);
+    broadcast(room, { type: 'notice', text: '🎯 Nova rodada iniciada!', kind: 'success' });
     const playersArr2 = Array.from(room.players.values());
     const closeInfo = engine.computeCloseCardsForAllPlayers(playersArr2, room.currentPhaseIndex, room.drawnBalls);
     broadcast(room, { type: 'closeCards', data: closeInfo });
@@ -743,7 +743,7 @@ async function salvarHistoricoSorteio(room) {
     const historico = db.getHistorico();
     historico.push(dados);
     await db.setHistorico(historico);
-    addLog(room, `ðŸ“‹ Sorteio #${room.currentRound} salvo no histórico.`);
+    addLog(room, `📋 Sorteio #${room.currentRound} salvo no histórico.`);
 }
 
 async function finalizarRodada(room) {
@@ -755,8 +755,8 @@ async function finalizarRodada(room) {
     
     await salvarHistoricoSorteio(room);
     sendGameState(room);
-    addLog(room, 'ðŸ Rodada encerrada!');
-    broadcast(room, { type: 'notice', text: 'ðŸ Rodada encerrada! Cartelas serão limpas...', kind: 'info' });
+    addLog(room, '🏁 Rodada encerrada!');
+    broadcast(room, { type: 'notice', text: '🏁 Rodada encerrada! Cartelas serão limpas...', kind: 'info' });
     
     // After 10s, clear cards and restart auto-start
     setTimeout(async () => {
@@ -775,8 +775,8 @@ async function finalizarRodada(room) {
         room.gameEnded = false;
         cleanUpBots(room);
         broadcast(room, { type: 'resetGame', players: sanitizePlayers(room), drawnBalls: [], currentPhaseIndex: 0, gameActive: false, gameEnded: false, totalCardsAtStart: 0 });
-        addLog(room, 'ðŸ”„ Cartelas limpas. Novo sorteio em breve!');
-        broadcast(room, { type: 'notice', text: 'ðŸ”„ Compre suas cartelas! Novo sorteio em 2 minutos.', kind: 'info' });
+        addLog(room, '🔄 Cartelas limpas. Novo sorteio em breve!');
+        broadcast(room, { type: 'notice', text: '🔄 Compre suas cartelas! Novo sorteio em 2 minutos.', kind: 'info' });
         saveRoomSnapshot(room);
         // Auto-start after 30 seconds
         setTimeout(() => iniciarAutoStartServer(room), 30000);
@@ -2038,7 +2038,7 @@ app.post('/api/solicitar-saque', async (req, res) => {
 app.post('/api/admin/testar-email', async (req, res) => {
     try {
         await enviarEmailNotificacao(
-            'ðŸ”§ Teste de Email - Bingo Master Pro',
+            '🔧 Teste de Email - Bingo Master Pro',
             `Este é um email de teste.\n\nSe você está recebendo esta mensagem, a configuração de email está funcionando corretamente!\n\nData: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`
         );
         res.json({ success: true, message: 'Email de teste enviado para ' + ADMIN_EMAIL });
