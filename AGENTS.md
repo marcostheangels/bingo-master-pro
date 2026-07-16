@@ -13,3 +13,11 @@
 
 ## Verificacao
 - Validar sintaxe JS antes do deploy: `node -c server.js`
+
+## Agentes de automacao (pasta agents/)
+Rodar via: `npm run agent <nome>` ou `node agents/index.js <nome>`
+- `deploy`     -> deploy completo (valida server.js, Firebase, git commit + push)
+- `diagnostico`-> checa integridade dos JSON e do game-logic
+- `creditos`   -> consolida/sincroniza fichas e creditos admin dos jogadores
+- `backup`     -> copia os dados JSON para backups/<timestamp>
+- `list`       -> lista os agentes disponiveis

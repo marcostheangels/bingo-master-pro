@@ -1245,6 +1245,7 @@ function excluirUsuarioAdmin(cpf, nome) {
 
     msgEl.innerHTML = 'Tem certeza que deseja <b style="color:#ef4444">EXCLUIR COMPLETAMENTE</b> o jogador "' + (nome || '') + '"?<br><span style="font-size:12px;color:#94a3b8">Isso apaga cadastro, saldo, saques, transações e histórico.</span>';
     overlay.style.display = 'flex';
+    overlay.onclick = (e) => { if (e.target === overlay) fechar(); };
     btnExcluir.disabled = false;
     btnExcluir.textContent = '🗑️ Excluir';
 
@@ -1259,18 +1260,10 @@ function excluirUsuarioAdmin(cpf, nome) {
             try { carregarUsuariosParaExclusao(); } catch (e) {}
         };
 
-        const timeoutId = setTimeout(() => {
-            showToast('Exclusão demorando... a tela foi liberada. Se não atualizar, recarregue a página.', 'warning', 6000);
-            fechar();
-            btnExcluir.disabled = false;
-            btnCancel.disabled = false;
-        }, 15000);
-
         let resolvido = false;
         const finalizar = (sucesso, msg) => {
             if (resolvido) return;
             resolvido = true;
-            clearTimeout(timeoutId);
             fechar();
             btnExcluir.disabled = false;
             btnCancel.disabled = false;
@@ -1278,21 +1271,32 @@ function excluirUsuarioAdmin(cpf, nome) {
             if (sucesso) safeReload();
         };
 
+        const controller = new AbortController();
+        const fetchTimeout = setTimeout(() => controller.abort(), 12000);
+
         adminFetch(API_BASE + '/api/admin/usuario/excluir', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cpf })
+            body: JSON.stringify({ cpf }),
+            signal: controller.signal
         })
-        .then(r => r.json().then(j => ({ ok: r.ok, j })).catch(() => ({ ok: r.ok, j: null })))
-        .then(({ ok, j }) => {
-            if (ok && j && j.success) {
+        .then(async (r) => {
+            clearTimeout(fetchTimeout);
+            let j = null;
+            try { j = await r.json(); } catch (e) { j = null; }
+            if (r.ok && j && j.success) {
                 finalizar(true, `✅ Usuário "${nome}" excluído com sucesso!`);
             } else {
-                finalizar(false, 'Erro: ' + ((j && j.error) || 'Falha ao excluir (HTTP ' + (ok ? 'desconhecido' : 'sem resposta') + ')'));
+                finalizar(false, 'Erro: ' + ((j && j.error) || 'Falha ao excluir (HTTP ' + (r.ok ? 'desconhecido' : 'sem resposta') + ')'));
             }
         })
-        .catch(err => {
-            finalizar(false, 'Erro de conexão: ' + (err && err.message ? err.message : err));
+        .catch((err) => {
+            clearTimeout(fetchTimeout);
+            if (err && err.name === 'AbortError') {
+                finalizar(false, 'A operação demorou muito (timeout). Tente novamente.');
+            } else {
+                finalizar(false, 'Erro de conexão: ' + (err && err.message ? err.message : err));
+            }
         });
     };
 
@@ -1590,6 +1594,10 @@ function confirmarExclusaoJogador() {
     }
     const cpf = select.value;
     const selectedOption = select.options[select.selectedIndex];
+    if (!selectedOption) {
+        showToast('Selecione um jogador válido para excluir.', 'warning', 3500);
+        return;
+    }
     const nome = selectedOption.dataset.nome || '';
 
     // Reusa a função existente com fluxo completo de confirmação
