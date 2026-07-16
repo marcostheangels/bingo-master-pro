@@ -165,22 +165,8 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     const assunto = 'Seu bônus de R$ ' + valorFmt + ' chegou, ' + nomeUsuario + '!';
 
     let enviado = false;
-    if (transporter) {
-        try {
-            const info = await transporter.sendMail({
-                from: '"BingoVipClub" <' + SMTP_USER + '>',
-                to: emailLimpo,
-                subject: assunto,
-                html: htmlJogador,
-                headers: { 'List-Unsubscribe': '<' + unsubscribeUrl + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
-            });
-            enviado = true;
-            console.log('[EMAIL] Enviado via SMTP (Gmail)! ID:', info.messageId);
-        } catch (e) { console.error('[EMAIL] SMTP falhou, tentando alternativas:', e.message); }
-    }
-    if (!enviado && SENDGRID_API_KEY) {
-        enviado = await enviarEmailSendGrid(emailLimpo, assunto, htmlJogador, unsubscribeUrl);
-    }
+
+    // 1) Resend em primeiro lugar (canal comprovado funcionando em produção)
     if (!enviado && RESEND_API_KEY) {
         try {
             const res = await fetch('https://api.resend.com/emails', {
@@ -197,8 +183,31 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
             if (res.ok) {
                 enviado = true;
                 console.log('[EMAIL] Enviado via Resend para', emailLimpo);
+            } else {
+                const txt = await res.text();
+                console.error('[EMAIL] Resend retornou', res.status, txt.slice(0, 200));
             }
         } catch (e) { console.error('[EMAIL] Resend falhou:', e.message); }
+    }
+
+    // 2) SendGrid como alternativa
+    if (!enviado && SENDGRID_API_KEY) {
+        enviado = await enviarEmailSendGrid(emailLimpo, assunto, htmlJogador, unsubscribeUrl);
+    }
+
+    // 3) SMTP (Gmail) como último recurso
+    if (!enviado && transporter) {
+        try {
+            const info = await transporter.sendMail({
+                from: '"BingoVipClub" <' + SMTP_USER + '>',
+                to: emailLimpo,
+                subject: assunto,
+                html: htmlJogador,
+                headers: { 'List-Unsubscribe': '<' + unsubscribeUrl + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
+            });
+            enviado = true;
+            console.log('[EMAIL] Enviado via SMTP (Gmail)! ID:', info.messageId);
+        } catch (e) { console.error('[EMAIL] SMTP falhou:', e.message); }
     }
     console.log('[EMAIL-DIAG] Resultado final enviado=', enviado, 'para', emailLimpo);
 
