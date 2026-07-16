@@ -84,7 +84,7 @@ async function enviarEmailSendGrid(to, subject, html) {
             },
             body: JSON.stringify({
                 personalizations: [{ to: [{ email: to }] }],
-                from: { email: 'marcostheangels@gmail.com', name: 'BingoVipClub' },
+                from: { email: 'contato@bingovipclub.shop', name: 'BingoVipClub' },
                 subject,
                 content: [{ type: 'text/html', value: html }]
             })
@@ -107,27 +107,22 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     const valorFmt = valorReais.toFixed(2).replace('.', ',');
     const htmlJogador = `
         <div style="background:#fff;font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto">
-            <div style="background:#0a0a2e;text-align:center;padding:24px 16px">
-                <div style="color:#ffd700;font-size:26px;font-weight:bold;letter-spacing:2px">BingoVipClub</div>
+            <div style="background:#0a0a2e;text-align:center;padding:20px 16px">
+                <div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div>
             </div>
-            <div style="padding:28px 24px">
-                <div style="font-size:22px;color:#1a1a2e;font-weight:bold;margin:0 0 4px 0">Ol\u00e1 ${nomeUsuario},</div>
-                <p style="font-size:15px;color:#444;line-height:1.6;margin:14px 0">Sua conta no BingoVipClub recebeu R$ ${valorFmt} de credito especial para utilizar no site.</p>
-                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;padding:18px;text-align:center;margin:18px 0">
-                    <div style="color:#166534;font-size:32px;font-weight:bold">R$ ${valorFmt}</div>
-                </div>
-                <p style="font-size:15px;color:#444;line-height:1.6;margin:14px 0">Acesse sua conta e divirta-se.</p>
-                <div style="text-align:center;margin:24px 0 10px">
-                    <a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 36px;border-radius:6px;font-weight:bold;font-size:15px">Acessar Conta</a>
+            <div style="padding:24px">
+                <div style="font-size:18px;color:#333;margin:0 0 12px 0">Ola ${nomeUsuario},</div>
+                <p style="font-size:14px;color:#555;line-height:1.5;margin:0 0 10px 0">Seu saldo foi atualizado. Acesse sua conta para conferir as novidades.</p>
+                <div style="text-align:center;margin:20px 0">
+                    <a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:12px 32px;border-radius:6px;font-weight:bold;font-size:14px">Acessar Conta</a>
                 </div>
             </div>
-            <div style="background:#f5f5f5;padding:16px 24px;text-align:center;border-top:1px solid #e5e5e5">
-                <p style="color:#999;font-size:12px;margin:3px 0">BingoVipClub</p>
-                <p style="color:#bbb;font-size:11px;margin:3px 0">Mensagem automatica - nao responda</p>
+            <div style="background:#f5f5f5;padding:14px 24px;text-align:center;border-top:1px solid #e5e5e5">
+                <p style="color:#999;font-size:11px;margin:2px 0">BingoVipClub</p>
             </div>
         </div>
     `;
-    const assunto = 'Credito de R$ ' + valorFmt + ' disponivel no BingoVipClub';
+    const assunto = 'Sua conta no BingoVipClub foi atualizada';
 
     let enviado = false;
     if (SENDGRID_API_KEY) {
