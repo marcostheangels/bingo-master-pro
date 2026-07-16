@@ -221,6 +221,45 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
         }
     }
 
+// Envia um email transacional para o PRÃ“PRIO JOGADOR (usado em crÃ©dito, depÃ³sito, PIX, etc.)
+// Prioriza Resend (canal comprovado em produÃ§Ã£o).
+async function notificarJogador(nomeUsuario, emailUsuario, assunto, htmlCorpo) {
+    const emailLimpo = (emailUsuario || '').toString().trim().toLowerCase();
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo);
+    if (!emailValido) {
+        console.log('[EMAIL] notificarJogador: email invÃ¡lido para', nomeUsuario, '(', emailLimpo, ') - pulando');
+        return false;
+    }
+    let enviado = false;
+    if (RESEND_API_KEY) {
+        try {
+            const res = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    from: 'BingoVipClub <contato@bingovipclub.shop>',
+                    to: [emailLimpo],
+                    subject: assunto,
+                    html: htmlCorpo,
+                    headers: { 'List-Unsubscribe': '<' + SITE_URL + '/unsubscribe?email=' + encodeURIComponent(emailLimpo) + '>' }
+                })
+            });
+            if (res.ok) { enviado = true; console.log('[EMAIL] notificarJogador: enviado via Resend para', emailLimpo); }
+            else { const t = await res.text(); console.error('[EMAIL] notificarJogador Resend', res.status, t.slice(0, 200)); }
+        } catch (e) { console.error('[EMAIL] notificarJogador Resend falhou:', e.message); }
+    }
+    if (!enviado && SENDGRID_API_KEY) {
+        enviado = await enviarEmailSendGrid(emailLimpo, assunto, htmlCorpo, SITE_URL + '/unsubscribe?email=' + encodeURIComponent(emailLimpo));
+    }
+    if (!enviado && transporter) {
+        try {
+            await transporter.sendMail({ from: '"BingoVipClub" <' + SMTP_USER + '>', to: emailLimpo, subject: assunto, html: htmlCorpo });
+            enviado = true;
+        } catch (e) { console.error('[EMAIL] notificarJogador SMTP falhou:', e.message); }
+    }
+    return enviado;
+}
+
 async function montarEmailAdmin(assunto, corpoHtml, badge) {
     const badgeHtml = badge ? '<div style="display:inline-block;background:#10b981;color:#fff;font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px;letter-spacing:1px;margin-bottom:14px">' + badge + '</div>' : '';
     return `
@@ -1093,6 +1132,30 @@ async function handleAction(ws, room, action, payload) {
                     'CRÃ‰DITO ADMIN'
                 );
             } catch (e) { console.error('[EMAIL] Falha ao notificar crédito admin:', e.message); }
+
+            // Notifica o PRÃ“PRIO JOGADOR sobre o crÃ©dito recebido/removido
+            try {
+                const usuariosCred = carregarUsuarios();
+                const listaCred = Array.isArray(usuariosCred) ? usuariosCred : Object.values(usuariosCred);
+                const uCred = listaCred.find(u => (u.nomeCompleto || '').toLowerCase().trim() === (targetName || '').toLowerCase().trim());
+                if (uCred && uCred.email) {
+                    const valorReaisCred = amount / 1000;
+                    const operacao = payload.mode === 'remove' ? 'removido' : 'creditado';
+                    const htmlCred = `
+                        <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+                            <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                                <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
+                                <div style="padding:28px 24px">
+                                    <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${targetName},</div>
+                                    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Um crédito de <strong style="color:#3b82f6">R$ ${valorReaisCred.toFixed(2).replace('.', ',')}</strong> em fichas foi ${operacao} na sua conta pela administração.</p>
+                                    <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">Acesse sua conta para conferir o saldo atualizado.</p>
+                                    <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acessar minha conta</a></div>
+                                </div>
+                            </div>
+                        </div>`;
+                    await notificarJogador(targetName, uCred.email, 'Crédito de R$ ' + valorReaisCred.toFixed(2).replace('.', ',') + ' na sua conta', htmlCred);
+                }
+            } catch (e) { console.error('[EMAIL] Falha ao notificar jogador (crédito):', e.message); }
         }
         
         broadcast(room, {
@@ -1404,6 +1467,22 @@ app.post('/api/register', async (req, res) => {
             ).catch(err => {
                 console.error('Erro na fila de execução do e-mail:', err.message);
             });
+
+            // E-mail de boas-vindas para o PRÃ“PRIO JOGADOR
+            try {
+                const htmlBoasVindas = `
+                    <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+                        <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                            <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
+                            <div style="padding:28px 24px">
+                                <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Bem-vindo(a), ${nomeCompleto}!</div>
+                                <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Sua conta foi criada com sucesso. Você já pode entrar nas salas de bingo, comprar cartelas e concorrer a prêmios.</p>
+                                <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Entrar no Bingo</a></div>
+                            </div>
+                        </div>
+                    </div>`;
+                notificarJogador(nomeCompleto, email, 'Bem-vindo ao BingoVipClub! Sua conta foi criada', htmlBoasVindas).catch(() => {});
+            } catch (e) { console.error('[EMAIL] Falha ao notificar jogador (cadastro):', e.message); }
         });
 
     } catch (err) {
@@ -2294,6 +2373,25 @@ app.post('/api/criar-pix', async (req, res) => {
                 console.error('[EMAIL] Falha ao notificar PIX gerado:', e.message);
             }
 
+            // Notifica o PRÃ“PRIO JOGADOR de que o PIX foi gerado
+            try {
+                if (email) {
+                    const htmlPix = `
+                        <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+                            <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                                <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
+                                <div style="padding:28px 24px">
+                                    <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${nome},</div>
+                                    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Seu PIX de <strong style="color:#10b981">R$ ${valor.toFixed(2).replace('.', ',')}</strong> para recarga foi gerado com sucesso.</p>
+                                    <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 8px 0">Pague o código ou escaneie o QR Code no seu app do banco. Assim que o pagamento for confirmado, suas fichas caem na conta automaticamente.</p>
+                                    <div style="text-align:center;margin:18px 0 4px"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acessar minha conta</a></div>
+                                </div>
+                            </div>
+                        </div>`;
+                    await notificarJogador(nome, email, 'Seu PIX de R$ ' + valor.toFixed(2).replace('.', ',') + ' foi gerado', htmlPix);
+                }
+            } catch (e) { console.error('[EMAIL] Falha ao notificar jogador (PIX gerado):', e.message); }
+
             res.json({
                 copyPaste: copyPaste,
                 qrCode: qrCode,
@@ -2403,6 +2501,29 @@ async function processarConfirmacaoRecarga(nome, valor, paymentId) {
             'DEPÃ“SITO'
         );
     } catch (e) { console.error('[EMAIL] Falha ao notificar depósito:', e.message); }
+
+    // Notifica o PRÃ“PRIO JOGADOR de que o depÃ³sito foi confirmado
+    try {
+        const usuariosDep = carregarUsuarios();
+        const listaDep = Array.isArray(usuariosDep) ? usuariosDep : Object.values(usuariosDep);
+        const uDep = listaDep.find(u => (u.nomeCompleto || '').toLowerCase().trim() === keyNome);
+        if (uDep && uDep.email) {
+            const valorFmt = valor.toFixed(2).replace('.', ',');
+            const bonusFmt = (bonus / 1000).toFixed(2).replace('.', ',');
+            const htmlDep = `
+                <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
+                    <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
+                        <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
+                        <div style="padding:28px 24px">
+                            <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${nome},</div>
+                            <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Seu depósito de <strong style="color:#10b981">R$ ${valorFmt}</strong> foi confirmado e suas fichas já estão na sua conta${bonus > 0 ? ' (incluindo bônus de primeiro depósito de <strong style="color:#10b981">R$ ' + bonusFmt + '</strong>)' : ''}.</p>
+                            <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acessar minha conta</a></div>
+                        </div>
+                    </div>
+                </div>`;
+            await notificarJogador(nome, uDep.email, 'Depósito de R$ ' + valorFmt + ' confirmado!', htmlDep);
+        }
+    } catch (e) { console.error('[EMAIL] Falha ao notificar jogador (depósito):', e.message); }
 
     // Marca a recarga como sincronizada (impede duplo crédito)
     if (paymentId) {
