@@ -307,9 +307,7 @@ function montarEmailAdmin(assunto, corpoHtml, badge) {
 async function enviarEmailAdmin(assunto, corpoHtml, badge) {
     const html = montarEmailAdmin(assunto, corpoHtml, badge);
     let enviado = false;
-    if (SENDGRID_API_KEY) {
-        enviado = await enviarEmailSendGrid(ADMIN_EMAIL, assunto, html);
-    }
+    // 1) Resend primeiro (funciona comprovadamente para emails de jogador)
     if (!enviado && RESEND_API_KEY) {
         try {
             const res = await fetchWithTimeout('https://api.resend.com/emails', {
@@ -317,14 +315,20 @@ async function enviarEmailAdmin(assunto, corpoHtml, badge) {
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ from: 'BingoVipClub <contato@bingovipclub.shop>', to: [ADMIN_EMAIL], subject: assunto, html })
             }, 8000);
-            if (res.ok) { enviado = true; } else { const t = await res.text(); console.error('[EMAIL] Resend admin erro:', res.status, t.slice(0, 200)); }
+            if (res.ok) { enviado = true; log('EMAIL', 'Admin via Resend', { assunto }); }
+            else { const t = await res.text(); console.error('[EMAIL] Resend admin erro:', res.status, t.slice(0, 200)); }
         } catch (e) { console.error('[EMAIL] Resend admin falhou:', e.message); }
     }
+    // 2) SendGrid como fallback
+    if (!enviado && SENDGRID_API_KEY) {
+        enviado = await enviarEmailSendGrid(ADMIN_EMAIL, assunto, html);
+    }
+    // 3) SMTP como ultimo fallback
     if (!enviado && transporter) {
         try {
             await transporter.sendMail({ from: '"BingoVipClub" <' + SMTP_USER + '>', to: ADMIN_EMAIL, subject: assunto, html });
             enviado = true;
-            console.log('[EMAIL] Admin email enviado via SMTP');
+            log('EMAIL', 'Admin via SMTP', { assunto });
         } catch (e) { console.error('[EMAIL] SMTP admin falhou:', e.message); }
     }
     log('EMAIL', 'Notificacao admin', { assunto, enviado });
