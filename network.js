@@ -971,7 +971,7 @@ function mostrarSaldoJogador(data) {
     const adminCreditsReais = (adminCredRaw / 1000).toFixed(2).replace('.', ',');
     const bonusGivenReais = ((data.bonusGiven || 0) / 1000).toFixed(2).replace('.', ',');
     const depositosReais = ((data.depositos || 0) / 1000).toFixed(2).replace('.', ',');
-    const sacavel = adminCredRaw + (data.winnings || 0);
+    const sacavel = typeof modoTesteSaque !== 'undefined' && modoTesteSaque ? data.chips : adminCredRaw + (data.winnings || 0);
     const sacavelReais = (sacavel / 1000).toFixed(2).replace('.', ',');
 
     const balanceDiv = document.getElementById('adminPlayerBalance');

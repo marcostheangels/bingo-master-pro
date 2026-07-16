@@ -3132,9 +3132,10 @@ async function verificarRecargas() {
 
 // ==================== SAQUE ====================
 function abrirModalSaque() {
-    const saldoSacavel = (myAdminCredits || 0) + (myWinnings || 0);
+    const modoTeste = typeof modoTesteSaque !== 'undefined' && modoTesteSaque;
+    const saldoSacavel = modoTeste ? (myChips || 0) : (myAdminCredits || 0) + (myWinnings || 0);
     const regraEl = document.getElementById('saqueRegra');
-    if (regraEl) regraEl.innerHTML = 'Podem ser sacados: <strong>Créditos (admin)</strong> + <strong>Prêmios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).';
+    if (regraEl) regraEl.innerHTML = modoTeste ? '📍 Modo Teste: <strong>todo saldo é sacável</strong>' : 'Podem ser sacados: <strong>Créditos (admin)</strong> + <strong>Prêmios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).';
     document.getElementById('saqueSaldo').textContent = 'R$ ' + (saldoSacavel / 1000).toFixed(2).replace('.', ',');
     document.getElementById('saqueValor').value = 10;
     const msgEl = document.getElementById('saqueMsg');

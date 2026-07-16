@@ -2239,8 +2239,8 @@ app.post('/api/solicitar-saque', async (req, res) => {
         // REGRA DE SAQUE:
         // SACAVEL = Creditos concedidos pelo admin + Premios ganhos (Kuadra/Kina/Keno/Jackpot)
         // NAO SACAVEL = Depositos e Bonus
-        const saldoSacavel = adminCred + c.winnings;
-        console.log('[SAQUE DEBUG] Balances:', { chips: c.chips, winnings: c.winnings, adminCred, saldoSacavel, fichasNecessarias });
+        const saldoSacavel = modoTesteSaque ? c.chips : adminCred + c.winnings;
+        console.log('[SAQUE DEBUG] Balances:', { chips: c.chips, winnings: c.winnings, adminCred, saldoSacavel, fichasNecessarias, modoTesteSaque });
 
         if (saldoSacavel < fichasNecessarias) {
             return res.status(400).json({ error: 'Saldo sacavel insuficiente. Podem ser sacados apenas: Creditos (admin) e Premios ganhos (Kuadra/Kina/Keno/Jackpot). Depositos e Bonus NAO podem ser sacados.' });
