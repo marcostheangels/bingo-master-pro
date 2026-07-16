@@ -1649,6 +1649,10 @@ app.post('/api/admin/usuarios/:cpf/edicao', async (req, res) => {
             usuario.senha = valor;
         } else if (campo === 'chavePix') {
             usuario.chavePix = valor;
+        } else if (campo === 'email') {
+            usuario.email = valor;
+        } else if (campo === 'nomeCompleto') {
+            usuario.nomeCompleto = valor;
         }
         
         await salvarUsuarios(usuariosArray);

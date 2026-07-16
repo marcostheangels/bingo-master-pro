@@ -1159,6 +1159,7 @@ function carregarCadastrosAdmin() {
                             ${jaTemBonus
                                 ? '<span class="bonus-badge">✅ Bônus enviado</span>'
                                 : `<button class="btn" onclick="darBonusUsuario('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}')" style="padding:8px 16px;font-size:0.85em;background:#10b981;min-width:90px">🎁 Bônus</button>`}
+                            <button class="btn" onclick="editarUsuarioAdmin('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}', '${escapeJsStr(u.email)}', '${escapeJsStr(u.senha)}', '${escapeJsStr(u.chavePix)}')" style="padding:8px 16px;font-size:0.85em;background:#3b82f6;min-width:90px">✏️ Editar</button>
                             <button class="btn btn-remove" onclick="excluirUsuarioAdmin('${escapeJsStr(u.cpf)}', '${escapeJsStr(u.nomeCompleto || u.nome)}')" style="padding:8px 16px;font-size:0.85em;min-width:90px">🗑️ Excluir</button>
                         </div>
                     </div>
@@ -1241,6 +1242,78 @@ function darBonusUsuario(cpf, nome) {
         hideSpinner();
         showToast('Erro de conexão: ' + err.message, 'error', 6000);
     });
+}
+
+function editarUsuarioAdmin(cpf, nomeAtual, emailAtual, senhaAtual, pixAtual) {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.8);z-index:9999;display:flex;justify-content:center;align-items:center';
+    overlay.innerHTML = `
+        <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:28px;max-width:420px;width:90%">
+            <div style="font-size:20px;color:#fff;font-weight:700;margin-bottom:20px">✏️ Editando ${escapeHtml(nomeAtual)}</div>
+            <label style="color:#aaa;font-size:13px;display:block;margin-bottom:4px">Nome</label>
+            <input id="editNome" class="input-field" style="width:100%;margin-bottom:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:10px 12px;border-radius:8px;font-size:14px;box-sizing:border-box" value="${escapeHtml(nomeAtual)}">
+            <label style="color:#aaa;font-size:13px;display:block;margin-bottom:4px">Email</label>
+            <input id="editEmail" class="input-field" style="width:100%;margin-bottom:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:10px 12px;border-radius:8px;font-size:14px;box-sizing:border-box" value="${escapeHtml(emailAtual)}">
+            <label style="color:#aaa;font-size:13px;display:block;margin-bottom:4px">Senha</label>
+            <input id="editSenha" class="input-field" style="width:100%;margin-bottom:12px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:10px 12px;border-radius:8px;font-size:14px;box-sizing:border-box" value="${escapeHtml(senhaAtual)}">
+            <label style="color:#aaa;font-size:13px;display:block;margin-bottom:4px">Chave PIX</label>
+            <input id="editPix" class="input-field" style="width:100%;margin-bottom:20px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;padding:10px 12px;border-radius:8px;font-size:14px;box-sizing:border-box" value="${escapeHtml(pixAtual)}">
+            <div style="display:flex;gap:10px;justify-content:flex-end">
+                <button id="editCancelBtn" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 24px;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer">Cancelar</button>
+                <button id="editSaveBtn" style="background:#3b82f6;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:bold;font-size:14px;cursor:pointer">Salvar</button>
+            </div>
+            <div id="editStatus" style="margin-top:12px;font-size:13px;color:#ccc;text-align:center"></div>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    overlay.querySelector('#editCancelBtn').onclick = () => overlay.remove();
+    overlay.querySelector('#editSaveBtn').onclick = async () => {
+        const dados = {
+            nome: document.getElementById('editNome').value.trim(),
+            email: document.getElementById('editEmail').value.trim(),
+            senha: document.getElementById('editSenha').value.trim(),
+            pix: document.getElementById('editPix').value.trim()
+        };
+        if (!dados.nome || !dados.email || !dados.senha || !dados.pix) {
+            document.getElementById('editStatus').textContent = 'Preencha todos os campos.';
+            return;
+        }
+        document.getElementById('editStatus').textContent = 'Salvando...';
+        overlay.querySelector('#editSaveBtn').disabled = true;
+        try {
+            if (dados.nome !== nomeAtual) {
+                await adminFetch(API_BASE + '/api/admin/usuarios/' + cpf + '/edicao', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campo: 'nomeCompleto', valor: dados.nome })
+                }).then(r => r.json());
+            }
+            if (dados.email !== emailAtual) {
+                await adminFetch(API_BASE + '/api/admin/usuarios/' + cpf + '/edicao', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campo: 'email', valor: dados.email })
+                }).then(r => r.json());
+            }
+            if (dados.senha !== senhaAtual) {
+                await adminFetch(API_BASE + '/api/admin/usuarios/' + cpf + '/edicao', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campo: 'senha', valor: dados.senha })
+                }).then(r => r.json());
+            }
+            if (dados.pix !== pixAtual) {
+                await adminFetch(API_BASE + '/api/admin/usuarios/' + cpf + '/edicao', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ campo: 'chavePix', valor: dados.pix })
+                }).then(r => r.json());
+            }
+            overlay.remove();
+            showToast('✅ Dados de "' + dados.nome + '" atualizados com sucesso!', 'success', 5000);
+            carregarCadastrosAdmin();
+        } catch (e) {
+            document.getElementById('editStatus').textContent = 'Erro ao salvar: ' + e.message;
+            overlay.querySelector('#editSaveBtn').disabled = false;
+        }
+    };
 }
 
 function addBonusSelecionado() {
