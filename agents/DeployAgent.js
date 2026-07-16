@@ -9,6 +9,21 @@ class DeployAgent extends BaseAgent {
     const message = msg || `deploy ${new Date().toISOString().slice(0, 16).replace('T', ' ')}`;
     this.log('Iniciando deploy completo...');
 
+    // 0. Bump automático da versão ?v= nos scripts do index.html (evita cache do navegador)
+    try {
+      const fs = require('fs');
+      const idxPath = path.join(this.projectRoot, 'index.html');
+      if (fs.existsSync(idxPath)) {
+        let html = fs.readFileSync(idxPath, 'utf8');
+        html = html.replace(/(src="game-logic\.js\?v=)(\d+)/, (m, p, n) => p + (parseInt(n, 10) + 1));
+        html = html.replace(/(src="network\.js\?v=)(\d+)/, (m, p, n) => p + (parseInt(n, 10) + 1));
+        fs.writeFileSync(idxPath, html, 'utf8');
+        this.log('Versão dos scripts incrementada no index.html', 'ok');
+      }
+    } catch (e) {
+      this.log(`Bump de versão falhou: ${e.message}`, 'warn');
+    }
+
     // 1. Validar sintaxe do server.js
     try {
       this.exec('node -c server.js');
