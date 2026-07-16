@@ -53,13 +53,15 @@ process.on('unhandledRejection', (reason) => {
     console.error('[UNHANDLED REJECTION]', reason?.message || reason);
 });
 
-// ===================== CONFIGURAÇÃO DE EMAIL (RESEND API + SMTP FALLBACK) =====================
+// ===================== CONFIGURAÇÃO DE EMAIL (SENDGRID + RESEND + SMTP FALLBACK) =====================
 const RESEND_API_KEY = process.env.RESEND_API_KEY;
+const SENDGRID_API_KEY = process.env.SENDGRID_API_KEY;
 const SMTP_HOST = process.env.SMTP_HOST || 'smtp.gmail.com';
 const SMTP_PORT = parseInt(process.env.SMTP_PORT || '465', 10);
 const SMTP_USER = process.env.SMTP_USER || ADMIN_EMAIL;
 const SMTP_PASS = process.env.SMTP_PASS;
 let transporter = null;
+const EMAIL_FROM = 'BingoVipClub <marcostheangels@gmail.com>';
 
 if (SMTP_PASS && nodemailer) {
     try {
@@ -69,6 +71,136 @@ if (SMTP_PASS && nodemailer) {
         });
         console.log('[EMAIL] Transportador SMTP configurado:', SMTP_USER);
     } catch (e) { console.log('[EMAIL] Erro SMTP:', e.message); }
+}
+
+async function enviarEmailSendGrid(to, subject, html) {
+    if (!SENDGRID_API_KEY) return false;
+    try {
+        const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
+            method: 'POST',
+            headers: {
+                'Authorization': 'Bearer ' + SENDGRID_API_KEY,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                personalizations: [{ to: [{ email: to }] }],
+                from: { email: 'marcostheangels@gmail.com', name: 'BingoVipClub' },
+                subject,
+                content: [{ type: 'text/html', value: html }]
+            })
+        });
+        if (!res.ok) {
+            const errText = await res.text();
+            throw new Error('SendGrid: ' + res.status + ' ' + errText.slice(0, 200));
+        }
+        console.log('[EMAIL] Enviado via SendGrid para', to);
+        return true;
+    } catch (e) {
+        console.error('[EMAIL] SendGrid falhou:', e.message);
+        return false;
+    }
+}
+
+async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
+    const valorFmt = valorReais.toFixed(2).replace('.', ',');
+    const htmlJogador = `
+        <div style="background:linear-gradient(135deg,#0a0a1a 0%,#1a1040 100%);font-family:'Segoe UI',Arial,sans-serif;padding:40px 20px;border-radius:16px;max-width:560px;margin:0 auto;border:1px solid rgba(255,215,0,0.3)">
+            <div style="text-align:center;margin-bottom:30px">
+                <div style="font-size:48px;margin-bottom:10px">🎰</div>
+                <h1 style="color:#ffd700;margin:0;font-size:28px;letter-spacing:2px;text-transform:uppercase;text-shadow:0 0 20px rgba(255,215,0,0.3)">BingoVipClub</h1>
+            </div>
+            <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:30px;backdrop-filter:blur(10px)">
+                <h2 style="color:#fff;margin:0 0 8px 0;font-size:22px">Ol\u00e1, ${nomeUsuario}! 🎉</h2>
+                <p style="color:#c0b8e0;font-size:15px;line-height:1.6;margin:16px 0">Temos uma \u00f3tima not\u00edcia! Voc\u00ea acaba de receber um b\u00f4nus especial para jogar no <strong style="color:#ffd700">BingoVipClub</strong>.</p>
+                <div style="background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,165,0,0.1));border:1px solid rgba(255,215,0,0.4);border-radius:10px;padding:20px;text-align:center;margin:20px 0">
+                    <div style="color:#a0a0b0;font-size:13px;text-transform:uppercase;letter-spacing:1px">🎁 B\u00f4nus Recebido</div>
+                    <div style="color:#ffd700;font-size:40px;font-weight:bold;margin:8px 0;text-shadow:0 0 15px rgba(255,215,0,0.3)">R$ ${valorFmt}</div>
+                    <div style="color:#7a7a9a;font-size:12px">Cr\u00e9ditos n\u00e3o sac\u00e1veis • V\u00e1lidos para apostas</div>
+                </div>
+                <p style="color:#c0b8e0;font-size:14px;line-height:1.6;margin:16px 0">Acesse sua conta agora mesmo e comece a se divertir! Boa sorte e boas vit\u00f3rias! 🍀</p>
+            </div>
+            <div style="text-align:center;margin-top:20px;color:#5a5a7a;font-size:11px">
+                <p style="margin:4px 0">\u00a9 2026 BingoVipClub. Todos os direitos reservados.</p>
+                <p style="margin:4px 0">Este \u00e9 um e-mail autom\u00e1tico, por favor n\u00e3o responda.</p>
+            </div>
+        </div>
+    `;
+    const assunto = `🎉 Você ganhou R$ ${valorFmt} de bônus no BingoVipClub!`;
+
+    let enviado = false;
+    if (RESEND_API_KEY) {
+        try {
+            const res = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    from: 'BingoVipClub <onboarding@resend.dev>',
+                    to: [emailUsuario],
+                    subject: assunto,
+                    html: htmlJogador
+                })
+            });
+            if (res.ok) {
+                enviado = true;
+                const data = await res.json();
+                console.log('[EMAIL] Enviado via Resend para', emailUsuario, 'ID:', data.id);
+            }
+        } catch (e) { console.error('[EMAIL] Resend falhou:', e.message); }
+    }
+    if (!enviado && SENDGRID_API_KEY) {
+        enviado = await enviarEmailSendGrid(emailUsuario, assunto, htmlJogador);
+    }
+    if (!enviado && transporter) {
+        try {
+            const res = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    from: 'BingoVipClub <onboarding@resend.dev>',
+                    to: [emailUsuario],
+                    subject: assunto,
+                    html: htmlJogador
+                })
+            });
+            if (res.ok) {
+                enviado = true;
+                console.log('[EMAIL] Enviado via Resend para', emailUsuario);
+            }
+        } catch (e) { console.error('[EMAIL] Resend falhou:', e.message); }
+    }
+    if (!enviado && transporter) {
+        try {
+            const info = await transporter.sendMail({
+                from: `"BingoVipClub" <${SMTP_USER}>`,
+                to: emailUsuario,
+                subject: assunto,
+                html: htmlJogador
+            });
+            enviado = true;
+            console.log('[EMAIL] Enviado via SMTP! ID:', info.messageId);
+        } catch (e) { console.error('[EMAIL] SMTP falhou:', e.message); }
+    }
+
+    if (enviado) {
+        console.log(`\n=== ✅ E-MAIL DE BÔNUS ENVIADO PARA ${emailUsuario} ===`);
+        const adminHtml = `<div style="font-family:Arial,sans-serif;padding:20px"><h2 style="color:#10b981">🎁 Bônus Enviado!</h2><p><strong>Jogador:</strong> ${nomeUsuario}</p><p><strong>Email:</strong> ${emailUsuario}</p><p><strong>Valor:</strong> R$ ${valorFmt}</p><p style="font-size:12px;color:#777">E-mail de bônus enviado com sucesso para o jogador.</p></div>`;
+        if (RESEND_API_KEY) {
+            try {
+                await fetch('https://api.resend.com/emails', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        from: 'BingoVipClub <onboarding@resend.dev>',
+                        to: [ADMIN_EMAIL],
+                        subject: `✅ Bônus de R$ ${valorFmt} enviado para ${nomeUsuario}`,
+                        html: adminHtml
+                    })
+                });
+            } catch (e) {}
+        } else if (SENDGRID_API_KEY) {
+            enviarEmailSendGrid(ADMIN_EMAIL, `✅ Bônus de R$ ${valorFmt} enviado para ${nomeUsuario}`, adminHtml).catch(() => {});
+        }
+    }
 }
 
 async function enviarEmailNotificacao(assunto, texto) {
@@ -1422,7 +1554,13 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
         });
 
         console.log(`[BONUS] ${bonus} fichas concedidas para ${usuario.nomeCompleto} via painel admin`);
-        res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips });
+
+        if (usuario.email) {
+            const valorReais = parseInt(bonus) / 1000;
+            enviarEmailBonus(usuario.nomeCompleto, usuario.email, valorReais);
+        }
+
+        res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips, emailEnviado: !!usuario.email, emailUsuario: usuario.email || null });
     } catch (err) {
         console.error('[API] Erro ao conceder bônus:', err);
         res.status(500).json({ error: 'Erro interno.' });

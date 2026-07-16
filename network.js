@@ -1210,13 +1210,8 @@ function excluirUsuarioAdmin(cpf, nome) {
 }
 
 function darBonusUsuario(cpf, nome) {
-    const bonus = prompt(`Digite o valor do BÔNUS para "${nome}":\n\nIsso adicionará fichas ao saldo do jogador.`);
-    if (bonus === null) return;
-    const valor = parseInt(bonus);
-    if (isNaN(valor) || valor <= 0) {
-        showToast('Valor inválido. O bônus deve ser um número positivo.', 'warning', 4000);
-        return;
-    }
+    const valor = 5000;
+    if (!confirm(`🎁 Conceder bônus de R$ 5,00 (${valor.toLocaleString('pt-BR')} fichas) para "${nome}"?`)) return;
     
     showSpinner('Concedendo bônus...');
     
@@ -1229,7 +1224,10 @@ function darBonusUsuario(cpf, nome) {
     .then(r => {
         hideSpinner();
         if (r.success) {
-            showToast(`✅ Bônus de ${valor.toLocaleString('pt-BR')} fichas concedido para "${nome}"!`, 'success', 6000);
+            const msg = r.emailEnviado
+                ? `✅ Bônus de R$ 5,00 concedido para "${nome}"! E-mail enviado para ${r.emailUsuario}`
+                : `✅ Bônus de R$ 5,00 concedido para "${nome}"!`;
+            showToast(msg, 'success', 8000);
             carregarCadastrosAdmin();
         } else {
             showToast('Erro: ' + (r.error || 'Erro desconhecido'), 'error', 6000);
