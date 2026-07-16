@@ -31,9 +31,11 @@ function validarValorSaque(v) {
     return n;
 }
 
+const path = require('path');
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
+app.use('/img', express.static(__dirname));
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
@@ -103,54 +105,34 @@ async function enviarEmailSendGrid(to, subject, html) {
 
 async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     const valorFmt = valorReais.toFixed(2).replace('.', ',');
+    const bannerUrl = (process.env.RENDER_EXTERNAL_URL || 'http://localhost:3000') + '/img/bingo1.jpeg';
     const htmlJogador = `
-        <div style="background:linear-gradient(135deg,#0a0a1a 0%,#1a1040 100%);font-family:'Segoe UI',Arial,sans-serif;padding:40px 20px;border-radius:16px;max-width:560px;margin:0 auto;border:1px solid rgba(255,215,0,0.3)">
-            <div style="text-align:center;margin-bottom:30px">
-                <div style="font-size:48px;margin-bottom:10px">🎰</div>
-                <h1 style="color:#ffd700;margin:0;font-size:28px;letter-spacing:2px;text-transform:uppercase;text-shadow:0 0 20px rgba(255,215,0,0.3)">BingoVipClub</h1>
+        <div style="background:#ffffff;font-family:Arial,Helvetica,sans-serif;padding:0;margin:0;max-width:600px">
+            <div style="background:linear-gradient(135deg,#0a0a2e,#1a1050);text-align:center;padding:0">
+                <img src="${bannerUrl}" alt="BingoVipClub" style="width:100%;max-width:600px;height:auto;display:block;border:none">
             </div>
-            <div style="background:rgba(255,255,255,0.05);border-radius:12px;padding:30px;backdrop-filter:blur(10px)">
-                <h2 style="color:#fff;margin:0 0 8px 0;font-size:22px">Ol\u00e1, ${nomeUsuario}! 🎉</h2>
-                <p style="color:#c0b8e0;font-size:15px;line-height:1.6;margin:16px 0">Temos uma \u00f3tima not\u00edcia! Voc\u00ea acaba de receber um b\u00f4nus especial para jogar no <strong style="color:#ffd700">BingoVipClub</strong>.</p>
-                <div style="background:linear-gradient(135deg,rgba(255,215,0,0.15),rgba(255,165,0,0.1));border:1px solid rgba(255,215,0,0.4);border-radius:10px;padding:20px;text-align:center;margin:20px 0">
-                    <div style="color:#a0a0b0;font-size:13px;text-transform:uppercase;letter-spacing:1px">🎁 B\u00f4nus Recebido</div>
-                    <div style="color:#ffd700;font-size:40px;font-weight:bold;margin:8px 0;text-shadow:0 0 15px rgba(255,215,0,0.3)">R$ ${valorFmt}</div>
-                    <div style="color:#7a7a9a;font-size:12px">Cr\u00e9ditos n\u00e3o sac\u00e1veis • V\u00e1lidos para apostas</div>
+            <div style="padding:32px 28px;background:#ffffff">
+                <div style="font-size:24px;color:#1a1a2e;font-weight:bold;margin:0 0 6px 0">Ola ${nomeUsuario},</div>
+                <p style="font-size:15px;color:#444;line-height:1.6;margin:12px 0">Sua conta no BingoVipClub recebeu um credito especial de:</p>
+                <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:20px;text-align:center;margin:16px 0">
+                    <div style="color:#166534;font-size:36px;font-weight:bold">R$ ${valorFmt}</div>
+                    <div style="color:#666;font-size:13px;margin-top:4px">Valor disponivel para compra de cartelas</div>
                 </div>
-                <p style="color:#c0b8e0;font-size:14px;line-height:1.6;margin:16px 0">Acesse sua conta agora mesmo e comece a se divertir! Boa sorte e boas vit\u00f3rias! 🍀</p>
+                <p style="font-size:15px;color:#444;line-height:1.6;margin:12px 0">Acesse sua conta e aproveite para jogar. Desejamos uma boa sorte!</p>
+                <div style="text-align:center;margin:28px 0 12px">
+                    <a href="${process.env.RENDER_EXTERNAL_URL || '#'}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:14px 40px;border-radius:8px;font-weight:bold;font-size:16px">Acessar Conta</a>
+                </div>
             </div>
-            <div style="text-align:center;margin-top:20px;color:#5a5a7a;font-size:11px">
-                <p style="margin:4px 0">\u00a9 2026 BingoVipClub. Todos os direitos reservados.</p>
-                <p style="margin:4px 0">Este \u00e9 um e-mail autom\u00e1tico, por favor n\u00e3o responda.</p>
+            <div style="background:#f8f8f8;padding:20px 28px;text-align:center;border-top:1px solid #eee">
+                <p style="color:#999;font-size:12px;margin:4px 0">BingoVipClub - Todos os direitos reservados</p>
+                <p style="color:#bbb;font-size:11px;margin:4px 0">Este e uma mensagem automatica. Por favor nao responda.</p>
             </div>
         </div>
     `;
-    const assunto = `🎉 Você ganhou R$ ${valorFmt} de bônus no BingoVipClub!`;
+    const assunto = `Credito de R$ ${valorFmt} disponivel no BingoVipClub`;
 
     let enviado = false;
     if (RESEND_API_KEY) {
-        try {
-            const res = await fetch('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    from: 'BingoVipClub <contato@bingovipclub.shop>',
-                    to: [emailUsuario],
-                    subject: assunto,
-                    html: htmlJogador
-                })
-            });
-            if (res.ok) {
-                enviado = true;
-                const data = await res.json();
-                console.log('[EMAIL] Enviado via Resend para', emailUsuario, 'ID:', data.id);
-            }
-        } catch (e) { console.error('[EMAIL] Resend falhou:', e.message); }
-    }
-    if (!enviado && SENDGRID_API_KEY) {
-        enviado = await enviarEmailSendGrid(emailUsuario, assunto, htmlJogador);
-    }
-    if (!enviado && transporter) {
         try {
             const res = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
@@ -168,10 +150,13 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
             }
         } catch (e) { console.error('[EMAIL] Resend falhou:', e.message); }
     }
+    if (!enviado && SENDGRID_API_KEY) {
+        enviado = await enviarEmailSendGrid(emailUsuario, assunto, htmlJogador);
+    }
     if (!enviado && transporter) {
         try {
             const info = await transporter.sendMail({
-                from: `"BingoVipClub" <${SMTP_USER}>`,
+                from: '"BingoVipClub" <' + SMTP_USER + '>',
                 to: emailUsuario,
                 subject: assunto,
                 html: htmlJogador
@@ -182,23 +167,18 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     }
 
     if (enviado) {
-        console.log(`\n=== ✅ E-MAIL DE BÔNUS ENVIADO PARA ${emailUsuario} ===`);
-        const adminHtml = `<div style="font-family:Arial,sans-serif;padding:20px"><h2 style="color:#10b981">🎁 Bônus Enviado!</h2><p><strong>Jogador:</strong> ${nomeUsuario}</p><p><strong>Email:</strong> ${emailUsuario}</p><p><strong>Valor:</strong> R$ ${valorFmt}</p><p style="font-size:12px;color:#777">E-mail de bônus enviado com sucesso para o jogador.</p></div>`;
+        console.log('[EMAIL] Bonus enviado para', emailUsuario);
+        const adminHtml = '<div style="font-family:Arial,sans-serif;padding:20px"><h2 style="color:#10b981">Bonus Enviado</h2><p><strong>Jogador:</strong> ' + nomeUsuario + '</p><p><strong>Email:</strong> ' + emailUsuario + '</p><p><strong>Valor:</strong> R$ ' + valorFmt + '</p></div>';
         if (RESEND_API_KEY) {
             try {
                 await fetch('https://api.resend.com/emails', {
                     method: 'POST',
                     headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        from: 'BingoVipClub <contato@bingovipclub.shop>',
-                        to: [ADMIN_EMAIL],
-                        subject: `✅ Bônus de R$ ${valorFmt} enviado para ${nomeUsuario}`,
-                        html: adminHtml
-                    })
+                    body: JSON.stringify({ from: 'BingoVipClub <contato@bingovipclub.shop>', to: [ADMIN_EMAIL], subject: 'Bonus de R$ ' + valorFmt + ' enviado para ' + nomeUsuario, html: adminHtml })
                 });
             } catch (e) {}
         } else if (SENDGRID_API_KEY) {
-            enviarEmailSendGrid(ADMIN_EMAIL, `✅ Bônus de R$ ${valorFmt} enviado para ${nomeUsuario}`, adminHtml).catch(() => {});
+            enviarEmailSendGrid(ADMIN_EMAIL, 'Bonus de R$ ' + valorFmt + ' enviado para ' + nomeUsuario, adminHtml).catch(() => {});
         }
     }
 }
