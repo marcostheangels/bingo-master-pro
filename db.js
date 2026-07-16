@@ -517,6 +517,18 @@ async function setUsuarios(lista) {
     usuariosCache = lista;
     await syncUsuarios();
 }
+async function deleteUsuario(cpf) {
+    const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
+    usuariosCache = usuariosCache.filter(u => String(u.cpf).replace(/\D/g, '').padStart(11, '0') !== cpfLimpo);
+    if (!pool) return;
+    try {
+        await pool.query('DELETE FROM usuarios WHERE "cpf" = $1', [cpfLimpo]);
+        console.log('[DB] Usuário excluído do banco (cpf=' + cpfLimpo + ')');
+    } catch (e) {
+        console.error('[DB] deleteUsuario error:', e.message);
+        throw e;
+    }
+}
 
 function getFichasStore() { return fichasCache; }
 async function setFichasStore(store) {
@@ -632,6 +644,7 @@ module.exports = {
     close,
     getUsuarios,
     setUsuarios,
+    deleteUsuario,
     getFichasStore,
     setFichasStore,
     syncFichasStore,

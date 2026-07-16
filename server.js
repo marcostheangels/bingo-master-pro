@@ -1755,8 +1755,7 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
         const nomeUsuario = usuariosArray[usuarioIdx].nomeCompleto || usuariosArray[usuarioIdx].nome || '';
         const keyNome = (nomeUsuario || '').toLowerCase().trim();
         const keyBot = 'bot-' + keyNome.replace(/\s+/g, '-');
-        usuariosArray.splice(usuarioIdx, 1);
-        await salvarUsuarios(usuariosArray);
+        await db.deleteUsuario(cpfLimpo);
 
         // Desconectar jogador deletado (essencial, feito antes de responder)
         try {
