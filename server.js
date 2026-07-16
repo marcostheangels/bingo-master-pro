@@ -1753,36 +1753,13 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
             return res.status(404).json({ error: 'Usuário não encontrado.' });
         }
         const nomeUsuario = usuariosArray[usuarioIdx].nomeCompleto || usuariosArray[usuarioIdx].nome || '';
+        const keyNome = (nomeUsuario || '').toLowerCase().trim();
+        const keyBot = 'bot-' + keyNome.replace(/\s+/g, '-');
         usuariosArray.splice(usuarioIdx, 1);
         await salvarUsuarios(usuariosArray);
 
-        const fichasStore = db.getFichasStore();
-        const keyNome = (nomeUsuario || '').toLowerCase().trim();
-        const keyBot = 'bot-' + keyNome.replace(/\s+/g, '-');
-        if (fichasStore[keyNome]) delete fichasStore[keyNome];
-        if (fichasStore[keyBot]) delete fichasStore[keyBot];
-        await db.setFichasStore(fichasStore);
-
-        const adminCreditsStore = db.getAdminCreditsStore();
-        if (adminCreditsStore[keyNome]) delete adminCreditsStore[keyNome];
-        if (adminCreditsStore[keyBot]) delete adminCreditsStore[keyBot];
-        await db.setAdminCreditsStore(adminCreditsStore);
-
-        const saques = db.getSaques();
-        const saquesFiltrados = saques.filter(s => (s.nome || '').toLowerCase().trim() !== keyNome);
-        await db.setSaques(saquesFiltrados);
-
-        const transacoes = db.getTransacoes();
-        const transacoesFiltradas = transacoes.filter(t => (t.nome || '').toLowerCase().trim() !== keyNome);
-        await db.setTransacoes(transacoesFiltradas);
-
-        const recargas = db.getRecargas();
-        const recargasFiltradas = recargas.filter(r => (r.nome || '').toLowerCase().trim() !== keyNome);
-        await db.setRecargas(recargasFiltradas);
-
-        // Forçar logout do jogador deletado (se estiver conectado)
+        // Desconectar jogador deletado (essencial, feito antes de responder)
         try {
-            // Tentar via sessoesAtivas (jogador autenticado por CPF)
             let desconectado = false;
             const sessao = sessoesAtivas.get(cpfLimpo);
             if (sessao && sessao.ws && sessao.ws.readyState === WebSocket.OPEN) {
@@ -1796,9 +1773,7 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
                 desconectado = true;
             }
 
-            // Se não encontrou via sessoesAtivas, buscar nas rooms ativas (jogador na sala sem auth separado)
             if (!desconectado) {
-                const keyNome = (nomeUsuario || '').toLowerCase().trim();
                 for (const room of gameRooms) {
                     for (const [clientId, ws] of room.clients) {
                         try {
@@ -1823,9 +1798,38 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
             console.error('[ADMIN EXCLUIR] Erro ao forçar logout:', e.message);
         }
 
-        console.log(`[ADMIN EXCLUIR] Usuário "${nomeUsuario}" (CPF: ${cpfLimpo}) excluído completamente com todos os dados`);
+        console.log(`[ADMIN EXCLUIR] Usuário "${nomeUsuario}" (CPF: ${cpfLimpo}) excluído. Respondendo ao admin...`);
 
+        // Responde imediatamente para a tela admin voltar na hora
         res.json({ success: true, message: `Usuário "${nomeUsuario}" excluído com sucesso. Todos os dados foram removidos.` });
+
+        // Sincronizações pesadas em background (não bloqueiam a resposta)
+        (async () => {
+            try {
+                const fichasStore = db.getFichasStore();
+                if (fichasStore[keyNome]) delete fichasStore[keyNome];
+                if (fichasStore[keyBot]) delete fichasStore[keyBot];
+                await db.setFichasStore(fichasStore);
+
+                const adminCreditsStore = db.getAdminCreditsStore();
+                if (adminCreditsStore[keyNome]) delete adminCreditsStore[keyNome];
+                if (adminCreditsStore[keyBot]) delete adminCreditsStore[keyBot];
+                await db.setAdminCreditsStore(adminCreditsStore);
+
+                const saques = db.getSaques();
+                await db.setSaques(saques.filter(s => (s.nome || '').toLowerCase().trim() !== keyNome));
+
+                const transacoes = db.getTransacoes();
+                await db.setTransacoes(transacoes.filter(t => (t.nome || '').toLowerCase().trim() !== keyNome));
+
+                const recargas = db.getRecargas();
+                await db.setRecargas(recargas.filter(r => (r.nome || '').toLowerCase().trim() !== keyNome));
+
+                console.log(`[ADMIN EXCLUIR] Limpeza de dados de "${nomeUsuario}" concluída em background.`);
+            } catch (bgErr) {
+                console.error('[ADMIN EXCLUIR] Erro em background:', bgErr);
+            }
+        })();
     } catch (err) {
         console.error('[ADMIN EXCLUIR] Erro:', err);
         res.status(500).json({ error: 'Erro interno ao excluir usuário.' });
