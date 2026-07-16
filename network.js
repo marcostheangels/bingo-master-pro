@@ -1277,14 +1277,22 @@ function excluirUsuarioAdmin(cpf, nome) {
         adminFetch(API_BASE + '/api/admin/usuario/excluir', {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ cpf }),
+            body: JSON.stringify({ cpf: String(cpf).replace(/\D/g, '') }),
             signal: controller.signal
         })
         .then(async (r) => {
             clearTimeout(fetchTimeout);
             let j = null;
             try { j = await r.json(); } catch (e) { j = null; }
+            console.log('[EXCLUIR] resposta:', r.status, j);
             if (r.ok && j && j.success) {
+                try {
+                    const sel = document.getElementById('deletePlayerSelect');
+                    if (sel) {
+                        const opt = Array.from(sel.options).find(o => o.value && String(o.value).replace(/\D/g, '') === String(cpf).replace(/\D/g, ''));
+                        if (opt) opt.remove();
+                    }
+                } catch (e) {}
                 finalizar(true, `✅ Usuário "${nome}" excluído com sucesso!`);
             } else {
                 finalizar(false, 'Erro: ' + ((j && j.error) || 'Falha ao excluir (HTTP ' + (r.ok ? 'desconhecido' : 'sem resposta') + ')'));
@@ -1592,13 +1600,13 @@ function confirmarExclusaoJogador() {
         showToast('Selecione um jogador para excluir.', 'warning', 3500);
         return;
     }
-    const cpf = select.value;
-    const selectedOption = select.options[select.selectedIndex];
+    const cpf = String(select.value).trim();
+    const selectedOption = Array.from(select.options).find(o => o.value === cpf);
     if (!selectedOption) {
         showToast('Selecione um jogador válido para excluir.', 'warning', 3500);
         return;
     }
-    const nome = selectedOption.dataset.nome || '';
+    const nome = selectedOption.dataset.nome || selectedOption.textContent || '';
 
     // Reusa a função existente com fluxo completo de confirmação
     excluirUsuarioAdmin(cpf, nome);
