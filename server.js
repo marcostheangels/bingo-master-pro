@@ -131,8 +131,16 @@ const API_URL = process.env.API_URL || 'https://bingo-master-pro-fcty.onrender.c
 const LOGO_URL = API_URL + '/logo-bingo';
 
 async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
+    console.log('[EMAIL-DIAG] Iniciando envio. Para:', JSON.stringify(emailUsuario), 'Nome:', JSON.stringify(nomeUsuario));
+    const emailLimpo = (emailUsuario || '').toString().trim().toLowerCase();
+    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo);
+    console.log('[EMAIL-DIAG] Email limpo:', JSON.stringify(emailLimpo), 'Valido:', emailValido, 'Tem SENDGRID:', !!SENDGRID_API_KEY, 'Tem RESEND:', !!RESEND_API_KEY);
+    if (!emailValido) {
+        console.error('[EMAIL-DIAG] Email INVALIDO, abortando envio.');
+        return;
+    }
     const valorFmt = valorReais.toFixed(2).replace('.', ',');
-    const unsubscribeUrl = SITE_URL + '/unsubscribe?email=' + encodeURIComponent(emailUsuario);
+    const unsubscribeUrl = SITE_URL + '/unsubscribe?email=' + encodeURIComponent(emailLimpo);
     const htmlJogador = `
         <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
             <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
@@ -162,7 +170,7 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
         try {
             const info = await transporter.sendMail({
                 from: '"BingoVipClub" <' + SMTP_USER + '>',
-                to: emailUsuario,
+                to: emailLimpo,
                 subject: assunto,
                 html: htmlJogador,
                 headers: { 'List-Unsubscribe': '<' + unsubscribeUrl + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
@@ -172,7 +180,7 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
         } catch (e) { console.error('[EMAIL] SMTP falhou, tentando alternativas:', e.message); }
     }
     if (!enviado && SENDGRID_API_KEY) {
-        enviado = await enviarEmailSendGrid(emailUsuario, assunto, htmlJogador, unsubscribeUrl);
+        enviado = await enviarEmailSendGrid(emailLimpo, assunto, htmlJogador, unsubscribeUrl);
     }
     if (!enviado && RESEND_API_KEY) {
         try {
@@ -181,7 +189,7 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     from: 'BingoVipClub <contato@bingovipclub.shop>',
-                    to: [emailUsuario],
+                    to: [emailLimpo],
                     subject: assunto,
                     html: htmlJogador,
                     headers: { 'List-Unsubscribe': '<' + unsubscribeUrl + '>' }
@@ -189,10 +197,11 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
             });
             if (res.ok) {
                 enviado = true;
-                console.log('[EMAIL] Enviado via Resend para', emailUsuario);
+                console.log('[EMAIL] Enviado via Resend para', emailLimpo);
             }
         } catch (e) { console.error('[EMAIL] Resend falhou:', e.message); }
     }
+    console.log('[EMAIL-DIAG] Resultado final enviado=', enviado, 'para', emailLimpo);
 
     if (enviado) {
         console.log('[EMAIL] Bonus enviado para', emailUsuario);
