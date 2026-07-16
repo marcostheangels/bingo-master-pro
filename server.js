@@ -274,7 +274,7 @@ async function notificarJogador(nomeUsuario, emailUsuario, assunto, htmlCorpo) {
     return enviado;
 }
 
-async function montarEmailAdmin(assunto, corpoHtml, badge) {
+function montarEmailAdmin(assunto, corpoHtml, badge) {
     const badgeHtml = badge ? '<div style="display:inline-block;background:#10b981;color:#fff;font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px;letter-spacing:1px;margin-bottom:14px">' + badge + '</div>' : '';
     return `
         <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
@@ -306,10 +306,17 @@ async function enviarEmailAdmin(assunto, corpoHtml, badge) {
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ from: 'BingoVipClub <contato@bingovipclub.shop>', to: [ADMIN_EMAIL], subject: assunto, html })
             });
-            if (res.ok) enviado = true;
+            if (res.ok) { enviado = true; } else { const t = await res.text(); console.error('[EMAIL] Resend admin erro:', res.status, t.slice(0, 200)); }
         } catch (e) { console.error('[EMAIL] Resend admin falhou:', e.message); }
     }
-    console.log('[EMAIL] Notificação admin:', enviado ? 'enviada' : 'FALHOU', '-', assunto);
+    if (!enviado && transporter) {
+        try {
+            await transporter.sendMail({ from: '"BingoVipClub" <' + SMTP_USER + '>', to: ADMIN_EMAIL, subject: assunto, html });
+            enviado = true;
+            console.log('[EMAIL] Admin email enviado via SMTP');
+        } catch (e) { console.error('[EMAIL] SMTP admin falhou:', e.message); }
+    }
+    log('EMAIL', 'Notificacao admin', { assunto, enviado });
     return enviado;
 }
 
@@ -2154,7 +2161,7 @@ const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, ne
 
 app.post('/api/solicitar-saque', async (req, res) => {
  try {
-    const { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
+    let { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
     log('SAQUE', 'Solicitado', { nome, valor, hasToken: !!sessionToken });
     if (!nome || !valor || !chavePix) {
         return res.status(400).json({ error: 'Parâmetros incompletos.' });
