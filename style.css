@@ -2993,6 +2993,17 @@ body {
     padding: 12px;
 }
 #screenGame .buy-label { color: var(--gold-soft); font-weight: 700; }
+.buy-total {
+    text-align: center;
+    font-size: 0.85em;
+    color: var(--gold-soft);
+    opacity: 0.8;
+    margin-top: 4px;
+}
+.buy-total strong {
+    color: #fde047;
+    font-weight: 800;
+}
 
 /* === BUY BUTTONS - NOVOS ESTILOS PREMIUM === */
 .buy-btn-row {

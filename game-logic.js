@@ -531,6 +531,8 @@ function goToScreen(screenId) {
                 requestWakeLock();
                 // Fallback iOS: vídeo invisível mudo
                 setupNoSleepFallback();
+                // Mostra total inicial da compra
+                if (typeof atualizarTotalCompra === 'function') atualizarTotalCompra();
             } catch (err) {
                 console.error('Erro ao inicializar a tela do jogo (tela ainda visível):', err);
             }
@@ -1249,12 +1251,22 @@ function comprarCartelas() {
     buyBingoCards(qty);
 }
 
+function atualizarTotalCompra() {
+    const input = document.getElementById('buyQtyInput');
+    const display = document.getElementById('buyTotalDisplay');
+    if (!input || !display) return;
+    const qty = parseInt(input.value, 10) || 1;
+    const total = (qty * CARD_COST / 1000).toFixed(2).replace('.', ',');
+    display.innerHTML = `Total: <strong>R$ ${total}</strong>`;
+}
+
 function ajustarQtd(delta) {
     const input = document.getElementById('buyQtyInput');
     if (!input) return;
     let val = parseInt(input.value, 10) || 1;
     val = Math.max(1, Math.min(HUMAN_MAX_CARDS, val + delta));
     input.value = val;
+    atualizarTotalCompra();
 }
 
 function renderMyCards() {

@@ -213,10 +213,11 @@
                             <span class="buy-label">🎟️ Comprar cartelas <span style="color:#fde047;font-weight:800">R$ <span id="cardCostDisplay">0,15</span></span> cada <span style="color:#fbbf24;font-size:0.85em">— Sem limite</span></span>
                             <div class="buy-btn-row">
                                 <button class="btn-qty" onclick="ajustarQtd(-1)" aria-label="Diminuir quantidade">−</button>
-                                <input type="number" id="buyQtyInput" value="1" min="1" max="9999" class="buy-qty-input">
+                                <input type="number" id="buyQtyInput" value="1" min="1" max="9999" class="buy-qty-input" oninput="atualizarTotalCompra()">
                                 <button class="btn-qty" onclick="ajustarQtd(1)" aria-label="Aumentar quantidade">+</button>
                                 <button class="btn-buy" onclick="comprarCartelas()">🎯 Comprar</button>
                             </div>
+                            <div class="buy-total" id="buyTotalDisplay">Total: <strong>R$ 0,15</strong></div>
                         </div>
                     </div>
                 </div>
@@ -544,8 +545,8 @@
     </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-<script src="game-logic.js?v=59"></script>
-<script src="network.js?v=57"></script>
+<script src="game-logic.js?v=60"></script>
+<script src="network.js?v=58"></script>
     <script>
         // Auto-login se tiver sessao valida
         (async function() {
