@@ -236,9 +236,9 @@
             gap: 2px; height: 100%; min-width: 0;
         }
 .grid-cell {
-            font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.20);
+            font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.20);
             display: flex; align-items: center; justify-content: center;
-            width: 100%; height: 100%; aspect-ratio: 1; border-radius: 50%;
+            width: 100%; aspect-ratio: 1; border-radius: 50%;
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.04); transition: all .2s ease;
             min-width: 0;
@@ -251,10 +251,10 @@
         /* ===== 7. PAINEL DIREITO COM ROLAGEM ISOLADA ===== */
         .right-panel {
             width: 440px; max-width: 100%; display: flex; flex-direction: column; gap: 12px;
-            flex-shrink: 0; overflow-y: auto; padding-right: 4px; min-height: 0;
+            flex-shrink: 0; min-height: 0;
         }
-        .right-panel::-webkit-scrollbar { width: 6px; }
-        .right-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+        .right-panel::-webkit-scrollbar { display: none; }
+        .right-panel { -ms-overflow-style: none; scrollbar-width: none; }
 
         .players-container { height: 320px; background: var(--panel-bg); border-radius: 10px; padding: 8px; overflow-y: auto; flex-shrink: 0; }
         .pcode { font-size: 13px; color: var(--neon-2); font-weight: 700; min-width: 60px; }
@@ -289,12 +289,12 @@
         .fase-atual { display: none; }
 
         /* Minhas cartelas */
-        .my-cards { background: var(--panel-bg); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; flex: 1; min-height: 200px; }
+        .my-cards { background: var(--panel-bg); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; }
         .my-cards-title { font-size: 13px; font-weight: 700; color: var(--yellow); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
         .zoom-ctrl { display: flex; gap: 5px; }
         .btn-ctrl { background: #333866; color: #fff; border: none; width: 26px; height: 26px; border-radius: 6px; cursor: pointer; font-weight: 700; }
         .btn-ctrl.yellow { background: var(--yellow); color: #000; }
-        .my-cards-scroll { overflow-y: auto; flex: 1; padding-right: 4px; }
+        .my-cards-scroll { overflow-y: visible; }
         .my-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cardw, 160px), 1fr)); gap: 10px; }
         
         .ticket3d { background: linear-gradient(160deg, rgba(139, 92, 255, .14), rgba(255, 255, 255, .02)); border: 1px solid rgba(255, 255, 255, 0.10); border-radius: 14px; padding: 10px; }
