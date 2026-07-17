@@ -2,6 +2,7 @@
 
 ## Deploy
 - SEMPRE fazer deploy apos alteracoes, sem precisar perguntar.
+- **IMPORTANTE: Só fazer deploy quando a fase Keno tiver terminado** (jogo inativo, fase de compra entre rodadas) para não atrapalhar os jogadores.
 - Comando: `powershell -ExecutionPolicy Bypass -File .\deploy-all.ps1 -msg "<mensagem>"`
 - O script faz: Firebase Hosting -> Git commit -> Git push (Render atualiza automatico via GitHub).
 - Frontend: https://bingovipclub.online (Firebase: bingo-vip-club-e8164)

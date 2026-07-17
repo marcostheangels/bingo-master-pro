@@ -529,6 +529,8 @@ function sendGameState(room, ws) {
         jackpot: room.jackpot,
         autoStartSeconds: room.autoStartSeconds,
         totalCardsAtStart: room.totalCardsAtStart || 0,
+        cardTier: room.cardTier || null,
+        dynamicPrizes: room.dynamicPrizes || null,
         manutencao: db.getManutencao()
     };
     broadcast(room, msg);
@@ -572,6 +574,11 @@ function pararAutoStartServer(room) {
 function iniciarNovaRodada(room) {
     if (room.gameActive) return;
     log('GAME', 'Rodada iniciada', { sala: room.id, round: room.currentRound + 1 });
+    
+    // Tier fixo: R$0,15 — igual ao site de referencia
+    const tier = engine.CARD_TIERS[0];
+    room.cardTier = tier;
+    
     liquidarComprasSala(room.id);
     room.currentRound++;
     room.drawnBalls = [];
@@ -588,22 +595,55 @@ function iniciarNovaRodada(room) {
             for (let i = 0; i < qtd; i++) {
                 p.cards.push(engine.generateBingoCardData());
             }
-            p.chips = Math.max(0, p.chips - p.cards.length * engine.CARD_COST);
+            p.chips = Math.max(0, p.chips - p.cards.length * tier.cost);
         }
         (p.cards || []).forEach(card => {
             card.awards = { kuadra: false, kina: false, keno: false };
         });
     });
     
-    const initialCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
-    room.totalCardsAtStart = initialCards;
-    // Jackpot é progressivo: mantém o acumulado; só semeia o valor inicial se estiver zerado
-    if (!room.jackpot) room.jackpot = engine.JACKPOT_INITIAL;
+    // Calcula prêmios baseados SÓ em cartelas HUMANAS (bots têm dinheiro fictício)
+    const humanCards = Array.from(room.players.values()).filter(p => !p.isBot).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
+    room.totalCardsAtStart = humanCards;
+    const rewards = engine.calculatePhaseRewards(humanCards, tier);
+
+    // Keno mínimo garantido: sempre maior que o gasto do jogador
+    // Usa contribuição do jackpot + lucro da casa + reserva acumulada se necessário
+    let kenoFinal = rewards.kenoBase;
+    let jackpotContrib = rewards.jackpotContrib;
+    let casaLucro = rewards.casaLucro;
+    if (rewards.kenoGap > 0) {
+        let gap = rewards.kenoGap;
+        // 1o: tira da contribuição do jackpot desta rodada
+        const fromJackpotContrib = Math.min(gap, jackpotContrib);
+        jackpotContrib -= fromJackpotContrib;
+        gap -= fromJackpotContrib;
+        // 2o: tira do lucro da casa desta rodada
+        const fromCasa = Math.min(gap, casaLucro);
+        casaLucro -= fromCasa;
+        gap -= fromCasa;
+        // 3o: tira da reserva acumulada do jackpot (acima da semente)
+        if (gap > 0 && room.jackpot) {
+            const reserva = room.jackpot - engine.JACKPOT_INITIAL;
+            if (reserva > 0) {
+                const fromReserva = Math.min(gap, reserva);
+                room.jackpot -= fromReserva;
+                gap -= fromReserva;
+            }
+        }
+        kenoFinal = rewards.kenoBase + (rewards.kenoGap - gap);
+    }
+    room.dynamicPrizes = { kuadra: rewards.kuadra, kina: rewards.kina, keno: kenoFinal };
+
+    // Jackpot: semente + contribuição restante da rodada
+    if (!room.jackpot || room.jackpot < engine.JACKPOT_INITIAL) room.jackpot = engine.JACKPOT_INITIAL;
+    const novoJackpot = room.jackpot + jackpotContrib;
+    if (novoJackpot <= engine.JACKPOT_MAX) room.jackpot = novoJackpot;
     
     saveRoomSnapshot(room);
     sendGameState(room);
-    addLog(room, `🎯 Rodada #${room.currentRound} iniciada!`);
-    broadcast(room, { type: 'notice', text: '🎯 Nova rodada iniciada!', kind: 'success' });
+    addLog(room, `🎯 Rodada #${room.currentRound} iniciada! (${tier.emoji} ${tier.name} - R$ ${(tier.cost / 1000).toFixed(2).replace('.', ',')})`);
+    broadcast(room, { type: 'notice', text: `🎯 Rodada ${tier.emoji} ${tier.name} iniciada! Cartela: R$ ${(tier.cost / 1000).toFixed(2).replace('.', ',')}`, kind: 'success' });
     const playersArr2 = Array.from(room.players.values());
     const closeInfo = engine.computeCloseCardsForAllPlayers(playersArr2, room.currentPhaseIndex, room.drawnBalls);
     broadcast(room, { type: 'closeCards', data: closeInfo });
@@ -693,7 +733,8 @@ async function sortearProximaBola(room) {
             const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
             log('GAME', 'Vencedores', { qtd: winners.length, fase: phaseKey, vencedores: winners.map(w => ({ nome: w.player.name, premio: w.phaseLabel })) });
             const humanCards = playersArr.filter(p => !p.isBot).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
-            const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, humanCards, room.jackpot);
+            const dynamicReward = room.dynamicPrizes ? room.dynamicPrizes[phaseKey] : null;
+            const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, humanCards, room.jackpot, dynamicReward);
 
             // Update persistent chips/winnings (cache instantâneo, sync em background)
             // Bots ganham no jogo (fichas/banner) para dar vida à sala, mas NÃƒO vão para o
@@ -851,7 +892,8 @@ async function finalizarRodada(room) {
         for (const p of room.players.values()) {
             const qtd = p.cards ? p.cards.length : 0;
             if (!p.isBot && qtd > 0) {
-                p.chips += qtd * engine.CARD_COST;
+                const refundCost = (room.cardTier && room.cardTier.cost) ? room.cardTier.cost : engine.CARD_COST;
+                p.chips += qtd * refundCost;
                 await setChips(p.name, p.chips, p.winnings);
             }
             p.cards = [];
@@ -1227,7 +1269,8 @@ async function handleAction(ws, room, action, payload) {
             if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: `Limite máximo de ${limit} cartelas por jogador.` }));
             return;
         }
-        const cost = qty * engine.CARD_COST;
+        const cardCost = (room.cardTier && room.cardTier.cost) ? room.cardTier.cost : engine.CARD_COST;
+        const cost = qty * cardCost;
         if (player.chips < cost) {
             if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: 'Saldo insuficiente para comprar cartelas.' }));
             return;
@@ -1237,7 +1280,8 @@ async function handleAction(ws, room, action, payload) {
         // Bots NÃƒO contribuem (suas fichas são de brincadeira). Teto de segurança JACKPOT_MAX.
         if (!player.isBot) {
             const base = (typeof room.jackpot === 'number' && room.jackpot > 0) ? room.jackpot : engine.JACKPOT_INITIAL;
-            room.jackpot = Math.min(base + qty * engine.JACKPOT_CONTRIBUTION_PER_CARD, engine.JACKPOT_MAX);
+            const perCardContrib = Math.max(1, Math.floor(cardCost * engine.PRIZE_PERCENTS.jackpot));
+            room.jackpot = Math.min(base + qty * perCardContrib, engine.JACKPOT_MAX);
         }
         for (let i = 0; i < qty; i++) player.cards.push(engine.generateBingoCardData());
         await setChips(player.name, player.chips, player.winnings);
@@ -1280,7 +1324,7 @@ async function handleAction(ws, room, action, payload) {
         pararAutoStartServer(room);
         for (const p of room.players.values()) {
             const qtd = p.cards ? p.cards.length : 0;
-            if (!p.isBot && qtd > 0) { p.chips += qtd * engine.CARD_COST; await setChips(p.name, p.chips, p.winnings); }
+            if (!p.isBot && qtd > 0) { const rc = (room.cardTier && room.cardTier.cost) ? room.cardTier.cost : engine.CARD_COST; p.chips += qtd * rc; await setChips(p.name, p.chips, p.winnings); }
             p.cards = [];
         }
         liquidarComprasSala(room.id);

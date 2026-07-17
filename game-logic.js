@@ -260,12 +260,18 @@ const PHASES = {
     kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 1,00', reward: 1000 },
     keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 2,00', reward: 2000 }
 };
+const CARD_TIERS = [
+    { name: 'Básica', emoji: '🟢', cost: 100, weight: 50 },
+    { name: 'Premium', emoji: '🔵', cost: 150, weight: 30 },
+    { name: 'VIP', emoji: '🟡', cost: 500, weight: 20 }
+];
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋'];
 const BOT_MAX_CARDS = 25;
-const HUMAN_MAX_CARDS = 40;
-const CARD_COST = 100;
-const JACKPOT_BALL_LIMIT = 55;
+const HUMAN_MAX_CARDS = 9999;
+const CARD_COST = 150;
+let currentDynamicPrizes = null;
+const JACKPOT_BALL_LIMIT = 37;
 let JACKPOT_REWARD = 50000;
 
 function getRoundNumber() {
@@ -369,9 +375,9 @@ function releaseWakeLock() {
     }
 }
 
-// Re-solicita wake lock quando a aba volta a ficar visível
+// Wake lock permanece ativo SEMPRE — nunca interrompe o jogo
 document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && document.getElementById('screenGame')?.classList.contains('active')) {
+    if (!document.hidden) {
         requestWakeLock();
         setupNoSleepFallback();
     }
@@ -529,8 +535,8 @@ function goToScreen(screenId) {
                 console.error('Erro ao inicializar a tela do jogo (tela ainda visível):', err);
             }
         } else {
-            // Libera wake lock ao sair da tela do jogo
-            releaseWakeLock();
+            // Wake lock NUNCA é liberado — mantém o jogo ativo mesmo fora da tela
+            // Só libera no logout explícito (sairDaConta)
         }
 }
 
@@ -1247,7 +1253,7 @@ function ajustarQtd(delta) {
     const input = document.getElementById('buyQtyInput');
     if (!input) return;
     let val = parseInt(input.value, 10) || 1;
-    val = Math.max(1, Math.min(40, val + delta));
+    val = Math.max(1, Math.min(HUMAN_MAX_CARDS, val + delta));
     input.value = val;
 }
 
@@ -1352,7 +1358,8 @@ function startBingoDraw() {
             for (let i = 0; i < BOT_MAX_CARDS; i++) {
                 player.cards.push(generateBingoCardData());
             }
-            player.chips = Math.max(0, player.chips - player.cards.length * CARD_COST);
+            const botCost = CARD_COST;
+            player.chips = Math.max(0, player.chips - player.cards.length * botCost);
             saveChips(player.name, player.chips);
         }
     });
@@ -1391,7 +1398,8 @@ function resetGame() {
     allPlayers.forEach(player => {
         const qtd = player.cards ? player.cards.length : 0;
         if (!player.isBot && qtd > 0) {
-            player.chips += qtd * CARD_COST;
+            const refCost = CARD_COST;
+            player.chips += qtd * refCost;
             saveChips(player.name, player.chips);
         }
         player.cards = [];

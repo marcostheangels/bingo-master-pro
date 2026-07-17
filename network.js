@@ -115,7 +115,7 @@ let wasForcedDisconnect = false;
 let heartbeatInterval = null;
 let backgroundPingInterval = null;
 const MAX_RECONNECT_ATTEMPTS = 999;
-const RECONNECT_BASE_DELAY = 500;
+const RECONNECT_BASE_DELAY = 100; // reconexão rápida (antes 500ms)
 const HEARTBEAT_INTERVAL = 3000;
 
 function loadChips(name) {
@@ -299,7 +299,6 @@ function scheduleReconnect() {
         if (typeof loggedOut !== 'undefined' && loggedOut) return;
         const logado = (typeof minhaSessaoToken !== 'undefined' && minhaSessaoToken) || (typeof meuCpf !== 'undefined' && meuCpf);
         if (pendingConnect || logado) {
-            showOfflineBanner(true);
             connectSocket();
         }
     }, delay);
@@ -336,12 +335,13 @@ document.addEventListener('visibilitychange', () => {
         }
         cancelReconnect();
         if (typeof clearStaleCelebrations === 'function') clearStaleCelebrations();
+        if (typeof requestWakeLock === 'function') requestWakeLock();
+        if (typeof setupNoSleepFallback === 'function') setupNoSleepFallback();
         if (!loggedOut && pendingConnect && (!socket || socket.readyState !== WebSocket.OPEN)) {
             connectSocket();
         }
         if (!loggedOut && socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: 'ping' }));
-            if (typeof requestWakeLock === 'function') requestWakeLock();
         }
     }
 });
@@ -650,6 +650,12 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
             if (data.jackpot !== undefined) {
                 JACKPOT_REWARD = data.jackpot;
                 try { localStorage.setItem('bingo_jackpot_reward', JACKPOT_REWARD); } catch (e) {}
+            }
+            if (data.cardTier) {
+                CARD_COST = data.cardTier.cost;
+            }
+            if (data.dynamicPrizes) {
+                currentDynamicPrizes = data.dynamicPrizes;
             }
             
             const me = allPlayers.find(p => p.id === myId || p.name.toLowerCase() === myName.toLowerCase());

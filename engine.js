@@ -7,15 +7,20 @@ const PHASES = {
     keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 2,00', reward: 2000 }
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
-const CARD_COST = 100; // R$0,10 cada cartela
-const JACKPOT_BALL_LIMIT = 55; // keno em ate 55 bolas
-const JACKPOT_INITIAL = 50000; // R$50,00 de semente do poço progressivo
-const JACKPOT_CONTRIBUTION_PER_CARD = 10; // R$0,01 por CARTELA HUMANA alimenta o poço
-const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada
-const JACKPOT_MAX = 200000; // R$200,00 teto de segurança do poço
+const CARD_COST = 100; // fallback padrão
+const CARD_TIERS = [
+    { name: 'Standard', emoji: '🎱', cost: 150, weight: 100 }
+];
+// % da receita destinada a cada fase + casa (sempre seguros)
+const PRIZE_PERCENTS = { kuadra: 0.15, kina: 0.15, keno: 0.50, jackpot: 0.12, casa: 0.08 };
+const JACKPOT_BALL_LIMIT = 37; // Igual ao site de referencia — quase impossivel
+const JACKPOT_INITIAL = 50000; // R$50,00 semente (nunca é tocada)
+const JACKPOT_CONTRIBUTION_PER_CARD = 10; // fallback
+const JACKPOT_MAX = 1000000; // R$1.000,00 teto (igual ao site)
+const KENO_MIN_MULTIPLIER = 1.25; // Keno mínimo = 40cart × preço × 1.25 (sempre maior que o gasto)
 
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
-const HUMAN_MAX_CARDS = 40; // limite de cartelas por jogador (aumentado p/ dar mais opções e garantir lucro da casa)
+const HUMAN_MAX_CARDS = 9999; // Sem limite pratico — igual ao site
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋', 'Lucas 🔥', 'Beatriz 🌻', 'Gustavo 🍎', 'Larissa 🦄', 'Rafael 🎲', 'Patrícia 🌹', 'Thiago ⚽', 'Vanessa 🍓', 'Felipe 🚀', 'Mariana 🐬'];
 const BOT_MAX_CARDS = 25;
 const BOT_INITIAL_CHIPS = 10000; // R$10,00 somente para bots
@@ -170,8 +175,30 @@ function isJackpotEligible(phaseKey, drawnBalls) {
     return phaseKey === 'keno' && drawnBalls.length <= JACKPOT_BALL_LIMIT;
 }
 
-function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards, jackpotAmount) {
-    const reward = PHASES[phaseKey].reward;
+function pickCardTier() {
+    const totalWeight = CARD_TIERS.reduce((sum, t) => sum + t.weight, 0);
+    let rand = Math.random() * totalWeight;
+    for (const tier of CARD_TIERS) {
+        rand -= tier.weight;
+        if (rand <= 0) return { ...tier };
+    }
+    return { ...CARD_TIERS[0] };
+}
+
+function calculatePhaseRewards(totalCards, tier) {
+    const revenue = totalCards * tier.cost;
+    const kuadra = Math.floor(revenue * PRIZE_PERCENTS.kuadra);
+    const kina = Math.floor(revenue * PRIZE_PERCENTS.kina);
+    const kenoBase = Math.floor(revenue * PRIZE_PERCENTS.keno);
+    const kenoMinimum = Math.floor(40 * tier.cost * KENO_MIN_MULTIPLIER);
+    const kenoGap = Math.max(0, kenoMinimum - kenoBase);
+    const jackpotContrib = Math.floor(revenue * PRIZE_PERCENTS.jackpot);
+    const casaLucro = Math.floor(revenue * PRIZE_PERCENTS.casa);
+    return { kuadra, kina, kenoBase, kenoMinimum, kenoGap, jackpotContrib, casaLucro };
+}
+
+function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards, jackpotAmount, dynamicReward) {
+    const reward = dynamicReward || PHASES[phaseKey].reward;
 
     // Vencedores únicos (1 prêmio por jogador, não por cartela)
     const uniquePlayers = [];
@@ -191,12 +218,9 @@ function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards, jackpotA
     // Prêmio base é dividido entre TODOS os vencedores (humanos E bots) — bots dão vida ao jogo
     const perPlayer = Math.max(1, Math.floor(reward / uniquePlayers.length));
 
-    // Jackpot vai para QUALQUER vencedor de keno (humano OU bot) quando a condição é
-    // atingida (keno em ate BALL_LIMIT bolas + >= MIN cartelas humanas). Bots também podem
-    // ganhar — assim fica transparente para todos verem o jackpot sendo pago. Bots só recebem
-    // fichas nao sacáveis, então a casa nao tem prejuízo real com isso.
-    const isJackpot = isJackpotEligible(phaseKey, drawnBalls) &&
-        (humanCards || 0) >= JACKPOT_MIN_HUMAN_CARDS;
+    // Jackpot: só vence se Keno em ate 34 bolas — quase impossível
+    // O prêmio é o acumulado total (jackpot menos a semente de R$50)
+    const isJackpot = isJackpotEligible(phaseKey, drawnBalls);
     const jackpotPool = jackpotAmount || JACKPOT_INITIAL;
     const jackpotPerPlayer = isJackpot ? Math.floor(jackpotPool / Math.max(1, uniquePlayers.length)) : 0;
 
@@ -216,9 +240,11 @@ function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards, jackpotA
 }
 
 module.exports = {
-    PHASES, PHASE_SEQUENCE, CARD_COST, JACKPOT_BALL_LIMIT, JACKPOT_INITIAL, JACKPOT_CONTRIBUTION_PER_CARD, JACKPOT_MIN_HUMAN_CARDS, JACKPOT_MAX,
+    PHASES, PHASE_SEQUENCE, CARD_COST, CARD_TIERS, PRIZE_PERCENTS,
+    JACKPOT_BALL_LIMIT, JACKPOT_INITIAL, JACKPOT_CONTRIBUTION_PER_CARD, JACKPOT_MAX, KENO_MIN_MULTIPLIER,
     INITIAL_CHIPS, HUMAN_MAX_CARDS, BOT_NAMES, BOT_MAX_CARDS, BOT_INITIAL_CHIPS,
     getMaxCardsForPlayer, generateBingoCardData,
     computeCardAwards, getCardClosePhase, computeCloseCardsForAllPlayers,
-    checkAwardsForAllPlayers, processPhaseWinners
+    checkAwardsForAllPlayers, processPhaseWinners,
+    pickCardTier, calculatePhaseRewards
 };

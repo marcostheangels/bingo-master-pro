@@ -210,10 +210,10 @@
 
                     <div class="ball-actions">
                         <div class="buy-options" id="buySection">
-                            <span class="buy-label">🎟️ Comprar cartelas <span style="color:#fde047;font-weight:800">R$ 0,10</span> cada <span style="color:#fbbf24;font-size:0.85em">— Máx: 40</span></span>
+                            <span class="buy-label">🎟️ Comprar cartelas <span style="color:#fde047;font-weight:800">R$ <span id="cardCostDisplay">0,15</span></span> cada <span style="color:#fbbf24;font-size:0.85em">— Sem limite</span></span>
                             <div class="buy-btn-row">
                                 <button class="btn-qty" onclick="ajustarQtd(-1)" aria-label="Diminuir quantidade">−</button>
-                                <input type="number" id="buyQtyInput" value="1" min="1" max="40" class="buy-qty-input">
+                                <input type="number" id="buyQtyInput" value="1" min="1" max="9999" class="buy-qty-input">
                                 <button class="btn-qty" onclick="ajustarQtd(1)" aria-label="Aumentar quantidade">+</button>
                                 <button class="btn-buy" onclick="comprarCartelas()">🎯 Comprar</button>
                             </div>
@@ -544,8 +544,8 @@
     </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-<script src="game-logic.js?v=58"></script>
-<script src="network.js?v=56"></script>
+<script src="game-logic.js?v=59"></script>
+<script src="network.js?v=57"></script>
     <script>
         // Auto-login se tiver sessao valida
         (async function() {
