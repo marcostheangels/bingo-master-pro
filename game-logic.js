@@ -256,9 +256,9 @@ async function validarSessaoExistente() {
 }
 const BOT_INITIAL_CHIPS = 10000; // bots comecam com R$10,00 em fichas (somente bots)
 const PHASES = {
-    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 Variável', reward: 500 },
-    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 Variável', reward: 1000 },
-    keno: { label: 'Keno', description: 'Cartela completa', prize: '💰 Variável', reward: 2000 }
+    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 15%', reward: 500 },
+    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 15%', reward: 1000 },
+    keno: { label: 'Keno', description: 'Cartela completa', prize: '💰 50% + Jackpot', reward: 2000 }
 };
 const CARD_TIERS = [
     { name: 'Básica', emoji: '🟢', cost: 100, weight: 50 },
