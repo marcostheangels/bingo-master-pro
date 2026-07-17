@@ -3305,14 +3305,17 @@ body {
    ========================================================= */
 
 /* ---------- RESET DE LAYOUT ANTIGO DO #screenGame ---------- */
-#screenGame .game-wrapper { display:block !important; padding:0 !important; }
+#screenGame.screen { display:block !important; align-items:stretch !important; justify-content:flex-start !important; padding:0 !important; overflow-x:hidden !important; }
+#screenGame.active { display:block !important; align-items:stretch !important; justify-content:flex-start !important; }
+#screenGame .game-wrapper,
+#screenGame .game-wrapper.game-wrapper-mobile { display:block !important; width:100% !important; max-width:none !important; margin:0 !important; padding:10px !important; gap:0 !important; }
 #screenGame .jackpot-panel,
 #screenGame .prizes-strip,
 #screenGame .ball-section,
 #screenGame .my-cards-section,
-#screenGame .players-panel,
 #screenGame .game-log,
-#screenGame .jackpot-balls-panel { all: unset; }
+#screenGame .jackpot-balls-panel { all:unset; }
+#screenGame .players-panel { all:unset; display:block !important; }
 #screenGame .game-body { all:unset; display:contents; }
 
 /* ---------- ROOT / FUNDO ---------- */
