@@ -88,6 +88,16 @@
 
                     <div class="buy-panel" id="buySection">
                         <div class="buy-title">🎟️ Comprar Cartelas</div>
+                        <div class="qty-row" id="qtyRow">
+                            <button class="qbtn" data-q="5" onclick="setQtd(5)">5</button>
+                            <button class="qbtn" data-q="10" onclick="setQtd(10)">10</button>
+                            <button class="qbtn" data-q="20" onclick="setQtd(20)">20</button>
+                            <button class="qbtn" data-q="30" onclick="setQtd(30)">30</button>
+                            <button class="qbtn" data-q="40" onclick="setQtd(40)">40</button>
+                            <button class="qbtn" data-q="50" onclick="setQtd(50)">50</button>
+                            <button class="qbtn" data-q="100" onclick="setQtd(100)">100</button>
+                            <button class="qbtn" data-q="200" onclick="setQtd(200)">200</button>
+                        </div>
                         <div class="buy-stepper">
                             <button class="stepper-btn" onclick="ajustarQtd(-1)">−</button>
                             <input type="number" id="buyQtyInput" value="1" min="1" max="9999" class="stepper-qty" oninput="atualizarTotalCompra()">
@@ -160,10 +170,8 @@ for(let k=0;k<4;k++){const box=document.createElement('div');box.className='bing
     g.appendChild(cell);}
   box.appendChild(tit);box.appendChild(g);mc.appendChild(box);}
 
-const log=document.getElementById('gameLog');
-['Número sorteado: 36','Número sorteado: 87','Número sorteado: 85','Aguardando jogadores...'].forEach(m=>{const e=document.createElement('div');e.textContent=m;log.appendChild(e);});
-
 function ajustarQtd(d){const i=document.getElementById('buyQtyInput');let v=parseInt(i.value)||1;v=Math.max(1,v+d);i.value=v;atualizarTotalCompra();}
+function setQtd(q){const i=document.getElementById('buyQtyInput');i.value=Math.max(1,q);atualizarTotalCompra();}
 function atualizarTotalCompra(){const i=document.getElementById('buyQtyInput');const q=parseInt(i.value)||1;document.getElementById('buyTotalDisplay').innerHTML='Total: <strong>R$ '+(q*0.15).toFixed(2).replace('.',',')+'</strong>';}
 function comprarCartelas(){alert('Teste local — compra real só no site.');}
 function zoomCards(){}

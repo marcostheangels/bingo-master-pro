@@ -1272,6 +1272,14 @@ function ajustarQtd(delta) {
     atualizarTotalCompra();
 }
 
+function setQtd(q) {
+    const input = document.getElementById('buyQtyInput');
+    if (!input) return;
+    const val = Math.max(1, Math.min(HUMAN_MAX_CARDS, q));
+    input.value = val;
+    atualizarTotalCompra();
+}
+
 function renderMyCards() {
     const grid = document.getElementById('myCardsGrid');
     if (!grid) return;

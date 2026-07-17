@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎱%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.0.8/index.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=36">
+    <link rel="stylesheet" href="style.css?v=37">
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => {
@@ -247,6 +247,16 @@
                     <!-- PAINEL DE COMPRA DE CARTELAS -->
                     <div class="buy-panel" id="buySection">
                         <div class="buy-title">🎟️ Comprar Cartelas</div>
+                        <div class="qty-row" id="qtyRow">
+                            <button class="qbtn" data-q="5" onclick="setQtd(5)">5</button>
+                            <button class="qbtn" data-q="10" onclick="setQtd(10)">10</button>
+                            <button class="qbtn" data-q="20" onclick="setQtd(20)">20</button>
+                            <button class="qbtn" data-q="30" onclick="setQtd(30)">30</button>
+                            <button class="qbtn" data-q="40" onclick="setQtd(40)">40</button>
+                            <button class="qbtn" data-q="50" onclick="setQtd(50)">50</button>
+                            <button class="qbtn" data-q="100" onclick="setQtd(100)">100</button>
+                            <button class="qbtn" data-q="200" onclick="setQtd(200)">200</button>
+                        </div>
                         <div class="buy-stepper">
                             <button class="stepper-btn" onclick="ajustarQtd(-1)" aria-label="Diminuir">−</button>
                             <input type="number" id="buyQtyInput" value="1" min="1" max="9999" class="stepper-qty" oninput="atualizarTotalCompra()">
@@ -581,8 +591,8 @@
     </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-<script src="game-logic.js?v=96"></script>
-<script src="network.js?v=94"></script>
+<script src="game-logic.js?v=97"></script>
+<script src="network.js?v=95"></script>
     <script>
         // Auto-login se tiver sessao valida
         (async function() {
