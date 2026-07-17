@@ -210,11 +210,12 @@
             display: grid; grid-template-columns: repeat(30, 1fr); grid-template-rows: repeat(3, 1fr);
             gap: 4px; height: 100%; width: 100%;
         }
-        .grid-cell {
-            font-size: 9px; font-weight: 700; color: rgba(255, 255, 255, 0.20);
+.grid-cell {
+            font-size: 12px; font-weight: 700; color: rgba(255,255,255,0.20);
             display: flex; align-items: center; justify-content: center;
-            border-radius: 50%; background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.04); transition: all .2s ease;
+            width: 28px; height: 28px; border-radius: 50%;
+            background: rgba(255,255,255,0.03);
+            border: 1px solid rgba(255,255,255,0.04); transition: all .2s ease;
         }
         .grid-cell.drawn { color: #06203f; background: radial-gradient(circle at 32% 28%, #fff 0%, #4aa3ff 42%, #0a4a8f 100%); box-shadow: 0 0 8px rgba(74, 163, 255, .5); }
         .grid-cell.drawn.f2 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ffd83d 42%, #c79a00 100%); color: #4a3700; box-shadow: 0 0 8px rgba(255, 216, 61, .5); }
