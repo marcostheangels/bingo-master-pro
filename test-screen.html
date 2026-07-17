@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TESTE — Tela 3D do jogo real (fake data)</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+<link rel="stylesheet" href="style.css?v=28">
+<style>body{margin:0}</style>
+</head>
+<body>
+<!-- ============ COPIA EXATA do #screenGame de index.html ============ -->
+<div class="screen active" id="screenGame">
+    <div class="game-wrapper game-wrapper-mobile">
+
+        <button class="btn-admin-open" id="btnAdminOpen" style="display:none" onclick="abrirAdminScreen()">⚙️ Admin</button>
+
+        <header class="top-bar b3d-topbar">
+            <div class="logo-area">
+                <img class="logo-img" src="bingo1.jpeg" alt="Bingo VIP Club">
+                <span class="logo-text">BINGO VIP CLUB</span>
+            </div>
+            <div class="nav-actions">
+                <button class="btn-action"><span class="material-icons ic-deposito">attach_money</span>Depositar</button>
+                <button class="btn-action" id="btnSacar"><span class="material-icons ic-sacar">account_balance_wallet</span>Sacar</button>
+                <button class="btn-action"><span class="material-icons ic-extrato">description</span>Extrato</button>
+                <button class="btn-action"><span class="material-icons ic-dados">assignment_ind</span>Dados</button>
+                <button class="btn-action"><span class="material-icons ic-sair">exit_to_app</span>Sair</button>
+                <button class="btn-sound" id="btnSoundToggle">🔊</button>
+                <button class="btn-sound" id="btnNotify">🔔</button>
+            </div>
+            <div class="user-info">
+                <div class="connection-info" id="connectionInfo" style="display:flex;align-items:center;gap:6px;font-size:11px;color:#9d96d4">
+                    <span class="conn-dot" id="connDot"></span>
+                    <span id="connStatus">Conectado</span>
+                </div>
+                <div class="user-avatar" id="avatarIcon" style="display:none">B</div>
+                <span id="labelMyName">MARKIM2026@</span>
+                <div class="balance-box">
+                    <div class="balance-val" id="labelMyChips">💰 1500 🏆 3</div>
+                    <div style="font-size:10px;color:rgba(255,255,255,0.5)">Saldo ▼</div>
+                </div>
+            </div>
+        </header>
+
+        <div class="main-container">
+
+            <aside class="b3d-aside">
+                <span class="material-icons side-icon">menu</span>
+                <span class="material-icons side-icon">radio</span>
+                <span class="material-icons side-icon">calendar_month</span>
+                <span class="material-icons side-icon">payments</span>
+                <span class="material-icons side-icon">history</span>
+                <span class="material-icons side-icon">support_agent</span>
+            </aside>
+
+            <div class="info-column">
+                <div class="info-card dark-blue"><span>Sorteio</span><strong id="currentRoundNumber">#131937</strong></div>
+                <div class="info-card"><span>Hora</span><strong id="liveClock">10:36:00</strong></div>
+                <div class="info-card"><span>Doação</span><strong id="doacaoVal">R$ 0,15</strong></div>
+                <div class="ordem-box">
+                    <span>ACUMULADO</span>
+                    <div class="jackpot-value" id="jackpotDisplay">R$ 1.000,00</div>
+                    <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÉ 55 BOLAS E LEVE O JACKPOT!</div>
+                    <div class="ordem-balls" id="ordemBalls"></div>
+                </div>
+                <div class="jackpot-balls-panel" id="jackpotBallsPanel" style="display:none;">
+                    <div class="jackpot-balls-label">Bolas para o Jackpot:</div>
+                    <div class="jackpot-balls-grid" id="jackpotBallsGrid"></div>
+                </div>
+            </div>
+
+            <div class="center-content">
+
+                <div class="prizes-row">
+                    <div class="prize-card phase-item-mini" id="phase_kuadra"><span>Kuadra</span><strong class="prize">R$ 0,50</strong></div>
+                    <div class="prize-card phase-item-mini" id="phase_kina"><span>Kina</span><strong class="prize">R$ 1,00</strong></div>
+                    <div class="prize-card phase-item-mini" id="phase_keno"><span>Bingo</span><strong class="prize">R$ 2,00</strong></div>
+                    <div class="prize-card acumulado">
+                        <div class="badge-acumulado" id="jackpotBadge">37</div>
+                        <span>Acumulado</span><strong id="jackpotTotal">R$ 1.000,00</strong>
+                    </div>
+                </div>
+
+                <div class="game-display">
+                    <div class="ball-display main-ball fb2" id="mainBall">36</div>
+                    <div class="history-balls" id="historyBalls"></div>
+                    <div class="drawn-grid balls-board" id="drawnGrid"></div>
+                </div>
+
+                <div class="buy-panel" id="buySection">
+                    <div class="buy-title">🎟️ Comprar Cartelas</div>
+                    <div class="buy-stepper">
+                        <button class="stepper-btn" onclick="ajustarQtd(-1)">−</button>
+                        <input type="number" id="buyQtyInput" value="1" min="1" max="9999" class="stepper-qty" oninput="atualizarTotalCompra()">
+                        <button class="stepper-btn yellow" onclick="ajustarQtd(1)">+</button>
+                    </div>
+                    <div class="buy-total" id="buyTotalDisplay">Total: <strong>R$ 0,15</strong></div>
+                    <button class="btn-comprar" onclick="comprarCartelas()">🎯 Comprar</button>
+                    <span class="buy-label">R$ <span id="cardCostDisplay">0,15</span> cada — Sem limite</span>
+                </div>
+
+            </div>
+
+            <div class="right-panel">
+
+                <div class="players-container players-panel" id="playersPanel">
+                    <h3 onclick="this.closest('.players-panel').classList.toggle('collapsed')">👥 Jogadores <span class="toggle-icon">▼</span></h3>
+                    <div class="players-panel-body">
+                        <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
+                        <ul class="player-list" id="playerListUI"></ul>
+                        <div class="players-missing" id="missingNumbersPanel">
+                            <h4 class="players-missing-title">📊 <span id="missingTitle">Cartelas próximas</span></h4>
+                            <div class="missing-numbers-list" id="missingNumbersList">
+                                <p style="color:#6b6599;font-size:0.82em">Nenhum jogo ativo no momento.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="cards-bar">
+                    <strong style="font-size:16px">Cartelas: <span id="cartCount">0</span></strong>
+                    <div class="fase-tags">
+                        <button class="fase-tag" data-f="kuadra">Kuadra</button>
+                        <button class="fase-tag" data-f="kina">Kina</button>
+                        <button class="fase-tag" data-f="keno">Keno</button>
+                    </div>
+                </div>
+
+                <div class="my-cards my-cards-section">
+                    <div class="my-cards-title">
+                        📋 Minhas Cartelas
+                        <span class="zoom-ctrl">
+                            <button class="btn-ctrl" onclick="zoomCards(-1)">−</button>
+                            <button class="btn-ctrl yellow" onclick="zoomCards(1)">+</button>
+                        </span>
+                    </div>
+                    <div class="my-cards-scroll">
+                        <div class="cards-grid my-cards-grid" id="myCardsGrid"></div>
+                    </div>
+                </div>
+
+                <div class="game-log" id="gameLog"></div>
+
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+/* ===== DADOS FAKE p/ preencher a tela como no preview ===== */
+const drawnBalls=[12,20,25,27,36,38,52,58,85,87];
+const bolaAtual=36;
+
+/* relogio */
+setInterval(()=>{document.getElementById('liveClock').innerText=new Date().toTimeString().split(' ')[0];},1000);
+
+/* mapa de 90 bolas */
+const faixa=n=>n<=30?'fb1':(n<=60?'fb2':'fb3');
+const grid=document.getElementById('drawnGrid');
+for(let i=1;i<=90;i++){
+  const c=document.createElement('div');
+  c.className='dgrid-cell';c.dataset.num=i;c.textContent=String(i).padStart(2,'0');
+  if(i===bolaAtual)c.classList.add('drawn','winner',faixa(i));
+  else if(drawnBalls.includes(i))c.classList.add('drawn',faixa(i));
+  grid.appendChild(c);
+}
+
+/* anel de bolas anteriores (ultimas 4, recente primeiro) */
+const ult=drawnBalls.slice(-4).reverse();
+const hb=document.getElementById('historyBalls');
+ult.forEach(n=>{const d=document.createElement('div');d.className='sub-ball show '+faixa(n);d.textContent=n;hb.appendChild(d);});
+
+/* ordem bolas (faltam sair, decrescente) */
+const ordem=document.getElementById('ordemBalls');
+const faltam=[];for(let i=1;i<=90;i++)if(!drawnBalls.includes(i))faltam.push(i);faltam.sort((a,b)=>b-a);
+ordem.innerHTML=faltam.map(n=>`<div class="ordem-ball ${n<=30?'f1':(n<=60?'f2':'f3')}">${n}</div>`).join('');
+
+/* fase atual pisca */
+const PHASE={'kuadra':'phase_kuadra','kina':'phase_kina','keno':'phase_keno'};
+document.getElementById(PHASE['kuadra']).classList.add('phase-active');
+
+/* jogadores fake */
+const nomes=['VANDOSK8','ISAMARINA','Kald','Lucia Lima','Marcos','Ana','João','Beatriz','Carlos','Diego'];
+const pl=document.getElementById('playerListUI');
+nomes.forEach((nm,i)=>{const li=document.createElement('li');li.innerHTML=`<span>${nm}</span><span class="player-cards">${1+Math.floor(Math.random()*5)} cartelas</span>`;pl.appendChild(li);});
+
+/* cartelas compradas fake (bingo-card com card-grid 3x9) */
+const mc=document.getElementById('myCardsGrid');document.getElementById('cartCount').textContent=6;
+function genCard(){const set=new Set();while(set.size<15)set.add(1+Math.floor(Math.random()*90));return[...set].sort((a,b)=>a-b);}
+for(let k=0;k<6;k++){
+  const nums=genCard();
+  const box=document.createElement('div');box.className='bingo-card card-show';
+  const tit=document.createElement('div');tit.style.cssText='font-size:11px;color:#9d96d4;margin-bottom:8px';tit.textContent='#5'+(100+k);
+  const g=document.createElement('div');g.className='card-grid';
+  for(let r=0;r<3;r++)for(let c=0;c<9;c++){const cell=document.createElement('div');cell.className='card-cell';
+    const v=nums[r*5+ (c%5)]; if(c<5){cell.textContent=v; if(drawnBalls.includes(v))cell.classList.add('marked');} else {cell.className+=' empty';}
+    g.appendChild(cell);}
+  box.appendChild(tit);box.appendChild(g);mc.appendChild(box);
+}
+
+/* game log fake */
+const log=document.getElementById('gameLog');
+['Número sorteado: 36','Número sorteado: 87','Número sorteado: 85','Aguardando jogadores...'].forEach(m=>{const e=document.createElement('div');e.textContent=m;log.appendChild(e);});
+
+/* handlers fake p/ nao quebrar ao clicar */
+function ajustarQtd(d){const i=document.getElementById('buyQtyInput');let v=parseInt(i.value)||1;v=Math.max(1,v+d);i.value=v;atualizarTotalCompra();}
+function atualizarTotalCompra(){const i=document.getElementById('buyQtyInput');const q=parseInt(i.value)||1;document.getElementById('buyTotalDisplay').innerHTML='Total: <strong>R$ '+(q*0.15).toFixed(2).replace('.',',')+'</strong>';}
+function comprarCartelas(){alert('Teste local — compra real só no site.');}
+function zoomCards(){}
+</script>
+</body>
+</html>

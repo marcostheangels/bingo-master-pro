@@ -1275,6 +1275,8 @@ function ajustarQtd(delta) {
 function renderMyCards() {
     const grid = document.getElementById('myCardsGrid');
     if (!grid) return;
+    const cc = document.getElementById('cartCount');
+    if (cc) cc.textContent = myCards.length;
     grid.innerHTML = '';
 
     if (!myCards.length) {
@@ -1690,6 +1692,65 @@ function applyDrawnBall(ball) {
 
     renderMyCards();
     updateJackpotPanel();
+    renderHistoryBalls();
+    renderOrdemBalls();
+}
+
+function renderHistoryBalls() {
+    const box = document.getElementById('historyBalls');
+    if (!box || !drawnBalls || !drawnBalls.length) return;
+    const ultimas = drawnBalls.slice(-4).reverse(); // mais recente primeiro
+    box.innerHTML = '';
+    ultimas.forEach((n, i) => {
+        const d = document.createElement('div');
+        d.className = 'sub-ball show ' + (n <= 30 ? 'fb1' : (n <= 60 ? 'fb2' : 'fb3'));
+        d.textContent = n;
+        box.appendChild(d);
+    });
+}
+
+function renderOrdemBalls() {
+    const el = document.getElementById('ordemBalls');
+    if (!el) return;
+    const faltam = [];
+    for (let i = 1; i <= 90; i++) if (!drawnBalls.includes(i)) faltam.push(i);
+    faltam.sort((a, b) => b - a); // decrescente
+    el.innerHTML = faltam.map(n => `<div class="ordem-ball ${n <= 30 ? 'f1' : (n <= 60 ? 'f2' : 'f3')}">${n}</div>`).join('');
+}
+
+let _relogioJogoTimer = null;
+function iniciarRelogioJogo() {
+    if (_relogioJogoTimer) clearInterval(_relogioJogoTimer);
+    const el = document.getElementById('liveClock');
+    if (!el) return;
+    const tick = () => { el.textContent = new Date().toTimeString().split(' ')[0]; };
+    tick();
+    _relogioJogoTimer = setInterval(tick, 1000);
+}
+
+/* ---------- Handlers do layout 3D (mirror do preview) ---------- */
+let _cardW3d = 160;
+function zoomCards(delta) {
+    _cardW3d = Math.max(110, Math.min(220, _cardW3d + delta * 20));
+    const grid = document.getElementById('myCardsGrid');
+    if (grid) grid.style.setProperty('--cardw', _cardW3d + 'px');
+}
+
+function abrirExtratoModal() {
+    if (typeof abrirModalDeposito === 'function') {
+        showToast('Extrato disponível em breve. Use Depositar/Sacar para movimentações.', 'info', 3000);
+    } else {
+        alert('Extrato disponível em breve.');
+    }
+}
+
+function abrirDadosModal() {
+    const nome = (typeof myName !== 'undefined' && myName) ? myName : 'Jogador';
+    if (typeof showToast === 'function') {
+        showToast('Dados da conta: ' + nome, 'info', 3000);
+    } else {
+        alert('Dados da conta: ' + nome);
+    }
 }
 
 function addLog(message) {
@@ -3290,6 +3351,9 @@ goToScreen = function(screenId) {
         document.body.classList.remove('admin-mode');
         initDrawnGrid();
         syncDrawnGrid();
+        renderHistoryBalls();
+        renderOrdemBalls();
+        iniciarRelogioJogo();
         setTimeout(verificarRecargas, 1000);
         if (isHost && !gameActive && !gameEnded) {
             setTimeout(iniciarAutoStart, 2000);
