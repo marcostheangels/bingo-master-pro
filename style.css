@@ -2574,53 +2574,53 @@ body {
 
 /* ===== 1. TOPO / NAVBAR ===== */
 header { position:relative;z-index:1;display:flex;justify-content:space-between;align-items:center;
-    height:96px;padding:0 18px;border-radius:14px;margin-bottom:10px;
+    height:64px;padding:0 14px;border-radius:12px;margin-bottom:8px;
     background:linear-gradient(160deg,rgba(20,26,62,0.8),rgba(8,10,32,0.7));
     border:1px solid rgba(255,255,255,0.10);
     box-shadow:0 14px 50px rgba(139,92,255,0.25),inset 0 1px 0 rgba(255,255,255,0.10); }
-.logo-area { display:flex;align-items:center;gap:12px; }
-.logo-img { height:64px;width:auto;border-radius:10px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5)); }
-.logo-text { font-weight:800;font-size:40px;letter-spacing:2px;
+.logo-area { display:flex;align-items:center;gap:10px; }
+.logo-img { height:44px;width:auto;border-radius:8px;filter:drop-shadow(0 4px 10px rgba(0,0,0,.5)); }
+.logo-text { font-weight:800;font-size:28px;letter-spacing:2px;
     background:linear-gradient(180deg,#E8C87A 0%,#B8860B 50%,#8a6304 100%);
     -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
     text-shadow:0 2px 4px rgba(0,0,0,.7),0 0 14px rgba(184,134,11,.35);
     filter:drop-shadow(0 1px 0 rgba(0,0,0,.5)); }
-.nav-actions { display:flex;align-items:center;gap:14px; }
-.btn-action { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
-    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:14px;
-    padding:10px 16px;color:#fff;cursor:pointer;font-size:12px;font-weight:600;min-width:74px;
+.nav-actions { display:flex;align-items:center;gap:8px; }
+.btn-action { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);border-radius:10px;
+    padding:6px 10px;color:#fff;cursor:pointer;font-size:10px;font-weight:600;min-width:56px;
     box-shadow:0 8px 18px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.18),inset 0 -4px 10px rgba(0,0,0,.3);
     transition:transform .15s ease,filter .15s ease,box-shadow .15s ease; }
 .btn-action:hover { transform:translateY(-3px);filter:brightness(1.15);
     box-shadow:0 14px 26px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.25),0 0 16px rgba(255,215,0,.35); }
 .btn-action:active { transform:translateY(1px); }
-.btn-action .material-icons { font-size:26px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
+.btn-action .material-icons { font-size:20px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.5)); }
 .btn-action .ic-deposito { color:#34e89e; }
 .btn-action .ic-sacar { color:#22d3ee; }
 .btn-action .ic-extrato { color:#fff; }
 .btn-action .ic-dados { color:#8b5cff; }
 .btn-action .ic-sair { color:#ff6b81; }
-.user-info { display:flex;align-items:center;gap:15px;font-size:13px; }
-.balance-box { border-left:1px solid rgba(255,255,255,0.2);padding-left:15px;text-align:right; }
-.balance-val { color:var(--neon-2);font-weight:700;font-size:16px;text-shadow:0 0 12px rgba(34,211,238,.5); }
+.user-info { display:flex;align-items:center;gap:10px;font-size:11px; }
+.balance-box { border-left:1px solid rgba(255,255,255,0.2);padding-left:10px;text-align:right; }
+.balance-val { color:var(--neon-2);font-weight:700;font-size:13px;text-shadow:0 0 12px rgba(34,211,238,.5); }
 
 /* ===== LAYOUT PRINCIPAL ===== */
-.main-container { position:relative;z-index:1;display:flex;gap:10px;align-items:stretch;height:calc(100vh - 120px); }
+.main-container { position:relative;z-index:1;display:flex;gap:8px;align-items:stretch;height:calc(100vh - 84px); }
 
 /* 2. BARRA LATERAL ESQUERDA */
-aside { display:flex;flex-direction:column;align-items:center;gap:22px;width:54px;padding-top:12px; }
+aside { display:flex;flex-direction:column;align-items:center;gap:10px;width:40px;padding-top:6px; }
 .side-icon { color:var(--yellow);cursor:pointer;transition:transform .2s, filter .2s;filter:drop-shadow(0 4px 8px rgba(0,0,0,.5)); }
 .side-icon:hover { transform:scale(1.15);filter:drop-shadow(0 0 10px var(--yellow)); }
 
 /* 3. COLUNA DE INFOS */
-.info-column { display:flex;flex-direction:column;gap:20px;width:200px;height:100%; }
-.info-card { background:var(--box-blue);border:2px solid rgba(255,255,255,0.12);border-radius:14px;
-    padding:18px 12px;text-align:center;flex:1 1 0;display:flex;flex-direction:column;
+.info-column { display:flex;flex-direction:column;gap:8px;width:170px;height:100%;min-height:0; }
+.info-card { background:var(--box-blue);border:2px solid rgba(255,255,255,0.12);border-radius:10px;
+    padding:8px 10px;text-align:center;flex:1 1 0;min-height:0;display:flex;flex-direction:column;
     align-items:center;justify-content:center;
     box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12); }
 .info-card.dark-blue { background:linear-gradient(160deg,#1d2a5e,#0c1230); }
-.info-card span { display:block;font-size:14px;color:var(--yellow);font-weight:600;text-transform:uppercase;margin-bottom:6px; }
-.info-card strong { font-size:24px;font-weight:700; }
+.info-card span { display:block;font-size:11px;color:var(--yellow);font-weight:600;text-transform:uppercase;margin-bottom:3px; }
+.info-card strong { font-size:17px;font-weight:700; }
 .ordem-box { background:var(--red);border-radius:14px;padding:18px 12px;flex:1 1 0;display:flex;flex-direction:column;
     align-items:center;justify-content:center;gap:14px;font-weight:700;font-size:13px;border:2px solid #ffb3c1;
     box-shadow:0 8px 24px rgba(255,59,92,.5); }
@@ -2636,26 +2636,26 @@ aside { display:flex;flex-direction:column;align-items:center;gap:22px;width:54p
     box-shadow:0 6px 14px rgba(255,93,93,.5),inset 0 -3px 6px rgba(0,0,0,.3); }
 
 /* CENTRO */
-.center-content { flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:15px;
-    position:sticky;top:0;align-self:stretch; }
+.center-content { flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:8px;
+    position:sticky;top:0;align-self:stretch;min-height:0; }
 
 /* 4. PREMIOS */
-.prizes-row { display:flex;gap:18px;flex-wrap:wrap; }
-.prize-card { flex:1 1 0;min-width:0;background-color:var(--box-blue);border-radius:16px;padding:20px 12px;text-align:center;
+.prizes-row { display:flex;gap:8px;flex-wrap:wrap; }
+.prize-card { flex:1 1 0;min-width:0;background-color:var(--box-blue);border-radius:10px;padding:8px 10px;text-align:center;
     border:2px solid rgba(255,255,255,0.12);
     box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12); }
 .prize-card.acumulado { background:linear-gradient(160deg,#b3132f,#5e0a1c);position:relative; }
 .badge-acumulado { position:absolute;top:-8px;right:-8px;background:#000;color:#fff;
     border:2px solid var(--red);border-radius:50%;width:28px;height:28px;font-size:12px;
     display:flex;align-items:center;justify-content:center;font-weight:700; }
-.prize-card span { display:block;font-size:15px;color:var(--yellow);font-weight:700;margin-bottom:8px; }
-.prize-card strong { font-size:26px;font-weight:800; }
+.prize-card span { display:block;font-size:11px;color:var(--yellow);font-weight:700;margin-bottom:3px; }
+.prize-card strong { font-size:18px;font-weight:800; }
 
 /* 5. AREA DO SORTEIO */
-.game-display { flex:1;display:flex;align-items:center;justify-content:flex-start;gap:40px;position:relative;flex-wrap:wrap;padding-left:30px; }
+.game-display { flex:1;display:flex;align-items:center;justify-content:flex-start;gap:20px;position:relative;flex-wrap:wrap;padding-left:16px; }
 /* BOLA PRINCIPAL 3D */
-.main-ball { width:240px;height:240px;border-radius:50%;display:flex;align-items:center;justify-content:center;
-    font-size:120px;font-weight:800;color:#0b3d1a;position:relative;
+.main-ball { width:160px;height:160px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    font-size:80px;font-weight:800;color:#0b3d1a;position:relative;
     background:radial-gradient(circle at 32% 28%,#fff 0%,#34e89e 38%,#0e7a52 100%);
     box-shadow:0 26px 60px rgba(52,232,158,.5),inset 0 -16px 30px rgba(0,0,0,.35),inset 0 16px 26px rgba(255,255,255,.6); }
 .main-ball:after { content:"";position:absolute;top:12%;left:18%;width:34%;height:24%;
@@ -2666,24 +2666,24 @@ aside { display:flex;flex-direction:column;align-items:center;gap:22px;width:54p
     box-shadow:0 26px 60px rgba(255,216,61,.5),inset 0 -16px 30px rgba(0,0,0,.35),inset 0 16px 26px rgba(255,255,255,.6); }
 .main-ball.fb3 { background:radial-gradient(circle at 32% 28%,#fff 0%,#ff5d5d 38%,#b3122e 100%);color:#fff;
     box-shadow:0 26px 60px rgba(255,93,93,.5),inset 0 -16px 30px rgba(0,0,0,.35),inset 0 16px 26px rgba(255,255,255,.6); }
-.history-balls { position:relative;width:240px;height:320px;flex:none; }
+.history-balls { position:relative;width:170px;height:220px;flex:none; }
 .history-balls .sub-ball { position:absolute;border-radius:50%;display:flex;align-items:center;
     justify-content:center;font-weight:800;color:#0b3d1a;
     background:radial-gradient(circle at 32% 28%,#fff 0%,#34e89e 38%,#0e7a52 100%);
     box-shadow:0 14px 30px rgba(52,232,158,.5),inset 0 -8px 16px rgba(0,0,0,.35),inset 0 8px 14px rgba(255,255,255,.6); }
 .history-balls .sub-ball:after { content:"";position:absolute;top:13%;left:20%;width:32%;height:22%;
     background:rgba(255,255,255,.7);border-radius:50%;filter:blur(2px); }
-.history-balls .sub-ball:nth-child(1) { width:96px;height:96px;font-size:40px;top:0;left:60px; }
-.history-balls .sub-ball:nth-child(2) { width:84px;height:84px;font-size:34px;top:80px;left:150px; }
-.history-balls .sub-ball:nth-child(3) { width:72px;height:72px;font-size:30px;top:180px;left:150px; }
-.history-balls .sub-ball:nth-child(4) { width:60px;height:60px;font-size:25px;top:260px;left:60px; }
+.history-balls .sub-ball:nth-child(1) { width:68px;height:68px;font-size:28px;top:0;left:42px; }
+.history-balls .sub-ball:nth-child(2) { width:60px;height:60px;font-size:24px;top:56px;left:106px; }
+.history-balls .sub-ball:nth-child(3) { width:50px;height:50px;font-size:20px;top:124px;left:106px; }
+.history-balls .sub-ball:nth-child(4) { width:42px;height:42px;font-size:17px;top:178px;left:42px; }
 .sub-ball.fb1 { background:radial-gradient(circle at 32% 28%,#fff 0%,#4aa3ff 40%,#0a4a8f 100%);color:#06203f; }
 .sub-ball.fb2 { background:radial-gradient(circle at 32% 28%,#fff 0%,#ffd83d 40%,#c79a00 100%);color:#4a3700; }
 .sub-ball.fb3 { background:radial-gradient(circle at 32% 28%,#fff 0%,#ff5d5d 40%,#b3122e 100%);color:#fff; }
 
 /* 6. MAPA 90 BOLAS */
 .balls-board { background:linear-gradient(160deg,rgba(20,28,66,.75),rgba(8,12,38,.75));
-    backdrop-filter:blur(10px);border-radius:16px;padding:14px;height:calc((100vh - 155px)/4);flex:0 0 auto;margin-top:auto;
+    backdrop-filter:blur(10px);border-radius:12px;padding:10px;height:auto;flex:1 1 auto;min-height:0;margin-top:auto;
     border:1px solid rgba(255,255,255,0.12);
     box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 24px rgba(52,232,158,.08); }
 .balls-board { display:grid;grid-template-columns:repeat(30,1fr);grid-template-rows:repeat(3,1fr);
@@ -2705,12 +2705,12 @@ aside { display:flex;flex-direction:column;align-items:center;gap:22px;width:54p
     text-shadow:none; }
 
 /* ===== 7. PAINEL DIREITO ===== */
-.right-panel { width:440px;display:flex;flex-direction:column;gap:10px;align-self:flex-start; }
-.players-container { height:380px;background:var(--panel-bg);border-radius:10px;padding:8px;
+.right-panel { width:380px;display:flex;flex-direction:column;gap:8px;align-self:stretch;min-height:0; }
+.players-container { flex:1 1 auto;min-height:0;background:var(--panel-bg);border-radius:10px;padding:8px;
     overflow-y:auto;border:1px solid rgba(255,255,255,0.12);
     box-shadow:inset 0 0 20px rgba(0,0,0,.4); }
-.player-row { display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;
-    background:linear-gradient(160deg,#232a5e,#161c44);border-radius:8px;margin-bottom:8px;font-size:15px;
+.player-row { display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 10px;
+    background:linear-gradient(160deg,#232a5e,#161c44);border-radius:8px;margin-bottom:6px;font-size:13px;
     border:1px solid rgba(255,255,255,0.06); }
 .pcode { font-size:14px;color:var(--neon-2);font-weight:700;min-width:64px; }
 .pballs { display:flex;gap:6px; }
@@ -2789,7 +2789,7 @@ aside { display:flex;flex-direction:column;align-items:center;gap:22px;width:54p
 .card-cell.empty { background:transparent;border:none;box-shadow:none; }
 
 .game-log { background:rgba(4,4,30,0.7);border:1px solid rgba(255,255,255,0.10);border-radius:12px;
-    padding:10px;max-height:160px;overflow-y:auto;font-size:12px;color:var(--muted); }
+    padding:8px;flex:0 0 auto;max-height:90px;overflow-y:auto;font-size:11px;color:var(--muted); }
 .game-log div { padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.04); }
 
 /* ===== RESPONSIVO ===== */
@@ -2806,6 +2806,7 @@ aside { display:flex;flex-direction:column;align-items:center;gap:22px;width:54p
 .phase-item-mini.phase-completed { opacity:.4 !important; filter:grayscale(.6); }
 
 /* ===== RESET DO LAYOUT ORIGINAL DO #screenGame (p/ espelhar o preview) ===== */
-#screenGame.screen, #screenGame.active { display:block !important; align-items:stretch !important; justify-content:flex-start !important; padding:0 !important; overflow-x:hidden !important; }
+#screenGame.screen, #screenGame.active { display:block !important; align-items:stretch !important; justify-content:flex-start !important; padding:0 !important; overflow:hidden !important; height:100vh !important; }
+#screenGame .game-wrapper, #screenGame .game-wrapper.game-wrapper-mobile { display:flex !important; flex-direction:column !important; width:100% !important; max-width:none !important; margin:0 !important; padding:8px !important; gap:0 !important; height:100vh !important; overflow:hidden !important; }
 #screenGame .game-wrapper, #screenGame .game-wrapper.game-wrapper-mobile { display:block !important; width:100% !important; max-width:none !important; margin:0 !important; padding:10px !important; gap:0 !important; }
 #screenGame .game-body { all:unset; display:contents; }
