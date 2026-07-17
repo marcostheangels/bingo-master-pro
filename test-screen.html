@@ -49,16 +49,6 @@
                 <span class="material-icons side-icon">history</span>
             </aside>
 
-            <div class="players-left">
-                <div class="players-container" id="playersPanel">
-                    <h3>👥 Jogadores</h3>
-                    <div class="players-panel-body">
-                        <div class="spectator-count" id="spectatorCount" style="display:none">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
-                        <ul class="player-list" id="playerListUI"></ul>
-                    </div>
-                </div>
-            </div>
-
             <div class="info-column">
                 <div class="info-card dark-blue"><span>Sorteio</span><strong id="currentRoundNumber">#131937</strong></div>
                 <div class="info-card"><span>Hora</span><strong id="liveClock">10:36:00</strong></div>
@@ -66,6 +56,7 @@
                 <div class="ordem-box">
                     <span>ACUMULADO</span>
                     <div class="jackpot-value" id="jackpotDisplay">R$ 1.000,00</div>
+                    <div class="ordem-balls" id="ordemBalls"></div>
                 </div>
             </div>
 
@@ -81,13 +72,21 @@
                     </div>
 
                     <div class="game-display">
-                        <div class="main-ball fb2" id="mainBall">36</div>
+                        <div class="main-ball" id="mainBall">36</div>
                         <div class="history-balls" id="historyBalls"></div>
                         <div class="balls-board" id="drawnGrid"></div>
                     </div>
                 </div>
 
                 <div class="right-panel">
+                    <div class="players-container" id="playersPanel">
+                        <h3>👥 Jogadores</h3>
+                        <div class="players-panel-body">
+                            <div class="spectator-count" id="spectatorCount" style="display:none">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
+                            <ul class="player-list" id="playerListUI"></ul>
+                        </div>
+                    </div>
+
                     <div class="buy-panel" id="buySection">
                         <div class="buy-title">🎟️ Comprar Cartelas</div>
                         <div class="buy-stepper">

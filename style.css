@@ -228,10 +228,6 @@ aside { display:flex;flex-direction:column;align-items:center;gap:10px;width:40p
     border:1px solid rgba(255,93,115,.8);box-shadow:0 0 16px rgba(255,93,115,.8),inset 0 -2px 4px rgba(0,0,0,.3);
     text-shadow:none; }
 
-/* ===== 2b. PAINEL DE JOGADORES (ESQUERDA) ===== */
-.players-left { width:240px;flex:0 0 240px;display:flex;flex-direction:column;min-height:0;align-self:stretch; }
-.players-left .players-container { flex:1 1 auto;min-height:0;height:auto;margin:0; }
-
 /* ===== 7. PAINEL DIREITO ===== */
 .right-panel { width:380px;display:flex;flex-direction:column;gap:8px;align-self:stretch;min-height:0; }
 .players-container { flex:1 1 auto;min-height:0;background:var(--panel-bg);border-radius:10px;padding:8px;
