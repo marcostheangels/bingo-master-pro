@@ -854,7 +854,7 @@ function avancarParaProximaFase(room) {
     room.phasePauseTimer = setTimeout(() => {
         room.phasePauseTimer = null;
         agendarProximoDraw(room);
-    }, 8000);
+    }, 10000);
 }
 
 async function salvarHistoricoSorteio(room) {
