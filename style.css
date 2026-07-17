@@ -758,12 +758,6 @@ body.admin-mode .admin-screen-wrapper * {
     filter: blur(2px);
 }
 
-.ball-display.ball-animate { animation: pulseBall 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
-
-@keyframes pulseBall {
-    0% { transform: scale(0.85); filter: brightness(1.5); }
-    100% { transform: scale(1); filter: brightness(1); }
-}
 
 .drawn-grid {
     display: grid;

@@ -896,30 +896,27 @@ async function finalizarRodada(room) {
     addLog(room, '🏁 Rodada encerrada!');
     broadcast(room, { type: 'notice', text: '🏁 Rodada encerrada! Cartelas serão limpas...', kind: 'info' });
     
-    // After 2s, clear cards and restart auto-start
-    setTimeout(async () => {
-        if (room.gameActive) return;
-        // Clear all cards, refund humans
-        for (const p of room.players.values()) {
-            const qtd = p.cards ? p.cards.length : 0;
-            if (!p.isBot && qtd > 0) {
-                const refundCost = (room.cardTier && room.cardTier.cost) ? room.cardTier.cost : engine.CARD_COST;
-                p.chips += qtd * refundCost;
-                await setChips(p.name, p.chips, p.winnings);
-            }
-            p.cards = [];
+    // Limpa cartelas imediatamente
+    if (room.gameActive) return;
+    for (const p of room.players.values()) {
+        const qtd = p.cards ? p.cards.length : 0;
+        if (!p.isBot && qtd > 0) {
+            const refundCost = (room.cardTier && room.cardTier.cost) ? room.cardTier.cost : engine.CARD_COST;
+            p.chips += qtd * refundCost;
+            await setChips(p.name, p.chips, p.winnings);
         }
-        room.drawnBalls = [];
-        room.currentPhaseIndex = 0;
-        room.gameEnded = false;
-        cleanUpBots(room);
-        broadcast(room, { type: 'resetGame', players: sanitizePlayers(room), drawnBalls: [], currentPhaseIndex: 0, gameActive: false, gameEnded: false, totalCardsAtStart: 0 });
-        addLog(room, '🔄 Cartelas limpas. Novo sorteio em breve!');
-        broadcast(room, { type: 'notice', text: '🔄 Compre suas cartelas! Novo sorteio em 1 minuto.', kind: 'info' });
-        saveRoomSnapshot(room);
-        // Auto-start after 3s
-        setTimeout(() => iniciarAutoStartServer(room), 3000);
-    }, 2000);
+        p.cards = [];
+    }
+    room.drawnBalls = [];
+    room.currentPhaseIndex = 0;
+    room.gameEnded = false;
+    cleanUpBots(room);
+    broadcast(room, { type: 'resetGame', players: sanitizePlayers(room), drawnBalls: [], currentPhaseIndex: 0, gameActive: false, gameEnded: false, totalCardsAtStart: 0 });
+    addLog(room, '🔄 Cartelas limpas. Novo sorteio em breve!');
+    broadcast(room, { type: 'notice', text: '🔄 Compre suas cartelas! Novo sorteio em 1 minuto.', kind: 'info' });
+    saveRoomSnapshot(room);
+    // Aguarda 4s (ranking na tela), depois inicia contagem regressiva
+    setTimeout(() => iniciarAutoStartServer(room), 4000);
 }
 
 function undoLastBall(room) {

@@ -1669,8 +1669,6 @@ function applyDrawnBall(ball) {
     const mainDisplay = document.getElementById('mainBall');
     if (mainDisplay) {
         mainDisplay.textContent = ball;
-        mainDisplay.classList.add('ball-animate');
-        setTimeout(() => mainDisplay.classList.remove('ball-animate'), 500);
     }
 
     const grid = document.getElementById('drawnGrid');
@@ -2118,9 +2116,6 @@ renderMyCards = function() {
 
         const isTop = index === 0;
         const isWon = awardLabels.length > 0;
-        const prog = countPhaseMarks(card, drawnBalls);
-        const missingList = getMissingInPhase(card, prog);
-        const pct = Math.min(100, Math.round((prog.marks / prog.target) * 100));
         const hitMe = lastDrawnBall !== null && card.flat().includes(lastDrawnBall);
 
         const cardBox = document.createElement('div');
@@ -2132,16 +2127,7 @@ renderMyCards = function() {
         if (isTop) header += `<div class="card-top-ribbon">★ MAIS PERTO</div>`;
         if (closeLabel) header += `<div class="card-badge">${closeLabel}</div>`;
 
-        let progText = '';
-        if (!isWon) {
-            progText = `<div class="card-progress"><div class="card-progress-bar"><div class="card-progress-fill" style="width:${pct}%"></div></div>`;
-            progText += `<div class="card-progress-text">${phaseLabel} ${prog.marks}/${prog.target}`;
-            if (missingList.length) {
-                progText += ' &middot; ⚡ faltam: ' + missingList.map(n => `<span class="miss-ball">${n}</span>`).join(' ');
-            }
-            progText += `</div></div>`;
-        }
-        cardBox.innerHTML = header + progText;
+        cardBox.innerHTML = header;
 
         const cardGrid = document.createElement('div');
         cardGrid.className = 'card-grid';
@@ -2605,9 +2591,8 @@ function showKenoRanking() {
         if (el) el.classList.add('visible');
     });
 
-    // Auto-fechar ranking com o mesmo tempo das animações de kuadra/kina/keno
-    const totalWinners = kuadra.length + kina.length + keno.length;
-    setTimeout(fecharKenoRanking, getCelebrationDuration(totalWinners || 1));
+    // Auto-fecha ranking após 4 segundos
+    setTimeout(fecharKenoRanking, 4000);
 }
 function fecharKenoRanking() {
     const el = document.getElementById('kenoRankingOverlay');

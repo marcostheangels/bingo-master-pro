@@ -639,7 +639,7 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
                 const wasEnded = gameEnded;
                 gameEnded = data.gameEnded;
                 if (gameEnded && !wasEnded && typeof showKenoRanking === 'function') {
-                    setTimeout(showKenoRanking, 2000);
+                    showKenoRanking();
                 }
             }
             if (data.currentRound !== undefined) {
