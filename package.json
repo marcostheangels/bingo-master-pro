@@ -18,8 +18,12 @@
     "pg": "^8.22.0",
     "resend": "^6.17.2",
     "sharp": "^0.35.3",
-    "ws": "^8.18.0",
-    "overrides": {
-    "yuku-ast": "^0.6.8"
+    "ws": "^8.18.0"
+  },
+  "overrides": {
+    "yuku-ast": "0.6.8"
+  },
+  "devDependencies": {
+    "omniroute": "^3.8.48"
   }
 }
