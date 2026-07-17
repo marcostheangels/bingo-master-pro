@@ -1185,7 +1185,6 @@ function updatePlayerListUI() {
             balls += `<div class="pballmini ${i < falta ? 'on' : ''}"></div>`;
         }
         li.innerHTML =
-            `<span class="pcode">${p.id != null ? p.id : (288000 + index)}</span>` +
             `<span class="player-name">${hostIcon}${escapeHtml(p.name)}</span>` +
             `<div class="pballs">${balls}</div>` +
             `<span class="player-cards">${cardCount} cartela${cardCount === 1 ? '' : 's'}</span>`;

@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎱%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.0.8/index.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=30">
+    <link rel="stylesheet" href="style.css?v=31">
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => {
@@ -196,8 +196,18 @@
                     <span class="material-icons side-icon">calendar_month</span>
                     <span class="material-icons side-icon">payments</span>
                     <span class="material-icons side-icon">history</span>
-                    <span class="material-icons side-icon">support_agent</span>
                 </aside>
+
+                <!-- 2b. PAINEL DE JOGADORES (ESQUERDA) -->
+                <div class="players-left">
+                    <div class="players-container" id="playersPanel">
+                        <h3>👥 Jogadores</h3>
+                        <div class="players-panel-body">
+                            <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
+                            <ul class="player-list" id="playerListUI"></ul>
+                        </div>
+                    </div>
+                </div>
 
                 <!-- 3. COLUNA DE INFOS -->
                 <div class="info-column">
@@ -235,15 +245,6 @@
 
                 <!-- 7. PAINEL LATERAL DIREITO -->
                 <div class="right-panel">
-
-                    <!-- Jogadores -->
-                    <div class="players-container" id="playersPanel">
-                        <h3 onclick="this.closest('.players-container').classList.toggle('collapsed')">👥 Jogadores <span class="toggle-icon">▼</span></h3>
-                        <div class="players-panel-body">
-                            <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
-                            <ul class="player-list" id="playerListUI"></ul>
-                        </div>
-                    </div>
 
                     <!-- PAINEL DE COMPRA DE CARTELAS -->
                     <div class="buy-panel" id="buySection">
@@ -585,8 +586,8 @@
     </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-<script src="game-logic.js?v=90"></script>
-<script src="network.js?v=88"></script>
+<script src="game-logic.js?v=91"></script>
+<script src="network.js?v=89"></script>
     <script>
         // Auto-login se tiver sessao valida
         (async function() {
