@@ -973,6 +973,10 @@ function loadRoomSnapshot(room) {
                 });
             });
         }
+        // Retoma o jogo se estava ativo antes do restart (recupera timers perdidos)
+        if (room.gameActive && !room.gameEnded) {
+            agendarProximoDraw(room);
+        }
     } catch (e) {}
 }
 
