@@ -170,7 +170,7 @@
 
         /* 5. AREA DO SORTEIO CENTRALIZADO */
         .game-display {
-            flex: 1; display: flex; align-items: center; justify-content: center; gap: 50px; 
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: 20px; 
             position: relative; padding: 20px; background: rgba(255, 255, 255, 0.02); border-radius: 16px;
         }
         .main-ball {
@@ -188,14 +188,14 @@
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             grid-template-rows: repeat(2, auto);
-            gap: 8px;
-            width: 220px;
+            gap: 6px;
+            width: 180px;
             height: auto;
-            min-height: 180px;
+            min-height: 160px;
             flex-shrink: 0;
-            padding: 8px;
+            padding: 6px;
             background: rgba(255,255,255,0.02);
-            border-radius: 12px;
+            border-radius: 10px;
             justify-items: center;
             align-items: center;
             justify-content: center;
@@ -206,18 +206,18 @@
             width: 100%;
             height: 100%;
             aspect-ratio: 1;
-            max-width: 80px;
-            max-height: 80px;
+            max-width: 70px;
+            max-height: 70px;
             margin: 0 auto;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
             font-weight: 800;
-            font-size: 28px;
+            font-size: 24px;
             color: #0b3d1a;
             background: radial-gradient(circle at 32% 28%, #fff 0%, #34e89e 38%, #0e7a52 100%);
-            box-shadow: 0 6px 12px rgba(52, 232, 158, .3), inset 0 -3px 6px rgba(0,0,0,.2);
+            box-shadow: 0 5px 10px rgba(52, 232, 158, .3), inset 0 -2px 4px rgba(0,0,0,.2);
         }
         .history-balls .sub-ball:nth-child(1) { }
         .history-balls .sub-ball:nth-child(2) { }
@@ -229,15 +229,16 @@
             background: linear-gradient(160deg, rgba(20, 28, 66, .75), rgba(8, 12, 38, .75));
             border-radius: 16px; padding: 12px; flex: 0 0 auto; height: 150px;
             border: 1px solid rgba(255, 255, 255, 0.12);
+            overflow-x: auto;
         }
-        .balls-grid {
+.balls-grid {
             display: grid; grid-template-columns: repeat(30, 1fr); grid-template-rows: repeat(3, 1fr);
-            gap: 4px; height: 100%; width: 100%;
+            gap: 3px; height: 100%; min-width: 720px;
         }
 .grid-cell {
-            font-size: 11px; font-weight: 700; color: rgba(255,255,255,0.20);
+            font-size: 10px; font-weight: 700; color: rgba(255,255,255,0.20);
             display: flex; align-items: center; justify-content: center;
-            width: 30px; height: 30px; border-radius: 50%;
+            width: 22px; height: 22px; border-radius: 50%;
             background: rgba(255,255,255,0.03);
             border: 1px solid rgba(255,255,255,0.04); transition: all .2s ease;
         }
