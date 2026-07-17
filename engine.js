@@ -19,9 +19,9 @@ const JACKPOT_CONTRIBUTION_PER_CARD = 10; // fallback
 const JACKPOT_MAX = 1000000; // R$1.000,00 teto (igual ao site)
 const KENO_MIN_MULTIPLIER = 1.25; // Keno mínimo = 40cart × preço × 1.25 (sempre maior que o gasto)
 // Prêmios mínimos pra sala nunca ficar com cara de jogo morto (subsidiados pela casa/jackpot)
-const MIN_KUADRA = 5000; // R$5,00
-const MIN_KINA = 5000; // R$5,00
-const MIN_KENO = 10000; // R$10,00
+const MIN_KUADRA = 100; // R$0,10 simbólico
+const MIN_KINA = 100; // R$0,10 simbólico
+const MIN_KENO = 500; // R$0,50 simbólico
 
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
 const HUMAN_MAX_CARDS = 9999; // Sem limite pratico — igual ao site
