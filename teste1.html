@@ -437,8 +437,8 @@
                         <button class="btn-ctrl yellow" onclick="zoom(1)">+</button>
                     </span>
                 </div>
-                <div class="my-cards-scroll" id="myCardsScroll" style="min-height: 200px;">
-                    <div style="text-align:center;color:var(--muted);padding:20px;">Role para baixo para ver mais</div>
+                <div class="my-cards-scroll" id="myCardsScroll">
+                    <div class="my-cards-grid" id="myCardsGrid"></div>
                 </div>
             </div>
         </div>
@@ -643,6 +643,17 @@
         const myCardsGrid=document.getElementById('myCardsGrid');
         let myCards=[];
         let cardSeq=5000;
+        // Adiciona 3 cartelas de exemplo para demonstração
+        for(let i=0;i<3;i++){
+            const nums=[]; const used=new Set();
+            while(nums.length<15){
+                const n=1+Math.floor(Math.random()*90);
+                if(!used.has(n)){ used.add(n); nums.push(n); }
+            }
+            nums.sort((a,b)=>a-b);
+            const marcados=new Set(nums.filter(v=>drawnBalls.includes(v)));
+            myCards.push({id:++cardSeq,nums,marcados});
+        }
         function genTicket(){
             const set=new Set();
             while(set.size<15){set.add(1+Math.floor(Math.random()*90));}
@@ -659,7 +670,22 @@
             renderMyCards();
         }
         function renderMyCards(){
-            // Grid removido: apenas mantém área de rolagem
+            myCards.forEach(c=>{
+                c.nums.forEach(x=>{ if(drawnBalls.includes(x)) c.marcados.add(x); });
+            });
+            const ordenado=[...myCards].sort((a,b)=>{
+                const fa=15-a.marcados.size, fb=15-b.marcados.size;
+                return fa-fb;
+            });
+            myCardsGrid.innerHTML='';
+            ordenado.forEach(c=>{
+                const marks=c.marcados.size;
+                const div=document.createElement('div');
+                div.className='ticket3d';
+                div.innerHTML=`<div class="th"><span class="cid">#${c.id}</span><span>${marks}/15</span></div>
+                    <div class="tgrid">${c.nums.map(x=>`<div class="tnum ${c.marcados.has(x)?'mark':''}">${x}</div>`).join('')}</div>`;
+                myCardsGrid.appendChild(div);
+            });
         }
 
         setInterval(()=>{
