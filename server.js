@@ -458,6 +458,7 @@ function getRoom(roomId) {
             gameEnded: false,
             currentRound: 0,
             jackpot: engine.JACKPOT_INITIAL,
+            botCardFactor: 1.0,
             jackpotAwarded: false,
             autoStartSeconds: 0,
             autoStartTimer: null,
@@ -589,8 +590,10 @@ function iniciarNovaRodada(room) {
     // Give bots cards, reset awards
     room.players.forEach(p => {
         if (p.isBot) {
-            const maxCards = engine.BOT_MAX_CARDS; // 25
-            const qtd = Math.floor(Math.random() * (maxCards - 9)) + 10; // 10 a 25
+            const factor = room.botCardFactor || 1.0;
+            const maxCards = Math.round(engine.BOT_MAX_CARDS * factor);
+            const minCards = Math.max(5, Math.round(10 * factor));
+            const qtd = Math.floor(Math.random() * (maxCards - minCards + 1)) + minCards;
             p.cards = [];
             for (let i = 0; i < qtd; i++) {
                 p.cards.push(engine.generateBingoCardData());
@@ -817,6 +820,14 @@ async function sortearProximaBola(room) {
             broadcast(room, { type: 'jackpotUpdate', value: room.jackpot });
         }
         
+        // Ajusta dificuldade adaptativa: humano ganhou → bots mais fortes; bot ganhou → bots mais fracos
+        const hasHumanWinner = results.some(r => !r.player.isBot);
+        if (hasHumanWinner) {
+            room.botCardFactor = Math.min(2.0, (room.botCardFactor || 1.0) + 0.1);
+        } else {
+            room.botCardFactor = Math.max(0.2, (room.botCardFactor || 1.0) - 0.05);
+        }
+
         // Advance phase or end round
         if (room.currentPhaseIndex < engine.PHASE_SEQUENCE.length - 1) {
             avancarParaProximaFase(room);
@@ -946,6 +957,7 @@ function saveRoomSnapshot(room) {
             gameEnded: room.gameEnded,
             currentRound: room.currentRound,
             jackpot: room.jackpot,
+            botCardFactor: room.botCardFactor || 1.0,
             players: Array.from(room.players.values()).map(p => ({
                 id: p.id, name: p.name, chips: p.chips, winnings: p.winnings, cards: p.cards, isBot: !!p.isBot
             }))
@@ -964,6 +976,7 @@ function loadRoomSnapshot(room) {
         room.gameEnded = snap.gameEnded === true;
         room.currentRound = snap.currentRound || 0;
         room.jackpot = snap.jackpot || engine.JACKPOT_INITIAL;
+        room.botCardFactor = typeof snap.botCardFactor === 'number' ? snap.botCardFactor : 1.0;
         if (Array.isArray(snap.players)) {
             snap.players.forEach(p => {
                 room.players.set(p.id, {
@@ -1001,7 +1014,8 @@ function botRandomChips() {
 }
 
 function ensureBots(room, rotate) {
-    const TARGET = 12;
+    const humanCount = Array.from(room.players.values()).filter(p => !p.isBot && !p.isSpectator).length;
+    const TARGET = Math.min(30, Math.max(6, 12 + humanCount * 2));
     const ativos = Array.from(room.players.values()).filter(p => p.isBot);
     // Remove excess if rotate requested
     if (rotate) {
