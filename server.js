@@ -986,9 +986,24 @@ function loadRoomSnapshot(room) {
                 });
             });
         }
-        // Retoma o jogo se estava ativo antes do restart (recupera timers perdidos)
+        // Se jogo estava ativo (ex: deploy no meio da rodada), reseta para pré-round
         if (room.gameActive && !room.gameEnded) {
-            agendarProximoDraw(room);
+            console.log('[SNAPSHOT] Jogo ativo no restart — resetando para pré-round');
+            room.gameActive = false;
+            room.gameEnded = false;
+            room.drawnBalls = [];
+            room.currentPhaseIndex = 0;
+            // Estorna cartelas dos humanos e limpa tudo
+            for (const p of room.players.values()) {
+                const qtd = p.cards ? p.cards.length : 0;
+                if (!p.isBot && qtd > 0) {
+                    const tier = room.cardTier || engine.CARD_TIERS[0];
+                    p.chips += qtd * (tier ? tier.cost : engine.CARD_COST);
+                }
+                p.cards = [];
+            }
+            saveRoomSnapshot(room);
+            iniciarAutoStartServer(room);
         }
     } catch (e) {}
 }
