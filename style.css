@@ -2810,7 +2810,8 @@ aside { display:flex;flex-direction:column;align-items:center;gap:10px;width:40p
 .phase-item-mini.phase-completed { opacity:.4 !important; filter:grayscale(.6); }
 
 /* ===== RESET DO LAYOUT ORIGINAL DO #screenGame (p/ espelhar o preview) ===== */
-#screenGame.screen, #screenGame.active { display:block !important; align-items:stretch !important; justify-content:flex-start !important; padding:0 !important; overflow:hidden !important; height:100vh !important; }
+#screenGame { display:none !important; }
+#screenGame.active { display:block !important; align-items:stretch !important; justify-content:flex-start !important; padding:0 !important; overflow:hidden !important; height:100vh !important; }
 #screenGame .game-wrapper, #screenGame .game-wrapper.game-wrapper-mobile { display:flex !important; flex-direction:column !important; width:100% !important; max-width:none !important; margin:0 !important; padding:8px !important; gap:0 !important; height:100vh !important; overflow:hidden !important; }
 #screenGame .game-wrapper, #screenGame .game-wrapper.game-wrapper-mobile { display:block !important; width:100% !important; max-width:none !important; margin:0 !important; padding:10px !important; gap:0 !important; }
 #screenGame .game-body { all:unset; display:contents; }
