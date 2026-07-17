@@ -555,7 +555,10 @@ function updatePhaseUI() {
                 ? 'Concluído'
                 : 'Aguardando';
 
-        element.innerHTML = `${PHASES[key].label}: <span class="prize">${PHASES[key].prize}</span> <span class="phase-state">${stateLabel}</span>`;
+        const prizeVal = currentDynamicPrizes && currentDynamicPrizes[key] != null
+            ? `💰 R$ ${formatReais(currentDynamicPrizes[key])}`
+            : PHASES[key].prize;
+        element.innerHTML = `${PHASES[key].label}: <span class="prize">${prizeVal}</span> <span class="phase-state">${stateLabel}</span>`;
         element.classList.toggle('phase-active', key === activePhase);
         element.classList.toggle('phase-completed', PHASE_SEQUENCE.indexOf(key) < currentPhaseIndex);
     });
