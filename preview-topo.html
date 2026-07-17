@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Topo — Bingo VIP Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg-0:#07060f;--bg-1:#0d0a1f;--bg-2:#140f2e;
+            --glass:rgba(255,255,255,0.05);--glass-brd:rgba(255,255,255,0.10);
+            --neon:#7c5cff;--neon-2:#22d3ee;--gold:#fbbf24;--pink:#ff4d8d;
+            --text:#eef0ff;--muted:#9a93c7;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Poppins',sans-serif;background:linear-gradient(160deg,var(--bg-0),var(--bg-1) 45%,var(--bg-2));
+            min-height:100vh;color:var(--text);padding-top:120px}
+        .demo{display:flex;align-items:center;justify-content:center;height:70vh;color:var(--muted);font-size:14px}
+
+        /* ===== BARRA SUPERIOR FIXA ===== */
+        .topbar{
+            position:fixed;top:0;left:0;right:0;z-index:100;
+            display:flex;align-items:center;gap:14px;
+            padding:10px 16px;
+            background:linear-gradient(0deg,rgba(13,10,31,0.65),rgba(7,6,15,0.92));
+            backdrop-filter:blur(16px);
+            border-bottom:1px solid rgba(124,92,255,0.25);
+            box-shadow:0 8px 40px rgba(124,92,255,0.18);
+        }
+        .t-logo{width:42px;height:42px;border-radius:12px;flex:none;
+            background:linear-gradient(135deg,var(--neon),var(--pink));
+            display:flex;align-items:center;justify-content:center;font-size:22px;
+            box-shadow:0 0 22px rgba(124,92,255,.55)}
+        .t-user{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+        .t-hello{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .t-hello .at{color:var(--neon-2)}
+        .t-bal{font-size:13px;font-weight:800;color:var(--gold);
+            text-shadow:0 0 14px rgba(251,191,36,.4)}
+        .t-bal span{font-size:10px;color:var(--muted);font-weight:600;text-shadow:none}
+        .t-spacer{flex:1}
+        /* FAIXA TIMER ABAIXO DA BARRA */
+        .timer-bar{
+            position:fixed;top:64px;left:0;right:0;z-index:99;
+            display:flex;align-items:center;justify-content:center;gap:14px;
+            padding:10px 16px;
+            background:linear-gradient(180deg,rgba(7,6,15,0.85),rgba(13,10,31,0.55));
+            backdrop-filter:blur(12px);
+            border-bottom:1px solid rgba(34,211,238,.2);
+        }
+        .timer-bar .tlabel{font-size:13px;font-weight:700;letter-spacing:1px;
+            text-transform:uppercase;color:var(--muted)}
+        .timer-bar .tlabel b{color:var(--neon-2)}
+        .timer-ring{position:relative;width:46px;height:46px}
+        .timer-ring svg{transform:rotate(-90deg)}
+        .timer-ring .track{stroke:rgba(255,255,255,.12)}
+        .timer-ring .prog{stroke:var(--neon-2);stroke-linecap:round;
+            filter:drop-shadow(0 0 8px rgba(34,211,238,.7));
+            transition:stroke-dashoffset 1s linear}
+        .timer-ring .num{position:absolute;inset:0;display:flex;align-items:center;
+            justify-content:center;font-size:16px;font-weight:800;color:var(--neon-2)}
+        .t-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+        .t-btn{border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;
+            padding:9px 13px;border-radius:11px;color:#fff;transition:.2s;white-space:nowrap}
+        .t-btn:hover{transform:translateY(-2px)}
+        .t-buy{background:linear-gradient(135deg,#fbbf24,#f97316);color:#1a1030;box-shadow:0 4px 16px rgba(251,191,36,.35)}
+        .t-dep{background:linear-gradient(135deg,var(--neon),var(--neon-2));box-shadow:0 4px 16px rgba(124,92,255,.35)}
+        .t-sac{background:linear-gradient(135deg,#ff4d8d,#a855f7)}
+        .t-ext{background:rgba(255,255,255,.07);border:1px solid var(--glass-brd)}
+        .t-dad{background:rgba(255,255,255,.07);border:1px solid var(--glass-brd)}
+        .t-out{background:rgba(255,77,141,.15);border:1px solid rgba(255,77,141,.4);color:#ff9ec4}
+
+        @media(max-width:760px){
+            .t-actions{gap:6px}
+            .t-btn{padding:8px 10px;font-size:11px}
+            .t-hello{font-size:12px}
+        }
+        @media(max-width:560px){
+            .t-btn span.txt{display:none}
+            .t-btn{padding:9px 11px}
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== BARRA SUPERIOR ===== -->
+    <div class="topbar">
+        <div class="t-logo">🎱</div>
+        <div class="t-user">
+            <div class="t-hello">Olá, <span class="at">MARKIM2026@</span></div>
+            <div class="t-bal">R$ 0,04 <span>Saldo</span></div>
+        </div>
+
+        <div class="t-spacer"></div>
+    </div>
+
+    <!-- ===== FAIXA TIMER (ABAIXO DA BARRA) ===== -->
+    <div class="timer-bar">
+        <div class="tlabel">Próximo <b>Sorteio</b></div>
+        <div class="timer-ring">
+            <svg width="46" height="46" viewBox="0 0 46 46">
+                <circle class="track" cx="23" cy="23" r="20" fill="none" stroke-width="4"></circle>
+                <circle class="prog" id="tProg" cx="23" cy="23" r="20" fill="none" stroke-width="4"
+                    stroke-dasharray="125.6" stroke-dashoffset="0"></circle>
+            </svg>
+            <div class="num" id="tNum">60</div>
+        </div>
+        <div class="t-actions">
+            <button class="t-btn t-buy">🎟️ <span class="txt">Comprar Créditos</span></button>
+            <button class="t-btn t-dep">💰 <span class="txt">Depositar</span></button>
+            <button class="t-btn t-sac">💵 <span class="txt">Sacar Créditos</span></button>
+            <button class="t-btn t-ext">📄 <span class="txt">Extrato</span></button>
+            <button class="t-btn t-dad">👤 <span class="txt">Meus Dados</span></button>
+            <button class="t-btn t-out">🚪 <span class="txt">Sair</span></button>
+        </div>
+    </div>
+
+    <div class="demo">↓ Conteúdo da tela do jogo aqui (preview da barra superior acima)</div>
+
+    <script>
+        (function(){
+            const TOTAL=60, CIRC=125.6;
+            let t=TOTAL;
+            const num=document.getElementById('tNum');
+            const prog=document.getElementById('tProg');
+            function tick(){
+                num.textContent=t;
+                prog.style.strokeDashoffset=(CIRC*(1-t/TOTAL)).toFixed(1);
+                if(t<=0){t=TOTAL;}else{t--;}
+            }
+            tick();
+            setInterval(tick,1000);
+        })();
+    </script>
+</body>
+</html>

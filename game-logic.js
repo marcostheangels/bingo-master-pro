@@ -1672,6 +1672,8 @@ function applyDrawnBall(ball) {
     const mainDisplay = document.getElementById('mainBall');
     if (mainDisplay) {
         mainDisplay.textContent = ball;
+        mainDisplay.classList.remove('fb1','fb2','fb3');
+        mainDisplay.classList.add(ball<=30?'fb1':(ball<=60?'fb2':'fb3'));
     }
 
     const grid = document.getElementById('drawnGrid');
@@ -1681,7 +1683,7 @@ function applyDrawnBall(ball) {
             const isWinner = typeof window.__ultimaBolaVencedora !== 'undefined' && Number(ball) === Number(window.__ultimaBolaVencedora);
             const ph = getCurrentPhaseKey();
             drawnBallPhase[ball] = ph;
-            cell.classList.add('drawn', 'phase-' + ph);
+            cell.classList.add('drawn', 'phase-' + ph, (ball<=30?'fb1':(ball<=60?'fb2':'fb3')));
             if (isWinner) cell.classList.add('winner');
         }
     }

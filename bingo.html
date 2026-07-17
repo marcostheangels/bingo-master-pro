@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bingo VIP Club</title>
+    <!-- Importação de Ícones Modernos -->
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-gradient: linear-gradient(180deg, #0099FF 0%, #000066 50%, #200044 100%);
+            --box-blue: #0000CC;
+            --panel-bg: rgba(16, 20, 50, 0.6);
+            --yellow: #FFD700;
+            --red: #FF0033;
+            --purple-card: #4A3B8C;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+            -webkit-user-select: none;
+            user-select: none;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: #FFF;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            padding: 10px;
+        }
+
+        /* ==========================================
+           1. TOPO / NAVBAR
+           ========================================== */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            height: 65px;
+            padding: 0 15px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-text {
+            font-weight: 800;
+            font-size: 24px;
+            letter-spacing: 1px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.6);
+            background: linear-gradient(45deg, #FFF, var(--yellow));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .btn-action {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: none;
+            border: none;
+            color: #FFF;
+            cursor: pointer;
+            font-size: 11px;
+            gap: 2px;
+            transition: transform 0.2s;
+        }
+
+        .btn-action:hover { transform: scale(1.05); }
+        .btn-action .material-icons { font-size: 22px; }
+        .yt-icon { color: #FF0000; font-size: 28px !important; }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            font-size: 13px;
+        }
+
+        .balance-box {
+            border-left: 1px solid rgba(255,255,255,0.2);
+            padding-left: 15px;
+            text-align: right;
+        }
+
+        .balance-val {
+            color: #00FFCC;
+            font-weight: 700;
+            font-size: 16px;
+        }
+
+        /* ==========================================
+           LAYOUT PRINCIPAL (CORPO)
+           ========================================== */
+        .main-container {
+            display: flex;
+            flex: 1;
+            gap: 10px;
+            height: calc(100vh - 95px);
+        }
+
+        /* 2. BARRA LATERAL ESQUERDA */
+        aside {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+            width: 50px;
+            padding-top: 10px;
+        }
+
+        .side-icon {
+            color: var(--yellow);
+            cursor: pointer;
+            transition: opacity 0.2s;
+        }
+        .side-icon:hover { opacity: 0.8; }
+
+        /* 3. COLUNA DE INFOS (SORTEIO, HORA) */
+        .info-column {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            width: 120px;
+        }
+
+        .info-card {
+            background: var(--box-blue);
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.5);
+        }
+        .info-card.dark-blue { background: #131937; }
+
+        .info-card span {
+            display: block;
+            font-size: 11px;
+            color: var(--yellow);
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .info-card strong {
+            font-size: 15px;
+            font-weight: 700;
+        }
+
+        .ordem-box {
+            background: var(--red);
+            border-radius: 6px;
+            padding: 6px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            font-weight: 700;
+            font-size: 12px;
+            border: 2px solid #FFAAAA;
+        }
+
+        .ordem-num {
+            background: var(--yellow);
+            color: #000;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 14px;
+        }
+
+        /* CENTRO (PRÊMIOS E SORTEIO) */
+        .center-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* 4. PREMIOS DO TOPO */
+        .prizes-row {
+            display: flex;
+            gap: 15px;
+        }
+
+        .prize-card {
+            flex: 1;
+            background: var(--box-blue);
+            border-radius: 8px;
+            padding: 8px;
+            text-align: center;
+            border: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .prize-card.acumulado {
+            background: var(--red);
+            position: relative;
+        }
+
+        .badge-acumulado {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            background: #000;
+            color: #FFF;
+            border: 2px solid var(--red);
+            border-radius: 50%;
+            width: 22px;
+            height: 22px;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+        }
+
+        .prize-card span {
+            display: block;
+            font-size: 12px;
+            color: var(--yellow);
+            font-weight: 700;
+        }
+        .prize-card strong { font-size: 18px; font-weight: 800; }
+
+        /* 5. ÁREA DO SORTEIO CENTRAL */
+        .game-display {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 40px;
+            position: relative;
+        }
+
+        .main-ball {
+            width: 170px;
+            height: 170px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #FFF 0%, #00CC33 40%, #003300 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 85px;
+            font-weight: 800;
+            color: #000;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+
+        .history-balls {
+            position: relative;
+            width: 160px;
+            height: 160px;
+        }
+
+        .sub-ball {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            font-weight: 700;
+            color: #000;
+            box-shadow: 0 5px 10px rgba(0,0,0,0.4);
+        }
+
+        .ball-blue { background: radial-gradient(circle at 30% 30%, #FFF 0%, #0066FF 50%, #000033 100%); }
+        .ball-grey { background: radial-gradient(circle at 30% 30%, #FFF 0%, #999999 50%, #333333 100%); }
+        .ball-orange { background: radial-gradient(circle at 30% 30%, #FFF 0%, #FF9900 50%, #663300 100%); }
+
+        /* 6. PAINEL INFERIOR DE 90 BOLAS */
+        .balls-board {
+            background: #05081c;
+            border-radius: 6px;
+            padding: 12px;
+            height: 125px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .balls-grid {
+            display: grid;
+            grid-template-columns: repeat(30, 1fr);
+            grid-template-rows: repeat(3, 1fr);
+            gap: 4px;
+            height: 100%;
+            align-items: center;
+            justify-items: center;
+        }
+
+        .grid-cell {
+            font-size: 12px;
+            font-weight: 700;
+            color: rgba(255, 255, 255, 0.15);
+        }
+        .grid-cell.drawn { color: #00FF66; }
+        .grid-cell.current { color: var(--red); font-size: 14px; text-shadow: 0 0 8px var(--red); }
+
+        /* ==========================================
+           7. PAINEL LATERAL DIREITO (JOGADORES E CARTELAS)
+           ========================================== */
+        .right-panel {
+            width: 420px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .players-container {
+            height: 220px;
+            background: var(--panel-bg);
+            border-radius: 6px;
+            padding: 8px;
+            overflow-y: auto;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .player-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 6px 10px;
+            background: #1d224d;
+            border-radius: 4px;
+            margin-bottom: 5px;
+            font-size: 12px;
+        }
+        .player-name { color: var(--yellow); font-weight: 600; }
+        
+        .player-status-dots {
+            display: flex;
+            gap: 3px;
+        }
+        .dot {
+            width: 14px;
+            height: 14px;
+            background: #333866;
+            border-radius: 50%;
+        }
+
+        .cards-bar {
+            background: var(--box-blue);
+            padding: 8px 12px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .cards-bar-actions {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-kina {
+            background: var(--yellow);
+            color: #000;
+            border: none;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 12px;
+            cursor: pointer;
+        }
+
+        .btn-ctrl {
+            background: #333866;
+            color: #FFF;
+            border: none;
+            width: 28px;
+            height: 28px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: 700;
+        }
+        .btn-ctrl.yellow { background: var(--yellow); color: #000; }
+
+        .cards-view-area {
+            flex: 1;
+            background: var(--purple-card);
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: rgba(255,255,255,0.4);
+            font-size: 14px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. TOPO / NAVBAR -->
+    <header>
+        <div class="logo-area">
+            <span class="material-icons" style="color: var(--yellow); font-size: 32px;">casino</span>
+            <span class="logo-text">BINGO VIP CLUB</span>
+        </div>
+        <div class="nav-actions">
+            <button class="btn-action"><span class="material-icons yt-icon">play_circle</span></button>
+            <button class="btn-action"><span class="material-icons" style="color: #00FF66;">attach_money</span>Depositar</button>
+            <button class="btn-action"><span class="material-icons" style="color: #00CCFF;">account_balance_wallet</span>Sacar</button>
+            <button class="btn-action"><span class="material-icons">description</span>Extrato</button>
+            <button class="btn-action"><span class="material-icons">assignment_ind</span>Dados</button>
+            <button class="btn-action"><span class="material-icons" style="color: #FF5555;">exit_to_app</span>Sair</button>
+        </div>
+        <div class="user-info">
+            <span>Olá, MARKIM2026@</span>
+            <div class="balance-box">
+                <div class="balance-val">R$ 0,04</div>
+                <div style="font-size: 10px; color: rgba(255,255,255,0.5);">Saldo ▼</div>
+            </div>
+        </div>
+    </header>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <div class="main-container">
+        
+        <!-- 2. BARRA LATERAL ESQUERDA -->
+        <aside>
+            <span class="material-icons side-icon">menu</span>
+            <span class="material-icons side-icon">radio</span>
+            <span class="material-icons side-icon">calendar_month</span>
+            <span class="material-icons side-icon">payments</span>
+            <span class="material-icons side-icon">history</span>
+            <span class="material-icons side-icon">support_agent</span>
+        </aside>
+
+        <!-- 3. COLUNA DE INFOS -->
+        <div class="info-column">
+            <div class="info-card dark-blue">
+                <span>Sorteio</span>
+                <strong>#131937</strong>
+            </div>
+            <div class="info-card">
+                <span>Hora</span>
+                <strong id="live-clock">10:36:00</strong>
+            </div>
+            <div class="info-card">
+                <span>Doação</span>
+                <strong>R$0,15</strong>
+            </div>
+            <div class="ordem-box">
+                <span>ORDEM</span>
+                <div class="ordem-num">11</div>
+            </div>
+        </div>
+
+        <!-- AREA CENTRAL -->
+        <div class="center-content">
+            <!-- 4. PRÊMIOS -->
+            <div class="prizes-row">
+                <div class="prize-card"><span>Kuadra</span><strong>R$20,00</strong></div>
+                <div class="prize-card"><span>Kina</span><strong>R$30,00</strong></div>
+                <div class="prize-card"><span>Keno</span><strong>R$100,00</strong></div>
+                <div class="prize-card acumulado">
+                    <div class="badge-acumulado">37</div>
+                    <span>Acumulado</span><strong>R$1.000,00</strong>
+                </div>
+            </div>
+
+            <!-- 5. VEZ E ANTERIORES -->
+            <div class="game-display">
+                <div class="main-ball">36</div>
+                <div class="history-balls">
+                    <div class="sub-ball ball-blue" style="top: 10px; left: 10px;">12</div>
+                    <div class="sub-ball ball-grey" style="bottom: 35px; left: 20px;">85</div>
+                    <div class="sub-ball ball-orange" style="bottom: 5px; right: 10px;">61</div>
+                </div>
+            </div>
+
+            <!-- 6. MAPA DE 90 BOLAS -->
+            <div class="balls-board">
+                <div class="balls-grid" id="board-grid">
+                    <!-- Gerado Dinamicamente pelo Script -->
+                </div>
+            </div>
+        </div>
+
+        <!-- 7. PAINEL LATERAL DIREITO -->
+        <div class="right-panel">
+            <div class="players-container" id="players-list">
+                <!-- Injetado mock de jogadores igual ao painel -->
+            </div>
+
+            <div class="cards-bar">
+                <strong style="font-size: 16px;">Cartelas: 0</strong>
+                <div class="cards-bar-actions">
+                    <button class="btn-kina">Buscando Kina</button>
+                    <button class="btn-ctrl">-</button>
+                    <button class="btn-ctrl yellow">+</button>
+                </div>
+            </div>
+
+            <div class="cards-view-area">
+                <span>Nenhuma cartela ativa</span>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- LÓGICA DO PAINEL DE BOLAS E COMPONENTES -->
+    <script>
+        // Simulação de Bolas Sorteadas (Regra idêntica à foto)
+        const sorteadas = [12, 20, 25, 27, 36, 38, 52, 58, 85, 87];
+        const bolaAtual = 36;
+        
+        const gridElement = document.getElementById('board-grid');
+
+        // Renderiza o painel inferior de 1 a 90
+        for (let i = 1; i <= 90; i++) {
+            const cell = document.createElement('div');
+            cell.classList.add('grid-cell');
+            cell.innerText = String(i).padStart(2, '0');
+
+            if (i === bolaAtual) {
+                cell.classList.add('current');
+            } else if (sorteadas.includes(i)) {
+                cell.classList.add('drawn');
+            }
+
+            gridElement.appendChild(cell);
+        }
+
+        // Mock Lista de Jogadores da direita
+        const players = [
+            { id: "288355", name: "VANDOSK8" },
+            { id: "288475", name: "❤️❤️❤️❤️" },
+            { id: "288188", name: "❤️💋ISAMARINA❤️💋" },
+            { id: "288128", name: "Kald" },
+            { id: "287966", name: "Lucia Lima" },
+            { id: "288014", name: "Lucia Lima" },
+            { id: "287943", name: "Lucia Lima" }
+        ];
+
+        const playersContainer = document.getElementById('players-list');
+        players.forEach(p => {
+            playersContainer.innerHTML += `
+                <div class="player-row">
+                    <span>${p.id}</span>
+                    <span class="player-name">${p.name}</span>
+                    <div class="player-status-dots">
+                        <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                    </div>
+                </div>
+            `;
+        });
+
+        // Relógio funcional simulado para a interface
+        setInterval(() => {
+            const now = new Date();
+            document.getElementById('live-clock').innerText = now.toTimeString().split(' ')[0];
+        }, 1000);
+    </script>
+</body>
+</html>

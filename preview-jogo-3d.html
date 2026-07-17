@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Preview Jogo 3D — Bingo VIP Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg-0:#05030f;--bg-1:#0b0820;--bg-2:#150d33;
+            --glass:rgba(255,255,255,0.05);--glass-brd:rgba(255,255,255,0.12);
+            --neon:#8b5cff;--neon-2:#22d3ee;--gold:#ffcf4d;--pink:#ff4d9d;
+            --green:#34e89e;--text:#f3f1ff;--muted:#9d96d4;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        html,body{height:100%}
+        body{
+            font-family:'Poppins',sans-serif;color:var(--text);
+            background:
+                radial-gradient(1100px 600px at 85% -15%, rgba(139,92,255,0.30), transparent 60%),
+                radial-gradient(900px 500px at -10% 115%, rgba(34,211,238,0.20), transparent 60%),
+                radial-gradient(700px 500px at 50% 120%, rgba(255,77,157,0.18), transparent 60%),
+                linear-gradient(165deg,var(--bg-0),var(--bg-1) 45%,var(--bg-2));
+            min-height:100vh;overflow-x:hidden;
+        }
+        /* floating glow orbs 3D */
+        .orb{position:fixed;border-radius:50%;filter:blur(60px);opacity:.5;z-index:0;pointer-events:none}
+        .orb.a{width:340px;height:340px;background:#8b5cff;top:-90px;right:-60px;animation:float1 9s ease-in-out infinite}
+        .orb.b{width:280px;height:280px;background:#22d3ee;bottom:-100px;left:-70px;animation:float2 11s ease-in-out infinite}
+        .orb.c{width:220px;height:220px;background:#ff4d9d;top:45%;left:55%;opacity:.3;animation:float1 13s ease-in-out infinite}
+        @keyframes float1{50%{transform:translateY(34px) translateX(-22px)}}
+        @keyframes float2{50%{transform:translateY(-34px) translateX(26px)}}
+
+        .wrap{position:relative;z-index:1;max-width:1280px;margin:0 auto;padding:18px}
+        .badge{display:inline-block;font-size:12px;color:var(--neon-2);background:rgba(34,211,238,.1);
+            border:1px solid rgba(34,211,238,.3);padding:4px 12px;border-radius:99px;margin-bottom:12px;letter-spacing:.5px}
+        h1.title{font-size:24px;font-weight:800;
+            background:linear-gradient(90deg,#fff,var(--neon),var(--pink));
+            -webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:16px}
+
+        .glass{background:linear-gradient(160deg,rgba(255,255,255,0.07),rgba(255,255,255,0.02));
+            border:1px solid var(--glass-brd);border-radius:22px;
+            backdrop-filter:blur(18px);box-shadow:0 12px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.08)}
+
+        /* ===== TOP BAR 3D ===== */
+        .topbar{display:flex;align-items:center;gap:14px;padding:14px 20px;margin-bottom:16px;
+            box-shadow:0 12px 50px rgba(139,92,255,.25),inset 0 1px 0 rgba(255,255,255,.08)}
+        .logo3d{width:50px;height:50px;border-radius:14px;flex:none;font-size:26px;
+            display:flex;align-items:center;justify-content:center;
+            background:linear-gradient(145deg,var(--neon),var(--pink));
+            box-shadow:0 10px 24px rgba(139,92,255,.6),inset 0 -4px 10px rgba(0,0,0,.3),inset 0 4px 8px rgba(255,255,255,.35)}
+        .t-name{font-weight:800;font-size:16px}
+        .t-conn{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+        .t-dot{width:9px;height:9px;border-radius:50%;background:var(--green);box-shadow:0 0 12px var(--green);animation:pulse 2s infinite}
+        @keyframes pulse{50%{opacity:.4}}
+        .spacer{flex:1}
+        .chip{font-size:13px;background:rgba(255,255,255,.06);border:1px solid var(--glass-brd);
+            padding:9px 14px;border-radius:14px;font-weight:600;box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+        .chip b{color:var(--gold)}
+        .btn{border:none;cursor:pointer;font-family:inherit;font-weight:700;border-radius:14px;
+            padding:10px 16px;font-size:13px;color:#fff;transition:.2s;
+            box-shadow:0 6px 18px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.2)}
+        .btn:hover{transform:translateY(-3px);filter:brightness(1.08)}
+        .btn-gold{background:linear-gradient(145deg,#ffcf4d,#ff8a3d);color:#1a1030}
+        .btn-pink{background:linear-gradient(145deg,#ff4d9d,#a855f7)}
+        .btn-ghost{background:rgba(255,255,255,.07);border:1px solid var(--glass-brd)}
+
+        /* ===== JACKPOT 3D ===== */
+        .jackpot{padding:20px;text-align:center;margin-bottom:16px;position:relative;overflow:hidden}
+        .jackpot:before{content:"";position:absolute;inset:0;background:
+            linear-gradient(90deg,transparent,rgba(255,207,77,.10),transparent);animation:shimmer 4s linear infinite}
+        @keyframes shimmer{to{transform:translateX(100%)}}
+        .jlbl{font-size:12px;letter-spacing:2px;color:var(--gold);text-transform:uppercase}
+        .jval{font-size:44px;font-weight:800;margin:4px 0;
+            background:linear-gradient(90deg,#ffcf4d,#ff4d9d);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+            text-shadow:0 0 50px rgba(255,207,77,.45)}
+        .jsub{font-size:12px;color:var(--muted)}
+        .jround{margin-top:10px;font-size:13px;color:var(--neon-2)}
+        .prizes{display:flex;gap:12px;justify-content:center;margin-top:14px;flex-wrap:wrap}
+        .prize{font-size:14px;font-weight:700;padding:10px 18px;border-radius:16px;
+            background:linear-gradient(160deg,rgba(139,92,255,.18),rgba(139,92,255,.05));
+            border:1px solid rgba(139,92,255,.4);box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+        .prize b{color:var(--gold)}
+
+        /* ===== GAME BODY ===== */
+        .grid2{display:grid;grid-template-columns:1.5fr 1fr;gap:16px}
+        @media(max-width:920px){.grid2{grid-template-columns:1fr}}
+
+        .ballcard{padding:20px;margin-bottom:16px}
+        .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:1px}
+        .current{display:flex;align-items:center;gap:22px;margin-top:8px}
+        /* BOLA 3D PRINCIPAL */
+        .mainball{width:120px;height:120px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+            font-size:52px;font-weight:800;color:#1a1030;flex:none;position:relative;
+            background:radial-gradient(circle at 32% 28%, #ffffff 0%, #ffcf4d 42%, #ff8a3d 78%, #c2521a 100%);
+            box-shadow:0 18px 40px rgba(255,138,61,.55),inset 0 -10px 22px rgba(0,0,0,.35),inset 0 10px 18px rgba(255,255,255,.6)}
+        .mainball:after{content:"";position:absolute;top:14%;left:20%;width:30%;height:22%;
+            background:rgba(255,255,255,.65);border-radius:50%;filter:blur(4px)}
+        .drawn{display:flex;flex-wrap:wrap;gap:8px;flex:1}
+        .mini{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+            font-size:14px;font-weight:700;background:rgba(255,255,255,.06);border:1px solid var(--glass-brd);color:var(--muted);
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.1)}
+        .mini.hot{background:linear-gradient(145deg,var(--neon),var(--neon-2));color:#fff;border-color:transparent;
+            box-shadow:0 0 18px rgba(139,92,255,.6)}
+
+        .buy{margin-top:18px;padding-top:16px;border-top:1px dashed var(--glass-brd)}
+        .buylbl{font-size:13px;margin-bottom:10px}
+        .buylbl b{color:var(--gold)}
+        .buyrow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+        .qty{width:60px;text-align:center;background:rgba(0,0,0,.35);border:1px solid var(--glass-brd);
+            color:#fff;border-radius:12px;padding:10px;font-family:inherit;font-weight:700;font-size:15px}
+        .qbtn{width:42px;height:42px;border-radius:12px;border:1px solid var(--glass-brd);
+            background:rgba(255,255,255,.07);color:#fff;font-size:22px;cursor:pointer;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.15)}
+        .buytotal{margin-top:10px;font-size:13px;color:var(--muted)}
+        .buytotal b{color:var(--gold)}
+
+        /* CARDS */
+        .cards{padding:20px;margin-bottom:16px}
+        .cards h3{font-size:15px;display:flex;align-items:center;gap:8px;margin-bottom:14px}
+        .compactbtn{margin-left:auto;background:rgba(255,255,255,.06);border:1px solid var(--glass-brd);
+            color:#fff;border-radius:10px;padding:4px 10px;cursor:pointer;font-size:12px}
+        .cardgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px}
+        .ticket{padding:14px;border-radius:16px;background:linear-gradient(160deg,rgba(139,92,255,.12),rgba(255,255,255,.02));
+            border:1px solid var(--glass-brd);box-shadow:inset 0 1px 0 rgba(255,255,255,.08)}
+        .ticket .th{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:10px}
+        .ticket .th .win{color:var(--green);font-weight:700}
+        .nums{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+        .num{aspect-ratio:1;border-radius:10px;display:flex;align-items:center;justify-content:center;
+            font-size:14px;font-weight:700;background:rgba(255,255,255,.05);border:1px solid var(--glass-brd);color:#cbbff7;
+            box-shadow:inset 0 1px 0 rgba(255,255,255,.06)}
+        .num.mark{background:linear-gradient(145deg,var(--neon),var(--neon-2));color:#fff;border-color:transparent;
+            box-shadow:0 0 14px rgba(139,92,255,.6)}
+
+        /* ===== SIDE (PLAYERS + BOLAS FASES) ===== */
+        .side{padding:18px}
+        .side h3{font-size:14px;margin-bottom:10px;display:flex;align-items:center;gap:6px}
+        .pcount{font-size:12px;color:var(--muted);margin-bottom:12px}
+
+        /* BOLAS 3D = JOGADORES PRÓXIMOS DE CADA FASE (Kuadra/Kina/Keno) */
+        .phaseballs{display:flex;justify-content:space-around;align-items:flex-start;gap:6px;
+            padding:14px 6px;margin-bottom:14px;border-radius:18px;
+            background:linear-gradient(160deg,rgba(34,211,238,.10),rgba(139,92,255,.05));
+            border:1px solid rgba(34,211,238,.25)}
+        .pball{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1}
+        .pball .b{width:52px;height:52px;border-radius:50%;display:flex;flex-direction:column;
+            align-items:center;justify-content:center;position:relative;color:#1a1030;
+            box-shadow:0 10px 22px rgba(0,0,0,.45),inset 0 -6px 12px rgba(0,0,0,.3),inset 0 6px 10px rgba(255,255,255,.5)}
+        .pball .b:after{content:"";position:absolute;top:14%;left:20%;width:32%;height:20%;
+            background:rgba(255,255,255,.6);border-radius:50%;filter:blur(2px)}
+        .pball .b .fnum{font-size:22px;font-weight:800;line-height:1;margin-top:2px}
+        .pball .b .ftag{font-size:8px;font-weight:800;text-transform:uppercase;letter-spacing:.3px;opacity:.85}
+        .pball .lab{font-size:9px;color:var(--muted);font-weight:600;text-align:center;line-height:1.15}
+        .pball .lab .cid{color:var(--gold);font-weight:700}
+        .pball .lab .cname{color:#cbbff7}
+        /* cores por fase mais próxima */
+        .b-kuadra{background:radial-gradient(circle at 32% 28%,#fff,#34e89e 45%,#0e7a52 100%)}
+        .b-kina{background:radial-gradient(circle at 32% 28%,#fff,#22d3ee 45%,#0a6f87 100%)}
+        .b-keno{background:radial-gradient(circle at 32% 28%,#fff,#8b5cff 45%,#4320a8 100%)}
+        /* animação quando a cartela está perto (mexe) */
+        .pball.active .b{animation:wobble .9s ease-in-out infinite}
+        @keyframes wobble{0%,100%{transform:translateY(0) rotate(0)}
+            25%{transform:translateY(-8px) rotate(-9deg)}
+            50%{transform:translateY(0) rotate(0)}
+            75%{transform:translateY(-5px) rotate(9deg)}}
+        .pball.active .lab{color:var(--gold);text-shadow:0 0 10px rgba(255,207,77,.6)}
+
+        .plist{list-style:none;display:flex;flex-direction:column;gap:7px;max-height:200px;overflow:auto}
+        .pitem{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:12px;
+            background:rgba(255,255,255,.04);border:1px solid var(--glass-brd);font-size:13px}
+        .pavatar{width:30px;height:30px;border-radius:50%;background:linear-gradient(145deg,var(--neon),var(--pink));
+            display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;
+            box-shadow:0 4px 12px rgba(139,92,255,.5),inset 0 2px 4px rgba(255,255,255,.4)}
+        .pitem .tag{margin-left:auto;font-size:11px;color:var(--gold)}
+
+        .log{margin-top:16px;padding:18px}
+        .log h3{font-size:14px;margin-bottom:10px}
+        .loglist{display:flex;flex-direction:column;gap:6px;max-height:200px;overflow:auto;font-size:12px;color:var(--muted)}
+        .loglist div{padding:6px 10px;background:rgba(255,255,255,.03);border-radius:10px;border-left:2px solid var(--neon)}
+
+        .foot{text-align:center;color:var(--muted);font-size:11px;margin-top:18px}
+    </style>
+</head>
+<body>
+    <div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+
+    <div class="wrap">
+        <span class="badge">PREVIEW LOCAL — Tela do Jogo 3D (dark neon glassmorphism)</span>
+        <h1 class="title">🎱 Bingo VIP Club</h1>
+
+        <!-- TOP BAR -->
+        <div class="glass topbar">
+            <div class="logo3d">🎱</div>
+            <div>
+                <div class="t-name">Marcos</div>
+                <div class="t-conn"><span class="t-dot"></span> Conectado</div>
+            </div>
+            <div class="spacer"></div>
+            <div class="chip">💰 <b>150,00</b> 🏆 12</div>
+            <button class="btn btn-gold">💰 Depositar</button>
+            <button class="btn btn-pink">💵 Sacar</button>
+            <button class="btn btn-ghost">🚪 Sair</button>
+            <button class="btn btn-ghost">🔊</button>
+        </div>
+
+        <!-- JACKPOT -->
+        <div class="glass jackpot">
+            <div class="jlbl">🎰 Jackpot Acumulado</div>
+            <div class="jval">R$ 120,00</div>
+            <div class="jsub">Feche a cartela em até 55 bolas e leve o JACKPOT!</div>
+            <div class="jround">Rodada #247 — Em andamento</div>
+            <div class="prizes">
+                <div class="prize">Kuadra <b>💰 R$ 0,50</b></div>
+                <div class="prize">Kina <b>💰 R$ 1,00</b></div>
+                <div class="prize">Keno <b>💰 R$ 2,00</b></div>
+            </div>
+        </div>
+
+        <div class="grid2">
+            <!-- LEFT -->
+            <div>
+                <!-- BALLS -->
+                <div class="glass ballcard">
+                    <div class="label">Última Bola</div>
+                    <div class="current">
+                        <div class="mainball" id="mainBall">42</div>
+                        <div class="drawn" id="drawn"></div>
+                    </div>
+                    <div class="buy">
+                        <div class="buylbl">🎟️ Comprar cartelas <b>R$ 0,15</b> cada — Sem limite</div>
+                        <div class="buyrow">
+                            <button class="qbtn" onclick="chg(-1)">−</button>
+                            <input class="qty" id="qty" value="1" min="1" oninput="upd()">
+                            <button class="qbtn" onclick="chg(1)">+</button>
+                            <button class="btn btn-gold" onclick="alert('Comprar (demo)')">🎯 Comprar</button>
+                        </div>
+                        <div class="buytotal">Total: <b id="total">R$ 0,15</b></div>
+                    </div>
+                </div>
+
+                <!-- CARDS -->
+                <div class="glass cards">
+                    <h3>📋 Minhas Cartelas <button class="compactbtn">⤢</button></h3>
+                    <div class="cardgrid" id="cardgrid"></div>
+                </div>
+            </div>
+
+            <!-- RIGHT -->
+            <div>
+                <div class="glass side">
+                    <h3>👥 Jogadores <span style="margin-left:auto;font-size:11px;color:var(--muted)">▼</span></h3>
+                    <div class="pcount">23 jogando • 5 espectadores</div>
+
+                    <!-- 5 BOLAS 3D = 5 CARTELAS (fase + num que falta) -->
+                    <div class="phaseballs" id="phaseballs"></div>
+
+                    <ul class="plist" id="plist"></ul>
+                </div>
+
+                <div class="glass log">
+                    <h3>📜 Log do Jogo</h3>
+                    <div class="loglist">
+                        <div>Bola 42 sorteada</div>
+                        <div>Marcos marcou quadra!</div>
+                        <div>Ana comprou 5 cartelas</div>
+                        <div>João venceu a rodada #246</div>
+                        <div>Jackpot aumentou para R$ 120,00</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="foot">Preview local — dados fictícios. Aprovação necessária antes do deploy.</div>
+    </div>
+
+    <script>
+        // bolas sorteadas demo
+        const drawn=[7,42,13,28,3,55,19,36,8,41,22,11,49,5];
+        const d=document.getElementById('drawn');
+        drawn.forEach((n,i)=>{
+            const e=document.createElement('div');
+            e.className='mini'+(i===drawn.length-1?' hot':'');
+            e.textContent=n;
+            d.appendChild(e);
+        });
+
+        // jogadores demo
+        const players=['Marcos','Ana','João','Beatriz','Carlos','Diego','Eduarda','Fernando','Gabi','Helena'];
+        const pl=document.getElementById('plist');
+        players.forEach((p,i)=>{
+            const li=document.createElement('li');
+            li.className='pitem';
+            li.innerHTML=`<div class="pavatar">${p[0]}</div><span>${p}</span><span class="tag">${Math.floor(Math.random()*9)+1} cartela(s)</span>`;
+            pl.appendChild(li);
+        });
+
+        // cartelas demo
+        function genTicket(){
+            const set=new Set();
+            while(set.size<15){set.add(Math.floor(Math.random()*60)+1);}
+            return [...set].sort((a,b)=>a-b);
+        }
+        const marked=new Set([7,42,13,3,19,8,5]);
+        const cg=document.getElementById('cardgrid');
+        for(let t=0;t<3;t++){
+            const nums=genTicket();
+            const div=document.createElement('div');
+            div.className='ticket';
+            const hits=nums.filter(n=>marked.has(n)).length;
+            div.innerHTML=`<div class="th"><span>Cartela #${1001+t}</span><span class="${hits>=10?'win':''}">${hits}/15</span></div>
+                <div class="nums">${nums.map(n=>`<div class="num ${marked.has(n)?'mark':''}">${n}</div>`).join('')}</div>`;
+            cg.appendChild(div);
+        }
+
+        // BOLAS = JOGADORES MAIS PRÓXIMOS DE CADA FASE (Kuadra/Kina/Keno)
+        // Cada bola mostra: fase, nº que falta, ID da cartela e nome do jogador.
+        // Ao "acertar", faltam diminui; quando zera, a bola sai e entra o próximo jogador.
+        const FASES={kuadra:4, kina:5, keno:15}; // alvos de cada fase
+        const COR={'kuadra':'b-kuadra','kina':'b-kina','keno':'b-keno'};
+        const NOME={'kuadra':'Kuadra','kina':'Kina','keno':'Keno'};
+        const fases=Object.keys(FASES);
+
+        const nomesJogadores=['VANDOSK8','ISAMARINA','Kald','Lucia Lima','Marcos','Ana','João','Beatriz','Carlos','Diego'];
+        const phaseballs=document.getElementById('phaseballs');
+
+        // fila de cartelas/jogadores por fase (pool para entrar quando uma bola sai)
+        const pool={};
+        fases.forEach(f=>{
+            pool[f]=[];
+            for(let i=0;i<6;i++){
+                pool[f].push({
+                    cartela:1000+Math.floor(Math.random()*900),
+                    nome:nomesJogadores[Math.floor(Math.random()*nomesJogadores.length)],
+                    falta:1+Math.floor(Math.random()*FASES[f])
+                });
+            }
+        });
+
+        // estado atual das 5 bolas (1 por fase, embaralhado na ordem visual)
+        const ordem=fases.slice().sort(()=>Math.random()-0.5);
+        const bolas=ordem.map(f=>{
+            const p=pool[f].shift();
+            return {fase:f, cartela:p.cartela, nome:p.nome, falta:p.falta, numQueFalta:1+Math.floor(Math.random()*90)};
+        });
+
+        function renderBalls(){
+            phaseballs.innerHTML='';
+            bolas.forEach(b=>{
+                const el=document.createElement('div');
+                el.className='pball'+(b.falta<=2?' active':''); // mexe quando perto
+                el.innerHTML=`<div class="b ${COR[b.fase]}">
+                        <div class="ftag">${NOME[b.fase]}</div>
+                        <div class="fnum">${b.falta}</div>
+                    </div>
+                    <div class="lab">ID <span class="cid">#${b.cartela}</span><br>
+                        <span class="cname">${b.nome}</span><br>
+                        falta <b>${b.numQueFalta}</b></div>`;
+                phaseballs.appendChild(el);
+            });
+        }
+        renderBalls();
+
+        // Simula acertos: a cada tick um jogador próximo "acerta" uma bola
+        setInterval(()=>{
+            const vivo=bolas.filter(b=>b.falta>0);
+            if(!vivo.length) return;
+            const b=vivo[Math.floor(Math.random()*vivo.length)];
+            b.falta--;
+            if(b.falta<=0){
+                // bola completou a fase -> sai e entra o próximo da fila dessa fase
+                const i=bolas.indexOf(b);
+                const prox=pool[b.fase].shift();
+                if(prox){
+                    bolas[i]={fase:b.fase, cartela:prox.cartela, nome:prox.nome,
+                        falta:prox.falta, numQueFalta:1+Math.floor(Math.random()*90)};
+                }else{
+                    bolas.splice(i,1);
+                }
+            }
+            renderBalls();
+        },1800);
+
+        function chg(v){const q=document.getElementById('qty');q.value=Math.max(1,(+q.value||1)+v);upd();}
+        function upd(){const q=+document.getElementById('qty').value||1;
+            document.getElementById('total').textContent='R$ '+(q*0.15).toFixed(2).replace('.',',');}
+        upd();
+    </script>
+</body>
+</html>

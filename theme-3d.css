@@ -1,0 +1,158 @@
+/* =========================================================
+   TEMA 3D - Bingo VIP Club
+   Aplicado sobre o style.css original. Não altera lógica,
+   regras, áudio ou animações. Apenas aprimora o visual.
+   ========================================================= */
+
+/* ---------- FUNDO AZUL ESCURO ---------- */
+body {
+    background: linear-gradient(180deg, #05052e 0%, #04042a 100%) !important;
+    color: #f3f1ff !important;
+}
+#screenGame {
+    background: transparent !important;
+}
+
+/* ---------- RELEVO 3D EM TODOS OS CARDS ---------- */
+.top-bar,
+.jackpot-panel,
+.prizes-strip,
+.phase-item-mini,
+.ball-section,
+.buy-options,
+.my-cards-section,
+.players-panel,
+.card-show,
+.tgrid,
+.bingo-card,
+.drawn-grid {
+    border: 1px solid rgba(255,255,255,0.18) !important;
+    box-shadow: 0 12px 28px rgba(0,0,0,.55), inset 0 2px 0 rgba(255,255,255,.18), inset 0 -10px 22px rgba(0,0,0,.35) !important;
+    backdrop-filter: blur(6px);
+}
+.top-bar,
+.jackpot-panel,
+.prizes-strip,
+.buy-options,
+.my-cards-section,
+.players-panel,
+.ball-section,
+.drawn-grid {
+    background-image: linear-gradient(160deg, rgba(255,255,255,.10), rgba(255,255,255,0) 45%) !important;
+}
+
+/* ---------- LOGO MAIOR ---------- */
+.room-logo {
+    height: 56px !important;
+    width: auto !important;
+    border-radius: 10px !important;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.5));
+}
+
+/* ---------- BOLA CENTRAL MAIOR E 3D ---------- */
+.ball-display {
+    width: 150px !important;
+    height: 150px !important;
+    font-size: 3.4em !important;
+    border: 3px solid rgba(255,255,255,0.2) !important;
+    box-shadow: 0 22px 50px rgba(0,0,0,.6), inset 0 -14px 26px rgba(0,0,0,.35), inset 0 14px 24px rgba(255,255,255,.55) !important;
+}
+.ball-display::after {
+    width: 46px !important;
+    height: 16px !important;
+    background: rgba(255,255,255,0.35) !important;
+}
+/* cores por faixa numérica (1-30 azul / 31-60 amarelo / 61-90 vermelho) */
+.ball-display.fb1 { background: radial-gradient(circle at 32% 28%, #fff 0%, #4aa3ff 38%, #0a4a8f 100%) !important; color:#06203f !important; }
+.ball-display.fb2 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ffd83d 38%, #c79a00 100%) !important; color:#4a3700 !important; }
+.ball-display.fb3 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ff5d5d 38%, #b3122e 100%) !important; color:#fff !important; }
+
+/* ---------- MAPA DE 90 BOLAS 3D ---------- */
+.drawn-grid {
+    gap: 4px !important;
+    padding: 10px !important;
+    background: rgba(4,4,30,0.55) !important;
+}
+.dgrid-cell {
+    border-radius: 6px !important;
+    font-size: 0.62em !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+.dgrid-cell.drawn {
+    background: linear-gradient(135deg, rgba(255,255,255,.18), rgba(255,255,255,.06)) !important;
+    color: #fff !important;
+    font-weight: 700 !important;
+}
+/* cor por faixa nas bolas já sorteadas */
+.dgrid-cell.drawn.fb1 { background: radial-gradient(circle at 32% 28%, #fff 0%, #4aa3ff 42%, #0a4a8f 100%) !important; color:#06203f !important;
+    border-color: rgba(74,163,255,.5) !important; box-shadow: 0 0 10px rgba(74,163,255,.5), inset 0 -2px 4px rgba(0,0,0,.3) !important; }
+.dgrid-cell.drawn.fb2 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ffd83d 42%, #c79a00 100%) !important; color:#4a3700 !important;
+    border-color: rgba(255,216,61,.5) !important; box-shadow: 0 0 10px rgba(255,216,61,.5), inset 0 -2px 4px rgba(0,0,0,.3) !important; }
+.dgrid-cell.drawn.fb3 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ff5d5d 42%, #b3122e 100%) !important; color:#fff !important;
+    border-color: rgba(255,93,93,.5) !important; box-shadow: 0 0 10px rgba(255,93,93,.5), inset 0 -2px 4px rgba(0,0,0,.3) !important; }
+.dgrid-cell.winner {
+    background: radial-gradient(circle at 32% 28%, #fff 0%, #ff5d73 45%, #b3122e 100%) !important;
+    color:#fff !important; border-color: rgba(255,93,115,.8) !important;
+    box-shadow: 0 0 14px rgba(255,93,115,.8), inset 0 -2px 4px rgba(0,0,0,.3) !important;
+}
+
+/* ---------- FASES: ativa pisca (mantém), não-ativas cinza ---------- */
+.phase-item-mini.phase-completed { opacity: 0.4 !important; filter: grayscale(0.6); }
+.phase-item-mini.phase-active {
+    animation: phaseBlink 1s steps(2,start) infinite !important;
+    box-shadow: 0 0 16px rgba(255,215,0,.6), inset 0 2px 0 rgba(255,255,255,.2) !important;
+}
+@keyframes phaseBlink { 50% { opacity: 0.35; } }
+
+/* ---------- JACKPOT INATIVO (vermelho) ---------- */
+.jackpot-panel.jackpot-inactive {
+    border-color: rgba(255,0,51,0.5) !important;
+    box-shadow: 0 0 22px rgba(255,0,51,.35), inset 0 2px 0 rgba(255,255,255,.1) !important;
+    animation: jackpotPulse 1.4s ease-in-out infinite !important;
+}
+@keyframes jackpotPulse { 0%,100% { box-shadow: 0 0 14px rgba(255,0,51,.25); } 50% { box-shadow: 0 0 26px rgba(255,0,51,.6); } }
+
+/* ---------- BOTÕES COM RELEVO ---------- */
+.btn-deposit, .btn-withdraw, .btn-logout, .btn-sound, .btn-qty, .btn-buy, .btn-hall, .cards-compact-btn {
+    border: 1px solid rgba(255,255,255,0.25) !important;
+    box-shadow: 0 8px 18px rgba(0,0,0,.5), inset 0 2px 0 rgba(255,255,255,.30), inset 0 -6px 12px rgba(0,0,0,.35) !important;
+    transition: transform .12s ease, filter .12s ease !important;
+}
+.btn-deposit:active, .btn-withdraw:active, .btn-logout:active, .btn-sound:active, .btn-qty:active, .btn-buy:active {
+    transform: translateY(3px) !important;
+    box-shadow: 0 3px 8px rgba(0,0,0,.5), inset 0 2px 6px rgba(0,0,0,.4) !important;
+}
+
+/* ---------- CARTELAS: relevo nas células ---------- */
+.card-cell {
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.10) !important;
+}
+.card-cell.marked {
+    box-shadow: 0 0 10px rgba(139,92,255,.5), inset 0 -2px 4px rgba(0,0,0,.3) !important;
+}
+
+/* ---------- JOGADORES: linhas com relevo ---------- */
+.player-list li {
+    border: 1px solid rgba(255,255,255,0.10) !important;
+    box-shadow: 0 6px 14px rgba(0,0,0,.4), inset 0 1px 0 rgba(255,255,255,.12), inset 0 -4px 8px rgba(0,0,0,.3) !important;
+    border-radius: 8px !important;
+}
+
+/* ---------- ORBS FLUTUANTES DE FUNDO (decorativo) ---------- */
+body::before {
+    content: '';
+    position: fixed;
+    top: -10%; left: -10%;
+    width: 50vw; height: 50vw;
+    background: radial-gradient(circle, rgba(34,211,238,0.10), transparent 70%);
+    pointer-events: none; z-index: 0;
+}
+body::after {
+    content: '';
+    position: fixed;
+    bottom: -15%; right: -10%;
+    width: 55vw; height: 55vw;
+    background: radial-gradient(circle, rgba(139,92,255,0.10), transparent 70%);
+    pointer-events: none; z-index: 0;
+}

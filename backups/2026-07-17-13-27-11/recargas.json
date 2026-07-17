@@ -1,0 +1,23 @@
+[
+  {
+    "paymentId": 167942837350,
+    "nome": "marcos albano miranda de araujo",
+    "fichas": 600,
+    "data": "2026-07-09T08:27:17.300Z",
+    "sincronizado": true
+  },
+  {
+    "paymentId": 167087299299,
+    "nome": "marcos albano miranda de araujo",
+    "fichas": 650,
+    "data": "2026-07-09T08:31:43.234Z",
+    "sincronizado": true
+  },
+  {
+    "paymentId": "pay_2kzdmc73elgd6ppb",
+    "nome": "marília miranda cruz",
+    "fichas": 5000,
+    "data": "2026-07-09T17:17:07.758Z",
+    "sincronizado": true
+  }
+]

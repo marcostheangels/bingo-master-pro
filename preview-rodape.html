@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Preview Rodapé — Bingo VIP Club</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        :root{
+            --bg-0:#07060f;--bg-1:#0d0a1f;--bg-2:#140f2e;
+            --glass:rgba(255,255,255,0.05);--glass-brd:rgba(255,255,255,0.10);
+            --neon:#7c5cff;--neon-2:#22d3ee;--gold:#fbbf24;--pink:#ff4d8d;
+            --text:#eef0ff;--muted:#9a93c7;
+        }
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:'Poppins',sans-serif;background:linear-gradient(160deg,var(--bg-0),var(--bg-1) 45%,var(--bg-2));
+            min-height:100vh;color:var(--text);padding-bottom:90px}
+        .demo{display:flex;align-items:center;justify-content:center;height:70vh;color:var(--muted);font-size:14px}
+
+        /* ===== RODAPÉ FIXO ===== */
+        .footbar{
+            position:fixed;bottom:0;left:0;right:0;z-index:100;
+            display:flex;align-items:center;gap:14px;
+            padding:10px 16px;
+            background:linear-gradient(180deg,rgba(13,10,31,0.65),rgba(7,6,15,0.92));
+            backdrop-filter:blur(16px);
+            border-top:1px solid rgba(124,92,255,0.25);
+            box-shadow:0 -8px 40px rgba(124,92,255,0.18);
+        }
+        .f-logo{width:42px;height:42px;border-radius:12px;flex:none;
+            background:linear-gradient(135deg,var(--neon),var(--pink));
+            display:flex;align-items:center;justify-content:center;font-size:22px;
+            box-shadow:0 0 22px rgba(124,92,255,.55)}
+        .f-user{display:flex;flex-direction:column;line-height:1.15;min-width:0}
+        .f-hello{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .f-hello .at{color:var(--neon-2)}
+        .f-bal{font-size:13px;font-weight:800;color:var(--gold);
+            text-shadow:0 0 14px rgba(251,191,36,.4)}
+        .f-bal span{font-size:10px;color:var(--muted);font-weight:600;text-shadow:none}
+        .f-spacer{flex:1}
+        .f-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
+        .f-btn{border:none;cursor:pointer;font-family:inherit;font-weight:700;font-size:12px;
+            padding:9px 13px;border-radius:11px;color:#fff;transition:.2s;white-space:nowrap}
+        .f-btn:hover{transform:translateY(-2px)}
+        .f-buy{background:linear-gradient(135deg,#fbbf24,#f97316);color:#1a1030;box-shadow:0 4px 16px rgba(251,191,36,.35)}
+        .f-dep{background:linear-gradient(135deg,var(--neon),var(--neon-2));box-shadow:0 4px 16px rgba(124,92,255,.35)}
+        .f-sac{background:linear-gradient(135deg,#ff4d8d,#a855f7)}
+        .f-ext{background:rgba(255,255,255,.07);border:1px solid var(--glass-brd)}
+        .f-dad{background:rgba(255,255,255,.07);border:1px solid var(--glass-brd)}
+        .f-out{background:rgba(255,77,141,.15);border:1px solid rgba(255,77,141,.4);color:#ff9ec4}
+
+        @media(max-width:760px){
+            .f-actions{gap:6px}
+            .f-btn{padding:8px 10px;font-size:11px}
+            .f-hello{font-size:12px}
+        }
+        @media(max-width:560px){
+            .f-btn span.txt{display:none}
+            .f-btn{padding:9px 11px}
+        }
+    </style>
+</head>
+<body>
+    <div class="demo">↑ Conteúdo da tela do jogo aqui (preview do rodapé abaixo)</div>
+
+    <!-- ===== RODAPÉ ===== -->
+    <div class="footbar">
+        <div class="f-logo">🎱</div>
+        <div class="f-user">
+            <div class="f-hello">Olá, <span class="at">MARKIM2026@</span></div>
+            <div class="f-bal">R$ 0,04 <span>Saldo</span></div>
+        </div>
+        <div class="f-spacer"></div>
+        <div class="f-actions">
+            <button class="f-btn f-buy">🎟️ <span class="txt">Comprar Créditos</span></button>
+            <button class="f-btn f-dep">💰 <span class="txt">Depositar</span></button>
+            <button class="f-btn f-sac">💵 <span class="txt">Sacar Créditos</span></button>
+            <button class="f-btn f-ext">📄 <span class="txt">Extrato</span></button>
+            <button class="f-btn f-dad">👤 <span class="txt">Meus Dados</span></button>
+            <button class="f-btn f-out">🚪 <span class="txt">Sair</span></button>
+        </div>
+    </div>
+</body>
+</html>
