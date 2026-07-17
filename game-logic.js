@@ -2128,7 +2128,6 @@ renderMyCards = function() {
 
         let header = `<div class="card-head">`;
         header += `<span class="card-title">${awardLabels.length ? '🏆 ' + awardLabels.join(' + ') : 'Cartela #' + (index + 1)}</span>`;
-        header += `<span class="card-prize">💰 R$ ${phasePrize.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>`;
         header += `</div>`;
         if (isTop) header += `<div class="card-top-ribbon">★ MAIS PERTO</div>`;
         if (closeLabel) header += `<div class="card-badge">${closeLabel}</div>`;
