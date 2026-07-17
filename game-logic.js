@@ -256,17 +256,17 @@ async function validarSessaoExistente() {
 }
 const BOT_INITIAL_CHIPS = 10000; // bots comecam com R$10,00 em fichas (somente bots)
 const PHASES = {
-    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 0,30', reward: 300 },
-    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 0,40', reward: 400 },
-    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 0,80', reward: 800 }
+    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 0,50', reward: 500 },
+    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 1,00', reward: 1000 },
+    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 2,00', reward: 2000 }
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋'];
-const BOT_MAX_CARDS = 15;
+const BOT_MAX_CARDS = 25;
 const HUMAN_MAX_CARDS = 40;
-const CARD_COST = 50;
+const CARD_COST = 100;
 const JACKPOT_BALL_LIMIT = 55;
-let JACKPOT_REWARD = 20000;
+let JACKPOT_REWARD = 50000;
 
 function getRoundNumber() {
     return parseInt(localStorage.getItem('bingo_round_number') || '0', 10);

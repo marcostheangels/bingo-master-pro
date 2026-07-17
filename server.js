@@ -582,8 +582,8 @@ function iniciarNovaRodada(room) {
     // Give bots cards, reset awards
     room.players.forEach(p => {
         if (p.isBot) {
-            const maxCards = engine.BOT_MAX_CARDS; // 15
-            const qtd = Math.floor(Math.random() * maxCards) + 1; // 1 a 15
+            const maxCards = engine.BOT_MAX_CARDS; // 25
+            const qtd = Math.floor(Math.random() * (maxCards - 9)) + 10; // 10 a 25
             p.cards = [];
             for (let i = 0; i < qtd; i++) {
                 p.cards.push(engine.generateBingoCardData());
@@ -955,7 +955,7 @@ function botRandomChips() {
 }
 
 function ensureBots(room, rotate) {
-    const TARGET = 15;
+    const TARGET = 25;
     const ativos = Array.from(room.players.values()).filter(p => p.isBot);
     // Remove excess if rotate requested
     if (rotate) {
@@ -1505,6 +1505,15 @@ app.post('/api/register', async (req, res) => {
         };
         usuarios.push(novoUsuario);
         await salvarUsuarios(usuarios);
+
+        // 1ï¸âƒ£ BÃ”NUS DE R$5 (5000 FICHAS) NO CADASTRO - não sacável, apenas para jogar
+        const c = getChips(nomeCompleto);
+        await setChips(nomeCompleto, c.chips + 5000, c.winnings);
+        // Marca como bonusGiven para não ser sacável
+        const bonusGivenStore = db.getBonusGivenStore();
+        const keyBonus = nomeCompleto.toLowerCase().trim().normalize('NFC');
+        bonusGivenStore[keyBonus] = (bonusGivenStore[keyBonus] || 0) + 5000;
+        await db.setBonusGivenStore(bonusGivenStore);
 
         // 1ï¸âƒ£ RESPONDE O JOGADOR IMEDIATAMENTE (Entra na tela sem travar!)
         res.json({ success: true, sessionToken: novoUsuario.sessionToken, cpf, nome: nomeCompleto });

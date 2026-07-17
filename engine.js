@@ -2,22 +2,22 @@
 // Lógica pura e autoritativa do Bingo. O servidor é a única fonte da verdade.
 
 const PHASES = {
-    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 0,30', reward: 300 },
-    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 0,40', reward: 400 },
-    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 0,80', reward: 800 }
+    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 0,50', reward: 500 },
+    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 1,00', reward: 1000 },
+    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 2,00', reward: 2000 }
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
-const CARD_COST = 50; // R$0,05 cada cartela (em fichas = centavos de real)
-const JACKPOT_BALL_LIMIT = 55; // keno em ate 55 bolas: jackpot raro p/ a panela ACUMULAR e crescer com a sala (casa lucra)
-const JACKPOT_INITIAL = 20000; // R$20,00 de semente do poço progressivo (piso atrativo)
-const JACKPOT_CONTRIBUTION_PER_CARD = 5; // R$0,005 por CARTELA HUMANA alimenta o poço (dentro da margem da casa => seguro, sem prejuizo)
-const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada (exige >=2 jogadores, pois HUMAN_MAX_CARDS=40)
-const JACKPOT_MAX = 100000; // R$100,00 teto de segurança do poço (backstop; na pratica fica ~R$40)
+const CARD_COST = 100; // R$0,10 cada cartela
+const JACKPOT_BALL_LIMIT = 55; // keno em ate 55 bolas
+const JACKPOT_INITIAL = 50000; // R$50,00 de semente do poço progressivo
+const JACKPOT_CONTRIBUTION_PER_CARD = 10; // R$0,01 por CARTELA HUMANA alimenta o poço
+const JACKPOT_MIN_HUMAN_CARDS = 50; // Só paga jackpot se houver >= este nº de cartelas humanas na rodada
+const JACKPOT_MAX = 200000; // R$200,00 teto de segurança do poço
 
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
 const HUMAN_MAX_CARDS = 40; // limite de cartelas por jogador (aumentado p/ dar mais opções e garantir lucro da casa)
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋', 'Lucas 🔥', 'Beatriz 🌻', 'Gustavo 🍎', 'Larissa 🦄', 'Rafael 🎲', 'Patrícia 🌹', 'Thiago ⚽', 'Vanessa 🍓', 'Felipe 🚀', 'Mariana 🐬'];
-const BOT_MAX_CARDS = 15;
+const BOT_MAX_CARDS = 25;
 const BOT_INITIAL_CHIPS = 10000; // R$10,00 somente para bots
 
 function getMaxCardsForPlayer(player) {
