@@ -1455,7 +1455,7 @@ function initDrawnGrid() {
     grid.innerHTML = '';
     for (let i = 1; i <= 90; i++) {
         const cell = document.createElement('div');
-        cell.className = 'dgrid-cell';
+        cell.className = 'grid-cell';
         cell.dataset.num = i;
         cell.textContent = i;
         grid.appendChild(cell);
@@ -1467,7 +1467,7 @@ function syncDrawnGrid() {
     const grid = document.getElementById('drawnGrid');
     if (!grid) return;
     drawnBalls.forEach(ball => {
-        const cell = grid.querySelector(`.dgrid-cell[data-num="${ball}"]`);
+        const cell = grid.querySelector(`.grid-cell[data-num="${ball}"]`);
         if (cell) {
             const ph = drawnBallPhase[ball] || getCurrentPhaseKey();
             drawnBallPhase[ball] = ph;
@@ -1479,7 +1479,7 @@ function syncDrawnGrid() {
 function applyBoardReset() {
     const grid = document.getElementById('drawnGrid');
     if (grid) {
-        grid.querySelectorAll('.dgrid-cell').forEach(c => {
+        grid.querySelectorAll('.grid-cell').forEach(c => {
             c.classList.remove('drawn', 'winner');
         });
     }
@@ -1680,7 +1680,7 @@ function applyDrawnBall(ball) {
 
     const grid = document.getElementById('drawnGrid');
     if (grid) {
-        const cell = grid.querySelector(`.dgrid-cell[data-num="${ball}"]`);
+        const cell = grid.querySelector(`.grid-cell[data-num="${ball}"]`);
         if (cell) {
             const isWinner = typeof window.__ultimaBolaVencedora !== 'undefined' && Number(ball) === Number(window.__ultimaBolaVencedora);
             const ph = getCurrentPhaseKey();
