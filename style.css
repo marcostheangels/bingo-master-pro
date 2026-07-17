@@ -212,6 +212,17 @@ aside { display:flex;flex-direction:column;align-items:center;gap:10px;width:40p
 .sub-ball.fb2 { background:radial-gradient(circle at 32% 28%,#fff 0%,#ffd83d 40%,#c79a00 100%);color:#4a3700; }
 .sub-ball.fb3 { background:radial-gradient(circle at 32% 28%,#fff 0%,#ff5d5d 40%,#b3122e 100%);color:#fff; }
 
+/* Bolas sorteadas dentro da coluna de infos (mesma altura do acumulado) */
+.history-box { background:var(--box-blue);border:2px solid rgba(255,255,255,0.12);border-radius:10px;
+    padding:8px 10px;text-align:center;flex:1 1 0;min-height:0;display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:8px;
+    box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12); }
+.history-box > span { display:block;font-size:11px;color:var(--yellow);font-weight:600;text-transform:uppercase; }
+.history-box .history-balls { position:static;width:100%;height:auto;flex:none;display:flex;flex-wrap:wrap;
+    gap:8px;justify-content:center;align-items:center; }
+.history-box .sub-ball { position:static !important;top:auto !important;left:auto !important;
+    width:42px;height:42px;font-size:18px; }
+
 /* 6. MAPA 90 BOLAS */
 .balls-board { background:linear-gradient(160deg,rgba(20,28,66,.75),rgba(8,12,38,.75));
     backdrop-filter:blur(10px);border-radius:12px;padding:10px;height:auto;flex:1 1 auto;min-height:0;margin-top:auto;

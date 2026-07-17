@@ -11,7 +11,7 @@
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎱%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.0.8/index.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=39">
+    <link rel="stylesheet" href="style.css?v=40">
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => {
@@ -207,6 +207,10 @@
                         <span>ACUMULADO</span>
                         <div class="jackpot-value" id="jackpotDisplay">R$ 1.000,00</div>
                     </div>
+                    <div class="history-box">
+                        <span>BOLAS SORTEADAS</span>
+                        <div class="history-balls" id="historyBalls"></div>
+                    </div>
                 </div>
 
                 <!-- AREA CENTRAL -->
@@ -226,7 +230,6 @@
                     <!-- 5. AREA DO SORTEIO -->
                     <div class="game-display">
                         <div class="main-ball" id="mainBall">-</div>
-                        <div class="history-balls" id="historyBalls"></div>
                         <div class="balls-board" id="drawnGrid"></div>
                     </div>
 
@@ -591,8 +594,8 @@
     </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-<script src="game-logic.js?v=99"></script>
-<script src="network.js?v=97"></script>
+<script src="game-logic.js?v=100"></script>
+<script src="network.js?v=98"></script>
     <script>
         // Auto-login se tiver sessao valida
         (async function() {
