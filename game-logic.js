@@ -256,9 +256,9 @@ async function validarSessaoExistente() {
 }
 const BOT_INITIAL_CHIPS = 10000; // bots comecam com R$10,00 em fichas (somente bots)
 const PHASES = {
-    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 0,50', reward: 500 },
-    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 1,00', reward: 1000 },
-    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 2,00', reward: 2000 }
+    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 Variável', reward: 500 },
+    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 Variável', reward: 1000 },
+    keno: { label: 'Keno', description: 'Cartela completa', prize: '💰 Variável', reward: 2000 }
 };
 const CARD_TIERS = [
     { name: 'Básica', emoji: '🟢', cost: 100, weight: 50 },
@@ -1175,11 +1175,11 @@ function renderCloseCardsPanel() {
 
         const badges = [];
         Object.entries(wonCounts).forEach(([phase, count]) => {
-            const label = phase === 'kuadra' ? 'Kuadra' : phase === 'kina' ? 'Kina' : phase === 'keno' ? 'Bingo' : phase;
+            const label = phase === 'kuadra' ? 'Kuadra' : phase === 'kina' ? 'Kina' : phase === 'keno' ? 'Keno' : phase;
             badges.push(`<span class="close-badge close-${phase}-won">✅ ${count}x ${label}</span>`);
         });
         Object.entries(closeCounts).forEach(([phase, count]) => {
-            const label = phase === 'kuadra' ? 'Kuadra' : phase === 'kina' ? 'Kina' : phase === 'keno' ? 'Bingo' : phase;
+            const label = phase === 'kuadra' ? 'Kuadra' : phase === 'kina' ? 'Kina' : phase === 'keno' ? 'Keno' : phase;
             badges.push(`<span class="close-badge close-${phase}">🔥 ${count}x ${label}</span>`);
         });
 

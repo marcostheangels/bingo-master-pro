@@ -2,9 +2,9 @@
 // Lógica pura e autoritativa do Bingo. O servidor é a única fonte da verdade.
 
 const PHASES = {
-    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 R$ 0,50', reward: 500 },
-    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 R$ 1,00', reward: 1000 },
-    keno: { label: 'Bingo', description: 'Cartela completa', prize: '💰 R$ 2,00', reward: 2000 }
+    kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 Variável', reward: 500 },
+    kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 Variável', reward: 1000 },
+    keno: { label: 'Keno', description: 'Cartela completa', prize: '💰 Variável', reward: 2000 }
 };
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const CARD_COST = 100; // fallback padrão
