@@ -1001,40 +1001,75 @@ body.admin-mode .admin-screen-wrapper * {
 
 /* Jackpot */
 .jackpot-panel {
-    background: linear-gradient(135deg, rgba(0,3,182,0.35), rgba(20,0,80,0.3));
-    border-radius: 14px;
-    padding: 12px 16px;
-    border: 1.5px solid rgba(255,215,0,0.5);
+    position: relative;
+    background: linear-gradient(135deg, rgba(120,80,0,0.45), rgba(60,40,0,0.35), rgba(120,80,0,0.45));
+    border-radius: 16px;
+    padding: 14px 18px;
+    border: 2px solid #ffd700;
     text-align: center;
-    animation: jackpotNeon 3s ease-in-out infinite;
+    overflow: hidden;
+    box-shadow: 0 0 24px rgba(255,215,0,0.4), inset 0 0 22px rgba(255,215,0,0.15);
+    animation: jackpotGold 2.6s ease-in-out infinite;
 }
-@keyframes jackpotNeon {
-    0%, 100% { box-shadow: 0 0 10px rgba(255,215,0,0.1); border-color: rgba(255,215,0,0.4); }
-    50% { box-shadow: 0 0 20px rgba(255,215,0,0.2); border-color: rgba(255,215,0,0.7); }
+@keyframes jackpotGold {
+    0%, 100% { box-shadow: 0 0 24px rgba(255,215,0,0.35), inset 0 0 22px rgba(255,215,0,0.12); border-color: #ffd700; }
+    50% { box-shadow: 0 0 42px rgba(255,215,0,0.7), inset 0 0 30px rgba(255,215,0,0.25); border-color: #fff3a0; }
+}
+/* Faixa brilhante deslizante (shimmer de cassino) */
+.jackpot-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -60%;
+    width: 50%; height: 100%;
+    background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.45) 50%, transparent 100%);
+    transform: skewX(-20deg);
+    animation: jackpotShimmer 3.4s ease-in-out infinite;
+    pointer-events: none;
+}
+@keyframes jackpotShimmer {
+    0% { left: -60%; }
+    55%, 100% { left: 130%; }
 }
 .jackpot-panel.jackpot-active {
-    border-color: rgba(16,185,129,0.6);
-    animation: jackpotNeonGreen 3s ease-in-out infinite;
+    border-color: #ffd700;
+    animation: jackpotGold 2.6s ease-in-out infinite;
 }
-@keyframes jackpotNeonGreen {
-    0%, 100% { box-shadow: 0 0 10px rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.4); }
-    50% { box-shadow: 0 0 20px rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.7); }
+.jackpot-panel.jackpot-inactive { border-color: rgba(239,68,68,0.35); box-shadow: none; animation: none; }
+.jackpot-panel.jackpot-inactive::before { display: none; }
+.jackpot-label {
+    position: relative;
+    color: #fff3a0;
+    font-size: 0.82em;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    font-weight: 800;
+    text-shadow: 0 0 10px rgba(255,215,0,0.7);
 }
-.jackpot-panel.jackpot-inactive { border-color: rgba(239,68,68,0.25); animation: none; box-shadow: none; }
-.jackpot-label { color: #ffff00; font-size: 0.78em; letter-spacing: 1px; text-transform: uppercase; font-weight: 600; }
-.jackpot-value { font-size: 1.5em; font-weight: 800; color: #ffff00; text-shadow: 2px 2px rgba(0,0,0,0.8); }
-.jackpot-subtitle { font-size: 0.82em; color: rgba(255,255,200,0.9); font-weight: 600; letter-spacing: 0.3px; margin-top: 4px; }
+.jackpot-value {
+    position: relative;
+    font-size: 2.1em;
+    font-weight: 900;
+    color: #ffd700;
+    text-shadow: 0 0 14px rgba(255,215,0,0.8), 0 0 30px rgba(255,180,0,0.5);
+    animation: jackpotValuePulse 2s ease-in-out infinite;
+    letter-spacing: 0.5px;
+}
+@keyframes jackpotValuePulse {
+    0%, 100% { transform: scale(1); text-shadow: 0 0 14px rgba(255,215,0,0.8), 0 0 30px rgba(255,180,0,0.5); }
+    50% { transform: scale(1.05); text-shadow: 0 0 22px rgba(255,215,0,1), 0 0 44px rgba(255,180,0,0.7); }
+}
+.jackpot-subtitle { font-size: 0.82em; color: rgba(255,245,200,0.95); font-weight: 600; letter-spacing: 0.3px; margin-top: 5px; }
 .round-number { font-size: 0.72em; color: rgba(255,255,255,0.6); margin-top: 4px; }
 
 .jackpot-balls-panel {
-    background: rgba(251,191,36,0.04);
+    background: rgba(255,215,0,0.05);
     border-radius: 10px;
     padding: 10px;
-    border: 1px solid rgba(251,191,36,0.08);
+    border: 1px solid rgba(255,215,0,0.15);
     display: none;
 }
 .jackpot-balls-panel.visible { display: block; }
-.jackpot-balls-label { color: #ffff00; font-size: 0.75em; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+.jackpot-balls-label { color: #ffd700; font-size: 0.75em; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
 .jackpot-balls-grid { display: flex; flex-wrap: wrap; gap: 4px; }
 .jackpot-ball {
     width: 28px; height: 28px; border-radius: 50%;
@@ -2820,10 +2855,24 @@ body {
 
 /* Jackpot hero */
 #screenGame .jackpot-panel {
-    background: linear-gradient(135deg, rgba(40,25,80,0.6), rgba(20,12,48,0.5));
-    border: 1.5px solid rgba(255,215,0,0.6);
-    box-shadow: 0 0 40px rgba(255,215,0,0.15), inset 0 1px 0 rgba(255,255,255,0.06);
+    position: relative;
+    background: linear-gradient(135deg, rgba(120,80,0,0.5), rgba(60,40,0,0.4), rgba(120,80,0,0.5));
+    border: 2px solid #ffd700;
+    box-shadow: 0 0 36px rgba(255,215,0,0.5), inset 0 0 24px rgba(255,215,0,0.18);
+    overflow: hidden;
+    animation: jackpotGold 2.6s ease-in-out infinite;
 }
+#screenGame .jackpot-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -60%;
+    width: 50%; height: 100%;
+    background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%);
+    transform: skewX(-20deg);
+    animation: jackpotShimmer 3.4s ease-in-out infinite;
+    pointer-events: none;
+}
+#screenGame .jackpot-value { color: #ffd700; text-shadow: 0 0 16px rgba(255,215,0,0.85), 0 0 34px rgba(255,180,0,0.55); animation: jackpotValuePulse 2s ease-in-out infinite; }
 
 /* Rim-light + depth on panels */
 #screenGame .top-bar,
@@ -2942,15 +2991,28 @@ body {
 
 /* Jackpot hero */
 #screenGame .jackpot-panel {
-    background: linear-gradient(135deg, rgba(40, 25, 80, 0.85), rgba(20, 12, 48, 0.85));
-    border: 1px solid rgba(255, 215, 0, 0.5);
+    position: relative;
+    background: linear-gradient(135deg, rgba(120,80,0,0.5), rgba(60,40,0,0.4), rgba(120,80,0,0.5));
+    border: 2px solid #ffd700;
     border-radius: var(--r);
-    box-shadow: 0 0 40px rgba(255, 215, 0, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+    box-shadow: 0 0 40px rgba(255, 215, 0, 0.5), inset 0 0 26px rgba(255, 215, 0, 0.18);
+    overflow: hidden;
     padding: 18px 22px;
+    animation: jackpotGold 2.6s ease-in-out infinite;
 }
-#screenGame .jackpot-label { color: var(--gold-soft); font-size: 0.8em; letter-spacing: 1.5px; text-transform: uppercase; }
-#screenGame .jackpot-value { color: var(--gold); text-shadow: 0 0 26px rgba(255, 215, 0, 0.28); }
-#screenGame .jackpot-subtitle { color: rgba(255, 255, 220, 0.85); }
+#screenGame .jackpot-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: -60%;
+    width: 50%; height: 100%;
+    background: linear-gradient(100deg, transparent 0%, rgba(255,255,255,0.5) 50%, transparent 100%);
+    transform: skewX(-20deg);
+    animation: jackpotShimmer 3.4s ease-in-out infinite;
+    pointer-events: none;
+}
+#screenGame .jackpot-label { color: #fff3a0; font-size: 0.82em; letter-spacing: 2px; text-transform: uppercase; font-weight: 800; text-shadow: 0 0 10px rgba(255,215,0,0.7); }
+#screenGame .jackpot-value { color: #ffd700; text-shadow: 0 0 18px rgba(255,215,0,0.9), 0 0 38px rgba(255,180,0,0.6); animation: jackpotValuePulse 2s ease-in-out infinite; font-size: 2.1em; font-weight: 900; }
+#screenGame .jackpot-subtitle { color: rgba(255, 245, 200, 0.95); }
 
 /* Phase band (Kuadra / Kina / Keno) */
 #screenGame .prizes-strip {
