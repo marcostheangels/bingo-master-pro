@@ -1,9 +1,9 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preview Bingo 3D — Bingo VIP Club (modelo bingo.html)</title>
+    <title>Preview Bingo 3D â€” Bingo VIP Club (modelo bingo.html)</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -101,8 +101,15 @@
             align-items:center;justify-content:center;gap:14px;font-weight:700;font-size:13px;border:2px solid #ffb3c1;
             box-shadow:0 8px 24px rgba(255,59,92,.5)}
         .ordem-num{background:var(--yellow);color:#000;padding:2px 8px;border-radius:6px;font-size:14px}
-        /* painel acumulado com bolas faltando em decrescente, bem espaçadas */
+        /* painel acumulado com bolas faltando em decrescente, bem espaÃ§adas */
         .ordem-box>span{font-size:14px;letter-spacing:1px;color:#fff;text-transform:uppercase;text-shadow:0 0 8px rgba(0,0,0,.4)}
+        /* painel bolas sorteadas na coluna de infos */
+        .history-box{background:var(--box-blue);border:2px solid rgba(255,255,255,0.12);border-radius:14px;padding:18px 12px;flex:1 1 0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;font-weight:700;font-size:13px;box-shadow:0 8px 24px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.12)}
+        .history-box>span{font-size:14px;letter-spacing:1px;color:var(--yellow);text-transform:uppercase;text-shadow:0 0 8px rgba(0,0,0,.4)}
+        .history-balls{display:flex;flex-wrap:wrap;gap:16px 14px;justify-content:center;max-width:100%;overflow-y:auto}
+        .history-balls .sub-ball{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:#0b3d1a;background:radial-gradient(circle at 32% 28%,#fff 0%,#34e89e 38%,#0e7a52 100%);box-shadow:0 6px 14px rgba(52,232,158,.5),inset 0 -3px 6px rgba(0,0,0,.3)}
+        .history-balls .sub-ball.f2{background:radial-gradient(circle at 32% 28%,#fff 0%,#ffd83d 40%,#c79a00 100%);color:#4a3700;box-shadow:0 6px 14px rgba(255,216,61,.5),inset 0 -3px 6px rgba(0,0,0,.3)}
+        .history-balls .sub-ball.f3{background:radial-gradient(circle at 32% 28%,#fff 0%,#ff5d5d 40%,#b3122e 100%);color:#fff;box-shadow:0 6px 14px rgba(255,93,93,.5),inset 0 -3px 6px rgba(0,0,0,.3)}
         .ordem-balls{display:flex;flex-wrap:wrap;gap:16px 14px;justify-content:center;max-width:140px;margin-top:4px;overflow-y:auto}
         .ordem-ball{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;
             font-size:14px;font-weight:800;color:#06203f;
@@ -151,13 +158,16 @@
             box-shadow:0 14px 30px rgba(52,232,158,.5),inset 0 -8px 16px rgba(0,0,0,.35),inset 0 8px 14px rgba(255,255,255,.6)}
         .sub-ball:after{content:"";position:absolute;top:13%;left:20%;width:32%;height:22%;
             background:rgba(255,255,255,.7);border-radius:50%;filter:blur(2px)}
-        /* arco em forma de C ao contrario (Ɔ), bem grandes e espacados */
+        /* arco em forma de C ao contrario (Æ†), bem grandes e espacados */
         .history-balls .sub-ball:nth-child(1){width:96px;height:96px;font-size:40px}
         .history-balls .sub-ball:nth-child(2){width:84px;height:84px;font-size:34px}
         .history-balls .sub-ball:nth-child(3){width:72px;height:72px;font-size:30px}
         .history-balls .sub-ball:nth-child(4){width:60px;height:60px;font-size:25px}
         .sub-ball.hslot{opacity:0}
         .sub-ball.hslot.show{opacity:1}
+        /* painel de bolas sorteadas na coluna de infos (layout flex simples) */
+        .history-box .history-balls{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;align-items:center;}
+        .history-box .history-balls .sub-ball{width:36px;height:36px;font-size:14px;}
         /* cores por faixa (1-30 azul / 31-60 amarelo / 61-90 vermelho) */
         .ball-f1{background:radial-gradient(circle at 32% 28%,#fff 0%,#4aa3ff 40%,#0a4a8f 100%);
             color:#06203f;box-shadow:0 14px 30px rgba(74,163,255,.5),inset 0 -8px 16px rgba(0,0,0,.35),inset 0 8px 14px rgba(255,255,255,.6)}
@@ -306,10 +316,10 @@
             <button class="btn-action"><span class="material-icons ic-sair">exit_to_app</span>Sair</button>
         </div>
         <div class="user-info">
-            <span>Olá, MARKIM2026@</span>
+            <span>OlÃ¡, MARKIM2026@</span>
             <div class="balance-box">
                 <div class="balance-val">R$ 0,04</div>
-                <div style="font-size:10px;color:rgba(255,255,255,0.5)">Saldo ▼</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.5)">Saldo â–¼</div>
             </div>
         </div>
     </header>
@@ -331,13 +341,14 @@
         <div class="info-column">
             <div class="info-card dark-blue"><span>Sorteio</span><strong>#131937</strong></div>
             <div class="info-card"><span>Hora</span><strong id="live-clock">10:36:00</strong></div>
-            <div class="info-card"><span>Doação</span><strong>R$ 0,15</strong></div>
+            <div class="info-card"><span>DoaÃ§Ã£o</span><strong>R$ 0,15</strong></div>
             <div class="ordem-box"><span>ACUMULADO</span><div class="ordem-balls" id="ordemBalls"></div></div>
+            <div class="history-box"><span>BOLAS SORTEADAS</span><div class="history-balls" id="historyBalls"></div></div>
         </div>
 
         <!-- AREA CENTRAL -->
         <div class="center-content">
-            <!-- 4. PRÊMIOS -->
+            <!-- 4. PRÃŠMIOS -->
             <div class="prizes-row">
                 <div class="prize-card"><span>Kuadra</span><strong>R$20,00</strong></div>
                 <div class="prize-card"><span>Kina</span><strong>R$30,00</strong></div>
@@ -351,12 +362,6 @@
             <!-- 5. VEZ E ANTERIORES -->
             <div class="game-display">
                 <div class="main-ball ball-f2" id="mainBall">36</div>
-                <div class="history-balls" id="historyBalls">
-                    <div class="sub-ball hslot show ball-f2" style="top:0;left:60px">36</div>
-                    <div class="sub-ball hslot show ball-f3" style="top:80px;left:150px">87</div>
-                    <div class="sub-ball hslot show ball-f3" style="top:180px;left:150px">85</div>
-                    <div class="sub-ball hslot show ball-f2" style="top:260px;left:60px">58</div>
-                </div>
             </div>
 
             <!-- 6. MAPA DE 90 BOLAS -->
@@ -371,7 +376,7 @@
 
             <!-- PAINEL DE COMPRA DE CARTELAS -->
             <div class="buy-panel">
-                <div class="buy-title">🎟️ Comprar Cartelas</div>
+                <div class="buy-title">ðŸŽŸï¸ Comprar Cartelas</div>
                 <div class="qty-row" id="qtyRow">
                     <button class="qbtn" data-q="5">5</button>
                     <button class="qbtn" data-q="10">10</button>
@@ -384,7 +389,7 @@
                 </div>
                 <div class="buy-controls">
                     <div class="buy-stepper">
-                        <button class="stepper-btn" onclick="alterar(-1)">−</button>
+                        <button class="stepper-btn" onclick="alterar(-1)">âˆ’</button>
                         <span class="stepper-qty" id="qty">1</span>
                         <button class="stepper-btn yellow" onclick="alterar(1)">+</button>
                     </div>
@@ -393,7 +398,7 @@
                         <div class="bt-val" id="totalVal">R$ 0,15</div>
                         <div class="bt-qty"><span id="totalQty">1</span> cartela(s)</div>
                     </div>
-                    <button class="btn-comprar" onclick="comprarCartelas()">🎯 Comprar</button>
+                    <button class="btn-comprar" onclick="comprarCartelas()">ðŸŽ¯ Comprar</button>
                 </div>
             </div>
 
@@ -410,9 +415,9 @@
             <!-- CARTELAS COMPRADAS -->
             <div class="my-cards" id="myCards">
                 <div class="my-cards-title">
-                    📋 Minhas Cartelas Compradas
+                    ðŸ“‹ Minhas Cartelas Compradas
                     <span class="zoom-ctrl">
-                        <button class="btn-ctrl" onclick="zoom(-1)">−</button>
+                        <button class="btn-ctrl" onclick="zoom(-1)">âˆ’</button>
                         <button class="btn-ctrl yellow" onclick="zoom(1)">+</button>
                     </span>
                 </div>
@@ -424,7 +429,7 @@
 
     </div>
 
-    <div class="foot">Preview local — mesmo modelo do bingo.html em 3D. Dados fictícios.</div>
+    <div class="foot">Preview local â€” mesmo modelo do bingo.html em 3D. Dados fictÃ­cios.</div>
 
     <script>
         // Mapa de 90 bolas (igual bingo.html)
@@ -442,7 +447,7 @@
             gridElement.appendChild(cell);
         }
 
-        // ===== LÓGICA IGUAL AO PROJETO (getCardClosePhase em game-logic.js) =====
+        // ===== LÃ“GICA IGUAL AO PROJETO (getCardClosePhase em game-logic.js) =====
         // Kuadra: linha c/ 3+ marcados -> falta 1 p/ 4
         // Kina  : linha c/ 4+ marcados -> falta 1 p/ 5
         // Keno  : cartela c/ 14+ marcados -> falta 1 p/ 15
@@ -452,7 +457,7 @@
         const drawnBalls=sorteadas.concat([bolaAtual]);
         let currentPhaseIndex=0; // fase atual do jogo (simulada)
 
-        const nomes=['VANDOSK8','ISAMARINA','Kald','Lucia Lima','Marcos','Ana','João','Beatriz','Carlos','Diego'];
+        const nomes=['VANDOSK8','ISAMARINA','Kald','Lucia Lima','Marcos','Ana','JoÃ£o','Beatriz','Carlos','Diego'];
 
         function genCard(){
             const nums=[];const used=new Set();
@@ -463,8 +468,8 @@
             }
             return nums;
         }
-        // retorna fase mais próxima + QUANTAS bolas faltam (estratégia "cartelas faltando 1 bola")
-        // Kuadra: falta = 4 - marcadosNaLinha (mostra até 5 bolinhas)
+        // retorna fase mais prÃ³xima + QUANTAS bolas faltam (estratÃ©gia "cartelas faltando 1 bola")
+        // Kuadra: falta = 4 - marcadosNaLinha (mostra atÃ© 5 bolinhas)
         // Kina  : falta = 5 - marcadosNaLinha
         // Keno  : falta = 15 - marcadosTotais
         function closePhase(card){
@@ -485,7 +490,7 @@
             return null;
         }
 
-        // cria jogadores com cartela + fase + bolas que faltam (máx 5)
+        // cria jogadores com cartela + fase + bolas que faltam (mÃ¡x 5)
         const players=[];
         nomes.forEach((nm,i)=>{
             const card=genCard();
@@ -518,7 +523,7 @@
         function anunciar(nome,fase){
             const d=document.createElement('div');
             d.className='vencedor-pop';
-            d.innerHTML=`🏆 <b>${nome}</b> venceu ${NOME[fase]}!`;
+            d.innerHTML=`ðŸ† <b>${nome}</b> venceu ${NOME[fase]}!`;
             document.body.appendChild(d);
             setTimeout(()=>d.remove(),3500);
         }
@@ -526,6 +531,7 @@
         // simula o jogo: sorteio AUTOMATICO + marcacao automatica
         const elMainBall=document.getElementById('mainBall');
         const hSlots=document.querySelectorAll('#historyBalls .hslot');
+        const historyBallsLeft=document.getElementById('historyBalls'); // novo painel na coluna esquerda
         // cor por faixa: 1-30 = f1, 31-60 = f2, 61-90 = f3
         function faixa(n){ return n<=30 ? 'ball-f1' : (n<=60 ? 'ball-f2' : 'ball-f3'); }
         // comeca com as bolas que JA sairam (preenche os slots transparentes)
@@ -538,6 +544,17 @@
                     slot.className='sub-ball hslot show '+faixa(val);
                 }
             });
+            // atualiza painel de bolas sorteadas na coluna esquerda (layout flex)
+            if(historyBallsLeft){
+                const ultimas4=ultimas.slice(-4).reverse(); // mais recente primeiro
+                historyBallsLeft.innerHTML='';
+                ultimas4.forEach(n=>{
+                    const d=document.createElement('div');
+                    d.className='sub-ball '+faixa(n);
+                    d.textContent=n;
+                    historyBallsLeft.appendChild(d);
+                });
+            }
         }
         function atualizarCentral(n){
             elMainBall.textContent=n;
@@ -599,7 +616,7 @@
             elQty.textContent=qtd;
             elTotalVal.textContent='R$ '+(qtd*CARD_COST).toFixed(2).replace('.',',');
             elTotalQty.textContent=qtd;
-            // destaca botão de quantidade correspondente
+            // destaca botÃ£o de quantidade correspondente
             qtyRow.querySelectorAll('.qbtn').forEach(b=>{
                 b.classList.toggle('active', +b.dataset.q===qtd);
             });
@@ -624,20 +641,20 @@
             });
         }
         atualizarFases();
-        // atualiza a fase mostrada quando o jogo avança
+        // atualiza a fase mostrada quando o jogo avanÃ§a
         setInterval(atualizarFases,500);
 
         // ===== ZOOM DAS CARTELAS COMPRADAS (+ / -) =====
-        // muda o tamanho das cartelas (nao o container) → barra de rolagem e botoes ficam fixos
+        // muda o tamanho das cartelas (nao o container) â†’ barra de rolagem e botoes ficam fixos
         let cardW=160;
         const cardsGrid=document.getElementById('myCardsGrid');
         function zoom(delta){
-            // limite: 110px (menor) ate 220px (maior) — cabe no layout
+            // limite: 110px (menor) ate 220px (maior) â€” cabe no layout
             cardW=Math.max(110,Math.min(220,cardW+delta*20));
             cardsGrid.style.setProperty('--cardw',cardW+'px');
         }
 
-        // ===== COMPRAR CARTELAS (gera + mostra + desce a página) =====
+        // ===== COMPRAR CARTELAS (gera + mostra + desce a pÃ¡gina) =====
         const myCardsGrid=document.getElementById('myCardsGrid');
         let myCards=[];
         let cardSeq=5000;
@@ -655,7 +672,7 @@
             }
             elCartCount.textContent=myCards.length;
             renderMyCards();
-            // desce a página até as cartelas compradas
+            // desce a pÃ¡gina atÃ© as cartelas compradas
             document.getElementById('myCards').scrollIntoView({behavior:'smooth',block:'start'});
         }
         function renderMyCards(){
@@ -679,7 +696,7 @@
             });
         }
 
-        // Relógio
+        // RelÃ³gio
         setInterval(()=>{
             document.getElementById('live-clock').innerText=new Date().toTimeString().split(' ')[0];
         },1000);
