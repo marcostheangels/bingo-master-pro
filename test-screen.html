@@ -47,8 +47,17 @@
                 <span class="material-icons side-icon">calendar_month</span>
                 <span class="material-icons side-icon">payments</span>
                 <span class="material-icons side-icon">history</span>
-                <span class="material-icons side-icon">support_agent</span>
             </aside>
+
+            <div class="players-left">
+                <div class="players-container" id="playersPanel">
+                    <h3>👥 Jogadores</h3>
+                    <div class="players-panel-body">
+                        <div class="spectator-count" id="spectatorCount" style="display:none">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
+                        <ul class="player-list" id="playerListUI"></ul>
+                    </div>
+                </div>
+            </div>
 
             <div class="info-column">
                 <div class="info-card dark-blue"><span>Sorteio</span><strong id="currentRoundNumber">#131937</strong></div>
@@ -79,14 +88,6 @@
                 </div>
 
                 <div class="right-panel">
-                    <div class="players-container" id="playersPanel">
-                        <h3 onclick="this.closest('.players-container').classList.toggle('collapsed')">👥 Jogadores <span class="toggle-icon">▼</span></h3>
-                        <div class="players-panel-body">
-                            <div class="spectator-count" id="spectatorCount" style="display:none">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
-                            <ul class="player-list" id="playerListUI"></ul>
-                        </div>
-                    </div>
-
                     <div class="buy-panel" id="buySection">
                         <div class="buy-title">🎟️ Comprar Cartelas</div>
                         <div class="buy-stepper">
@@ -142,8 +143,8 @@ const hb=document.getElementById('historyBalls');
 ult.forEach(n=>{const d=document.createElement('div');d.className='sub-ball '+faixa(n);d.textContent=n;hb.appendChild(d);});
 
 const ordem=document.getElementById('ordemBalls');
-const faltam=[];for(let i=1;i<=90;i++)if(!drawnBalls.includes(i))faltam.push(i);faltam.sort((a,b)=>b-a);
-ordem.innerHTML=faltam.map(n=>`<div class="ordem-ball ${n<=30?'f1':(n<=60?'f2':'f3')}">${n}</div>`).join('');
+if(ordem){const faltam=[];for(let i=1;i<=90;i++)if(!drawnBalls.includes(i))faltam.push(i);faltam.sort((a,b)=>b-a);
+ordem.innerHTML=faltam.map(n=>`<div class="ordem-ball ${n<=30?'f1':(n<=60?'f2':'f3')}">${n}</div>`).join('');}
 
 document.getElementById('phase_kuadra').classList.add('phase-active');
 
@@ -151,7 +152,7 @@ const nomes=['VANDOSK8','ISAMARINA','Kald','Lucia Lima','Marcos','Ana','João','
 const pl=document.getElementById('playerListUI');
 nomes.forEach((nm,i)=>{const li=document.createElement('li');li.className='player-row';
   const falta=1+Math.floor(Math.random()*5);let balls='';for(let b=0;b<5;b++)balls+=`<div class="pballmini ${b<falta?'on':''}"></div>`;
-  li.innerHTML=`<span class="pcode">${288000+i}</span><span class="player-name">${nm}</span><div class="pballs">${balls}</div><span class="player-cards">${1+Math.floor(Math.random()*5)} cartelas</span>`;
+  li.innerHTML=`<span class="player-name">${nm}</span><div class="pballs">${balls}</div><span class="player-cards">${1+Math.floor(Math.random()*5)} cartelas</span>`;
   pl.appendChild(li);});
 
 const mc=document.getElementById('myCardsGrid');document.getElementById('cartCount').textContent=4;
