@@ -420,8 +420,8 @@
                         <button class="btn-ctrl yellow" onclick="zoom(1)">+</button>
                     </span>
                 </div>
-                <div class="my-cards-scroll" id="myCardsScroll">
-                    <div class="my-cards-grid" id="myCardsGrid"></div>
+                <div class="my-cards-scroll" id="myCardsScroll" style="min-height: 200px;">
+                    <div style="text-align:center;color:var(--muted);padding:20px;">Role para baixo para ver mais</div>
                 </div>
             </div>
         </div>
@@ -579,7 +579,6 @@
                 }
             });
             renderPlayers();
-            if(myCards.length) renderMyCards();
         },1500);
 
         const CARD_COST=0.15;
@@ -643,22 +642,7 @@
             renderMyCards();
         }
         function renderMyCards(){
-            myCards.forEach(c=>{
-                c.nums.forEach(x=>{ if(drawnBalls.includes(x)) c.marcados.add(x); });
-            });
-            const ordenado=[...myCards].sort((a,b)=>{
-                const fa=15-a.marcados.size, fb=15-b.marcados.size;
-                return fa-fb;
-            });
-            myCardsGrid.innerHTML='';
-            ordenado.forEach(c=>{
-                const marks=c.marcados.size;
-                const div=document.createElement('div');
-                div.className='ticket3d';
-                div.innerHTML=`<div class="th"><span class="cid">#${c.id}</span><span>${marks}/15</span></div>
-                    <div class="tgrid">${c.nums.map(x=>`<div class="tnum ${c.marcados.has(x)?'mark':''}">${x}</div>`).join('')}</div>`;
-                myCardsGrid.appendChild(div);
-            });
+            // Grid removido: apenas mantém área de rolagem
         }
 
         setInterval(()=>{
