@@ -182,10 +182,14 @@ ordem.innerHTML=faltam.map(n=>`<div class="ordem-ball ${n<=30?'f1':(n<=60?'f2':'
 const PHASE={'kuadra':'phase_kuadra','kina':'phase_kina','keno':'phase_keno'};
 document.getElementById(PHASE['kuadra']).classList.add('phase-active');
 
-/* jogadores fake */
+/* jogadores fake (estilo preview: pcode + nome + 5 bolas) */
 const nomes=['VANDOSK8','ISAMARINA','Kald','Lucia Lima','Marcos','Ana','João','Beatriz','Carlos','Diego'];
 const pl=document.getElementById('playerListUI');
-nomes.forEach((nm,i)=>{const li=document.createElement('li');li.innerHTML=`<span>${nm}</span><span class="player-cards">${1+Math.floor(Math.random()*5)} cartelas</span>`;pl.appendChild(li);});
+nomes.forEach((nm,i)=>{const li=document.createElement('li');li.className='player-row';
+  const falta=1+Math.floor(Math.random()*5);
+  let balls='';for(let b=0;b<5;b++)balls+=`<div class="pballmini ${b<falta?'on':''}"></div>`;
+  li.innerHTML=`<span class="pcode">${288000+i}</span><span class="player-name">${nm}</span><div class="pballs">${balls}</div><span class="player-cards">${1+Math.floor(Math.random()*5)} cartelas</span>`;
+  pl.appendChild(li);});
 
 /* cartelas compradas fake (bingo-card com card-grid 3x9) */
 const mc=document.getElementById('myCardsGrid');document.getElementById('cartCount').textContent=6;

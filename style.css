@@ -3387,7 +3387,7 @@ body::after{ width:300px;height:300px;background:#22d3ee;bottom:-110px;left:-80p
 .balance-val{color:var(--neon-2);font-weight:700;font-size:16px;text-shadow:0 0 12px rgba(34,211,238,.5)}
 
 /* ---------- LAYOUT PRINCIPAL ---------- */
-.main-container{position:relative;z-index:1;display:flex;gap:10px;align-items:stretch;min-height:calc(100vh - 120px)}
+.main-container{position:relative;z-index:1;display:flex;gap:10px;align-items:stretch;height:calc(100vh - 120px)}
 
 /* 2. BARRA LATERAL ESQUERDA */
 .b3d-aside{display:flex;flex-direction:column;align-items:center;gap:22px;width:54px;padding-top:12px}
@@ -3418,7 +3418,8 @@ body::after{ width:300px;height:300px;background:#22d3ee;bottom:-110px;left:-80p
     box-shadow:0 6px 14px rgba(255,93,93,.5),inset 0 -3px 6px rgba(0,0,0,.3)}
 
 /* CENTRO */
-.center-content{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:15px;align-self:stretch;position:relative}
+.center-content{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:15px;
+    position:sticky;top:0;align-self:stretch}
 
 /* 4. PREMIOS */
 .prizes-row{display:flex;gap:18px;flex-wrap:wrap}
@@ -3466,7 +3467,8 @@ body::after{ width:300px;height:300px;background:#22d3ee;bottom:-110px;left:-80p
 
 /* 6. MAPA 90 BOLAS (board) */
 .balls-board{background:linear-gradient(160deg,rgba(20,28,66,.75),rgba(8,12,38,.75)) !important;
-    backdrop-filter:blur(10px);border-radius:16px;padding:14px;margin-top:auto;
+    backdrop-filter:blur(10px);border-radius:16px;padding:14px;margin-top:auto;flex:0 0 auto;
+    height:calc((100vh - 155px)/4);
     border:1px solid rgba(255,255,255,0.12) !important;
     box-shadow:0 10px 30px rgba(0,0,0,.5),inset 0 0 24px rgba(52,232,158,.08) !important}
 .drawn-grid.balls-board{display:grid !important;grid-template-columns:repeat(30,1fr);grid-template-rows:repeat(3,1fr);
@@ -3495,12 +3497,20 @@ body::after{ width:300px;height:300px;background:#22d3ee;bottom:-110px;left:-80p
     overflow-y:auto;border:1px solid rgba(255,255,255,0.12) !important;
     box-shadow:inset 0 0 20px rgba(0,0,0,.4) !important}
 .players-panel h3{cursor:pointer;color:var(--yellow);font-weight:700;margin-bottom:8px}
-.player-list{list-style:none;font-size:0.85em;max-height:none;overflow-y:auto}
-.player-list li{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;
+.player-list{list-style:none;padding:0;margin:0;overflow-y:auto}
+.player-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 14px;
     background:linear-gradient(160deg,#232a5e,#161c44);border-radius:8px;margin-bottom:8px;font-size:15px;
     border:1px solid rgba(255,255,255,0.06) !important;
     box-shadow:0 6px 14px rgba(0,0,0,.4),inset 0 1px 0 rgba(255,255,255,.12),inset 0 -4px 8px rgba(0,0,0,.3) !important;
     color:var(--text) !important}
+.pcode{font-size:14px;color:var(--neon-2);font-weight:700;min-width:64px}
+.player-name{color:var(--yellow);font-weight:600;flex:1;margin-left:12px;max-width:160px;font-size:15px;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pballs{display:flex;gap:6px}
+.pballmini{width:18px;height:18px;border-radius:50%;background:#333866;
+    box-shadow:inset 0 -2px 4px rgba(0,0,0,.4)}
+.pballmini.on{background:transparent;border:2px solid var(--neon-2);
+    box-shadow:0 0 8px rgba(34,211,238,.6)}
 .player-cards{color:var(--neon-2) !important;font-weight:700}
 .players-missing{margin-top:8px}
 .players-missing-title{color:var(--yellow);font-weight:700;margin-bottom:6px}

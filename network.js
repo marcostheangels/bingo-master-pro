@@ -1176,15 +1176,66 @@ function updatePlayerListUI() {
 
     sortedPlayers.forEach((p, index) => {
         const li = document.createElement('li');
+        li.className = 'player-row';
         const hostIcon = p.isHost ? '👑 ' : '';
         const cardCount = p.cards ? p.cards.length : 0;
-        li.innerHTML = `<span>${hostIcon}${escapeHtml(p.name)}</span><span class="player-cards">${cardCount} cartela${cardCount === 1 ? '' : 's'}</span>`;
+        const falta = calcularBolasFaltando(p);
+        let balls = '';
+        for (let i = 0; i < 5; i++) {
+            balls += `<div class="pballmini ${i < falta ? 'on' : ''}"></div>`;
+        }
+        li.innerHTML =
+            `<span class="pcode">${p.id != null ? p.id : (288000 + index)}</span>` +
+            `<span class="player-name">${hostIcon}${escapeHtml(p.name)}</span>` +
+            `<div class="pballs">${balls}</div>` +
+            `<span class="player-cards">${cardCount} cartela${cardCount === 1 ? '' : 's'}</span>`;
         list.appendChild(li);
     });
 
     if (typeof renderCloseCardsPanel === 'function') {
         renderCloseCardsPanel();
     }
+}
+
+/* Quantas bolas faltam para o jogador fechar (estratégia "falta 1 bola"),
+   igual ao preview. Kuadra: 4 - marcadosNaLinha; Kina: 5 - marcadosNaLinha;
+   Keno: 15 - marcadosTotais. Mostra no máximo 5 bolinhas acesas. */
+function calcularBolasFaltando(p) {
+    if (!p || !p.cards || !p.cards.length || typeof drawnBalls === 'undefined') return 5;
+    const card = p.cards[0];
+    const nums = (card.numbers && card.numbers.length) ? card.numbers : (card.numeros || []);
+    const getNums = () => {
+        if (Array.isArray(nums)) {
+            if (nums.length && Array.isArray(nums[0])) return nums.flat().filter(v => v !== '' && v != null).map(Number);
+            return nums.filter(v => v !== '' && v != null).map(Number);
+        }
+        return [];
+    };
+    const lista = getNums();
+    if (!lista.length) return 5;
+    const drawn = (drawnBalls || []).map(Number);
+    const idx = (typeof currentPhaseIndex !== 'undefined') ? currentPhaseIndex : 0;
+    if (idx === 0) {
+        for (const row of chunk(lista, 5)) {
+            const m = row.filter(v => drawn.includes(v)).length;
+            if (m >= 3) return Math.min(5, Math.max(0, 4 - m));
+        }
+    } else if (idx === 1) {
+        for (const row of chunk(lista, 5)) {
+            const m = row.filter(v => drawn.includes(v)).length;
+            if (m >= 4) return Math.min(5, Math.max(0, 5 - m));
+        }
+    } else {
+        const m = lista.filter(v => drawn.includes(v)).length;
+        if (m >= 14) return Math.min(5, Math.max(0, 15 - m));
+    }
+    return 5;
+}
+
+function chunk(arr, n) {
+    const out = [];
+    for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
+    return out;
 }
 
 function carregarCadastrosAdmin() {
