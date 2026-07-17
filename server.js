@@ -997,11 +997,11 @@ function generateBotName() {
 }
 
 function botRandomChips() {
-    return Math.floor(Math.random() * 40001) + 5000; // R$5,00 a R$45,00 em centavos
+    return Math.floor(Math.random() * 40001) + 10000; // R$10,00 a R$50,00 em centavos
 }
 
 function ensureBots(room, rotate) {
-    const TARGET = 25;
+    const TARGET = 12;
     const ativos = Array.from(room.players.values()).filter(p => p.isBot);
     // Remove excess if rotate requested
     if (rotate) {

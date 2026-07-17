@@ -254,7 +254,7 @@ async function validarSessaoExistente() {
     meuCpf = '';
     return false;
 }
-const BOT_INITIAL_CHIPS = 10000; // bots comecam com R$10,00 em fichas (somente bots)
+const BOT_INITIAL_CHIPS = 10000; // bots comecam com R$10,00 em fichas (ficticio, nao sacavel)
 const PHASES = {
     kuadra: { label: 'Kuadra', description: '4 números na mesma linha horizontal', prize: '💰 15%', reward: 500 },
     kina: { label: 'Kina', description: '5 números na mesma linha horizontal', prize: '💰 15%', reward: 1000 },
@@ -267,7 +267,7 @@ const CARD_TIERS = [
 ];
 const PHASE_SEQUENCE = ['kuadra', 'kina', 'keno'];
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋'];
-const BOT_MAX_CARDS = 25;
+const BOT_MAX_CARDS = 40;
 const HUMAN_MAX_CARDS = 9999;
 let CARD_COST = 150;
 let currentDynamicPrizes = null;

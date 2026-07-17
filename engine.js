@@ -18,11 +18,15 @@ const JACKPOT_INITIAL = 50000; // R$50,00 semente (nunca é tocada)
 const JACKPOT_CONTRIBUTION_PER_CARD = 10; // fallback
 const JACKPOT_MAX = 1000000; // R$1.000,00 teto (igual ao site)
 const KENO_MIN_MULTIPLIER = 1.25; // Keno mínimo = 40cart × preço × 1.25 (sempre maior que o gasto)
+// Prêmios mínimos pra sala nunca ficar com cara de jogo morto (subsidiados pela casa/jackpot)
+const MIN_KUADRA = 5000; // R$5,00
+const MIN_KINA = 5000; // R$5,00
+const MIN_KENO = 10000; // R$10,00
 
 const INITIAL_CHIPS = 0; // R$0,00 — quem se cadastra começa com 0 e precisa depositar
 const HUMAN_MAX_CARDS = 9999; // Sem limite pratico — igual ao site
 const BOT_NAMES = ['Renata 🌸', 'Carlos 🍀', 'Fernanda 🌷', 'Juliana 💎', 'Pedro 🎯', 'Aline 🌺', 'Rodrigo ⚡', 'Tatiana 🌟', 'Bruno 🍀', 'Camila 🦋', 'Lucas 🔥', 'Beatriz 🌻', 'Gustavo 🍎', 'Larissa 🦄', 'Rafael 🎲', 'Patrícia 🌹', 'Thiago ⚽', 'Vanessa 🍓', 'Felipe 🚀', 'Mariana 🐬'];
-const BOT_MAX_CARDS = 25;
+const BOT_MAX_CARDS = 40;
 const BOT_INITIAL_CHIPS = 10000; // R$10,00 somente para bots
 
 function getMaxCardsForPlayer(player) {
@@ -187,9 +191,9 @@ function pickCardTier() {
 
 function calculatePhaseRewards(totalCards, tier) {
     const revenue = totalCards * tier.cost;
-    const kuadra = Math.floor(revenue * PRIZE_PERCENTS.kuadra);
-    const kina = Math.floor(revenue * PRIZE_PERCENTS.kina);
-    const kenoBase = Math.floor(revenue * PRIZE_PERCENTS.keno);
+    const kuadra = Math.max(MIN_KUADRA, Math.floor(revenue * PRIZE_PERCENTS.kuadra));
+    const kina = Math.max(MIN_KINA, Math.floor(revenue * PRIZE_PERCENTS.kina));
+    const kenoBase = Math.max(MIN_KENO, Math.floor(revenue * PRIZE_PERCENTS.keno));
     const kenoMinimum = Math.floor(40 * tier.cost * KENO_MIN_MULTIPLIER);
     const kenoGap = Math.max(0, kenoMinimum - kenoBase);
     const jackpotContrib = Math.floor(revenue * PRIZE_PERCENTS.jackpot);
@@ -242,7 +246,7 @@ function processPhaseWinners(winners, phaseKey, drawnBalls, humanCards, jackpotA
 module.exports = {
     PHASES, PHASE_SEQUENCE, CARD_COST, CARD_TIERS, PRIZE_PERCENTS,
     JACKPOT_BALL_LIMIT, JACKPOT_INITIAL, JACKPOT_CONTRIBUTION_PER_CARD, JACKPOT_MAX, KENO_MIN_MULTIPLIER,
-    INITIAL_CHIPS, HUMAN_MAX_CARDS, BOT_NAMES, BOT_MAX_CARDS, BOT_INITIAL_CHIPS,
+    INITIAL_CHIPS, HUMAN_MAX_CARDS, BOT_NAMES, BOT_MAX_CARDS, BOT_INITIAL_CHIPS, MIN_KUADRA, MIN_KINA, MIN_KENO,
     getMaxCardsForPlayer, generateBingoCardData,
     computeCardAwards, getCardClosePhase, computeCloseCardsForAllPlayers,
     checkAwardsForAllPlayers, processPhaseWinners,
