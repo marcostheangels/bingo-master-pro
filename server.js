@@ -607,42 +607,29 @@ function iniciarNovaRodada(room) {
     
     // Calcula prêmios baseados SÓ em cartelas HUMANAS (bots têm dinheiro fictício)
     const humanCards = Array.from(room.players.values()).filter(p => !p.isBot).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
+    const maxHumanCards = Array.from(room.players.values()).filter(p => !p.isBot).reduce((max, p) => Math.max(max, p.cards ? p.cards.length : 0), 0);
     room.totalCardsAtStart = humanCards;
     const rewards = engine.calculatePhaseRewards(humanCards, tier);
 
-    // Keno mínimo garantido: sempre maior que o gasto do jogador
-    // Usa contribuição do jackpot + lucro da casa + reserva acumulada se necessário
+    // Keno mínimo garantido: sempre maior que o MAIOR gasto individual
+    const kenoMinimum = Math.max(rewards.kenoMinimum, Math.floor(maxHumanCards * tier.cost * engine.KENO_MIN_MULTIPLIER));
+    const kenoGap = Math.max(0, kenoMinimum - rewards.kenoBase);
+
     let kenoFinal = rewards.kenoBase;
-    let jackpotContrib = rewards.jackpotContrib;
     let casaLucro = rewards.casaLucro;
-    if (rewards.kenoGap > 0) {
-        let gap = rewards.kenoGap;
-        // 1o: tira da contribuição do jackpot desta rodada
-        const fromJackpotContrib = Math.min(gap, jackpotContrib);
-        jackpotContrib -= fromJackpotContrib;
-        gap -= fromJackpotContrib;
-        // 2o: tira do lucro da casa desta rodada
+    if (kenoGap > 0) {
+        let gap = kenoGap;
+        // Suplementa do lucro da casa desta rodada (jackpot é fixo, só exibição)
         const fromCasa = Math.min(gap, casaLucro);
         casaLucro -= fromCasa;
         gap -= fromCasa;
-        // 3o: tira da reserva acumulada do jackpot (acima da semente)
-        if (gap > 0 && room.jackpot) {
-            const reserva = room.jackpot - engine.JACKPOT_INITIAL;
-            if (reserva > 0) {
-                const fromReserva = Math.min(gap, reserva);
-                room.jackpot -= fromReserva;
-                gap -= fromReserva;
-            }
-        }
-        kenoFinal = rewards.kenoBase + (rewards.kenoGap - gap);
+        kenoFinal = rewards.kenoBase + (kenoGap - gap);
     }
     room.dynamicPrizes = { kuadra: rewards.kuadra, kina: rewards.kina, keno: kenoFinal };
 
-    // Jackpot: semente + contribuição restante da rodada
-    if (!room.jackpot || room.jackpot < engine.JACKPOT_INITIAL) room.jackpot = engine.JACKPOT_INITIAL;
-    const novoJackpot = room.jackpot + jackpotContrib;
-    if (novoJackpot <= engine.JACKPOT_MAX) room.jackpot = novoJackpot;
-    
+    // Jackpot: valor fixo de exibição (nunca é pago nem alterado)
+    room.jackpot = engine.JACKPOT_INITIAL;
+
     saveRoomSnapshot(room);
     sendGameState(room);
     addLog(room, `🎯 Rodada #${room.currentRound} iniciada! (${tier.emoji} ${tier.name} - R$ ${(tier.cost / 1000).toFixed(2).replace('.', ',')})`);

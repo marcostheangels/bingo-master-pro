@@ -1305,17 +1305,20 @@ function renderMyCards() {
         }
         const closeLabel = closePhase
             ? closePhase.won
-                ? closePhase.phase === 'kuadra' ? '✅ Kuadra' : closePhase.phase === 'kina' ? '✅ Kina' : '✅ Bingo'
-                : closePhase.phase === 'kuadra' ? '🔥 Quase Kuadra' : closePhase.phase === 'kina' ? '🔥 Quase Kina' : '🔥 Quase Bingo'
+                ? closePhase.phase === 'kuadra' ? '✅ Kuadra' : closePhase.phase === 'kina' ? '✅ Kina' : '🏆 KENO 🏆'
+                : closePhase.phase === 'kuadra' ? '🔥 Quase Kuadra' : closePhase.phase === 'kina' ? '🔥 Quase Kina' : '🔥 Quase Keno'
             : '';
 
+        const kenoFeito = cardData.awards.keno === true;
         const cardBox = document.createElement('div');
-        cardBox.className = 'bingo-card' + (closePhase ? ' card-close' : '');
+        cardBox.className = 'bingo-card' + (closePhase ? ' card-close' : '') + (kenoFeito ? ' card-keno-won' : '');
         // if the card already has any awards (phase passed), hide the card title as requested
         const titleText = awardLabels.length ? '' : `Cartela #${index + 1}`;
         const idText = cardData.codigo ? `<span class="card-id">ID: ${cardData.codigo}</span>` : '';
         cardBox.innerHTML = `<div class="card-title">${titleText}${awardLabels.length ? ' - ' + awardLabels.join(', ') : ''} ${idText}</div>`;
-        if (closeLabel) {
+        if (kenoFeito) {
+            cardBox.innerHTML += `<div class="card-badge card-badge-keno">🏆 KENO CONQUISTADO! 🏆</div>`;
+        } else if (closeLabel) {
             cardBox.innerHTML += `<div class="card-badge">${closeLabel}</div>`;
         }
 
@@ -2110,22 +2113,24 @@ renderMyCards = function() {
         }
         const closeLabel = closePhase
             ? closePhase.won
-                ? closePhase.phase === 'kuadra' ? '✅ Kuadra' : closePhase.phase === 'kina' ? '✅ Kina' : '✅ Bingo'
-                : closePhase.phase === 'kuadra' ? '🔥 Quase Kuadra' : closePhase.phase === 'kina' ? '🔥 Quase Kina' : '🔥 Quase Bingo'
+                ? closePhase.phase === 'kuadra' ? '✅ Kuadra' : closePhase.phase === 'kina' ? '✅ Kina' : '🏆 KENO 🏆'
+                : closePhase.phase === 'kuadra' ? '🔥 Quase Kuadra' : closePhase.phase === 'kina' ? '🔥 Quase Kina' : '🔥 Quase Keno'
             : '';
 
         const isTop = index === 0;
         const isWon = awardLabels.length > 0;
         const hitMe = lastDrawnBall !== null && card.flat().includes(lastDrawnBall);
+        const kenoFeito = cardData.awards.keno === true;
 
         const cardBox = document.createElement('div');
-        cardBox.className = `bingo-card${closePhase && !isWon ? ' card-close' : ''}${isWon ? ' card-won' : ''}${isTop ? ' card-top' : ''}${hitMe ? ' card-flash' : ''} theme-${cardData.theme}`;
+        cardBox.className = `bingo-card${closePhase && !isWon ? ' card-close' : ''}${isWon ? ' card-won' : ''}${isTop ? ' card-top' : ''}${hitMe ? ' card-flash' : ''}${kenoFeito ? ' card-keno-won' : ''} theme-${cardData.theme}`;
 
         let header = `<div class="card-head">`;
         header += `<span class="card-title">${awardLabels.length ? '🏆 ' + awardLabels.join(' + ') : 'Cartela #' + (index + 1)}</span>`;
         header += `</div>`;
         if (isTop) header += `<div class="card-top-ribbon">★ MAIS PERTO</div>`;
-        if (closeLabel) header += `<div class="card-badge">${closeLabel}</div>`;
+        if (kenoFeito) header += `<div class="card-badge card-badge-keno">🏆 KENO CONQUISTADO! 🏆</div>`;
+        else if (closeLabel) header += `<div class="card-badge">${closeLabel}</div>`;
 
         cardBox.innerHTML = header;
 

@@ -1174,6 +1174,30 @@ body.admin-mode .admin-screen-wrapper * {
     font-weight: 700;
 }
 
+.card-badge-keno {
+    margin-top: 8px;
+    display: inline-block;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: linear-gradient(90deg, #a855f7, #7e22ce);
+    color: #fff;
+    font-size: 0.9em;
+    font-weight: 900;
+    letter-spacing: 0.5px;
+    box-shadow: 0 0 18px rgba(168,85,247,0.7);
+    animation: kenoBadgePulse 1.2s ease-in-out infinite;
+}
+
+@keyframes kenoBadgePulse {
+    0%, 100% { transform: scale(1); box-shadow: 0 0 18px rgba(168,85,247,0.7); }
+    50% { transform: scale(1.06); box-shadow: 0 0 28px rgba(168,85,247,0.95); }
+}
+
+.card-keno-won {
+    border: 3px solid #a855f7 !important;
+    box-shadow: 0 0 30px rgba(168,85,247,0.45);
+}
+
 .card-codigo {
     margin-top: 4px;
     font-size: 0.65em;
@@ -2490,47 +2514,28 @@ body {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 #screenGame .dgrid-cell.drawn {
-    background: radial-gradient(circle at 32% 28%, #ffe9a3, #fbbf24 48%, #d97706 100%);
-    color: #2a1606;
-    border-color: rgba(255, 255, 255, 0.3);
-    box-shadow: 0 0 12px rgba(251,191,36,0.55), inset 0 -2px 4px rgba(0,0,0,0.25);
-    animation: ballPop 0.32s ease-out;
+    background: rgba(255,255,255,0.06);
+    color: rgba(255,255,255,0.7);
+    border-color: rgba(255,255,255,0.1);
+    font-weight: 700;
 }
 #screenGame .dgrid-cell.winner {
-    background: radial-gradient(circle at 32% 28%, #fecaca, #ef4444 50%, #b91c1c 100%);
+    background: #ef4444;
     color: #fff;
-    border-color: rgba(255, 255, 255, 0.4);
-    box-shadow: 0 0 14px rgba(239,68,68,0.6), inset 0 -2px 4px rgba(0,0,0,0.25);
+    box-shadow: 0 0 12px rgba(239,68,68,0.5);
 }
 
-/* Cores das bolas por fase: verde=Kuadra, azul=Kina, roxo=Keno */
-#screenGame .dgrid-cell.drawn.phase-kuadra {
-    background: radial-gradient(circle at 32% 28%, #a7f3d0, #10b981 50%, #047857 100%);
-    color: #042f1f; border-color: rgba(255,255,255,0.35);
-    box-shadow: 0 0 12px rgba(16,185,129,0.6), inset 0 -2px 4px rgba(0,0,0,0.25);
-}
-#screenGame .dgrid-cell.drawn.phase-kina {
-    background: radial-gradient(circle at 32% 28%, #bae6fd, #0ea5e9 50%, #0369a1 100%);
-    color: #04263b; border-color: rgba(255,255,255,0.35);
-    box-shadow: 0 0 12px rgba(14,165,233,0.6), inset 0 -2px 4px rgba(0,0,0,0.25);
-}
-#screenGame .dgrid-cell.drawn.phase-keno {
-    background: radial-gradient(circle at 32% 28%, #e9d5ff, #a855f7 50%, #7e22ce 100%);
-    color: #2e1065; border-color: rgba(255,255,255,0.35);
-    box-shadow: 0 0 12px rgba(168,85,247,0.6), inset 0 -2px 4px rgba(0,0,0,0.25);
-}
-#screenGame .dgrid-cell.drawn.winner { box-shadow: 0 0 0 3px #ffffff, 0 0 16px rgba(255,255,255,0.75); }
+/* Cores das bolas no painel = iguais às marcações das cartelas */
+#screenGame .dgrid-cell.drawn.phase-kuadra { background: #059669; color: #fff; }
+#screenGame .dgrid-cell.drawn.phase-kina { background: #0284c7; color: #fff; }
+#screenGame .dgrid-cell.drawn.phase-keno { background: #7e22ce; color: #fff; }
+#screenGame .dgrid-cell.drawn.winner { box-shadow: 0 0 0 2px #ffffff, 0 0 12px rgba(255,255,255,0.6); }
 
 /* Marcações nas cartelas por fase */
-#screenGame .card-cell.marked.phase-kuadra { background: radial-gradient(circle at 35% 30%, #34d399, #059669); color: #042f1f; }
-#screenGame .card-cell.marked.phase-kina { background: radial-gradient(circle at 35% 30%, #38bdf8, #0284c7); color: #04263b; }
-#screenGame .card-cell.marked.phase-keno { background: radial-gradient(circle at 35% 30%, #c084fc, #9333ea); color: #ffffff; }
+#screenGame .card-cell.marked.phase-kuadra { background: #059669; color: #fff; }
+#screenGame .card-cell.marked.phase-kina { background: #0284c7; color: #fff; }
+#screenGame .card-cell.marked.phase-keno { background: #7e22ce; color: #fff; }
 #screenGame .card-cell.marked.marked-last { box-shadow: 0 0 0 2px #ffffff, 0 0 12px rgba(255,255,255,0.7); }
-
-@keyframes ballPop {
-    0% { transform: scale(0.78); filter: brightness(1.35); }
-    100% { transform: scale(1); filter: brightness(1); }
-}
 
 /* Prizes strip */
 #screenGame .prizes-strip { }

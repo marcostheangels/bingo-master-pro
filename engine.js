@@ -11,10 +11,10 @@ const CARD_COST = 100; // fallback padrão
 const CARD_TIERS = [
     { name: 'Standard', emoji: '🎱', cost: 150, weight: 100 }
 ];
-// % da receita destinada a cada fase + casa (sempre seguros)
-const PRIZE_PERCENTS = { kuadra: 0.15, kina: 0.15, keno: 0.50, jackpot: 0.12, casa: 0.08 };
+// % da receita destinada a cada fase + casa (sempre seguros) — sem jackpot (fixo)
+const PRIZE_PERCENTS = { kuadra: 0.12, kina: 0.12, keno: 0.68, jackpot: 0, casa: 0.08 };
 const JACKPOT_BALL_LIMIT = 35; // 35 bolas — jackpot quase impossível
-const JACKPOT_INITIAL = 50000; // R$50,00 semente (nunca é tocada)
+const JACKPOT_INITIAL = 1000000; // R$1.000,00 fixo (só exibição — nunca é pago)
 const JACKPOT_CONTRIBUTION_PER_CARD = 10; // fallback
 const JACKPOT_MAX = 1000000; // R$1.000,00 teto (igual ao site)
 const KENO_MIN_MULTIPLIER = 1.25; // Keno mínimo = 40cart × preço × 1.25 (sempre maior que o gasto)
