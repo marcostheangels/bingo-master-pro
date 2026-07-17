@@ -885,7 +885,7 @@ async function finalizarRodada(room) {
     addLog(room, '🏁 Rodada encerrada!');
     broadcast(room, { type: 'notice', text: '🏁 Rodada encerrada! Cartelas serão limpas...', kind: 'info' });
     
-    // After 10s, clear cards and restart auto-start
+    // After 2s, clear cards and restart auto-start
     setTimeout(async () => {
         if (room.gameActive) return;
         // Clear all cards, refund humans
@@ -904,11 +904,11 @@ async function finalizarRodada(room) {
         cleanUpBots(room);
         broadcast(room, { type: 'resetGame', players: sanitizePlayers(room), drawnBalls: [], currentPhaseIndex: 0, gameActive: false, gameEnded: false, totalCardsAtStart: 0 });
         addLog(room, '🔄 Cartelas limpas. Novo sorteio em breve!');
-        broadcast(room, { type: 'notice', text: '🔄 Compre suas cartelas! Novo sorteio em 2 minutos.', kind: 'info' });
+        broadcast(room, { type: 'notice', text: '🔄 Compre suas cartelas! Novo sorteio em 1 minuto.', kind: 'info' });
         saveRoomSnapshot(room);
-        // Auto-start after 30 seconds
-        setTimeout(() => iniciarAutoStartServer(room), 30000);
-    }, 10000);
+        // Auto-start after 3s
+        setTimeout(() => iniciarAutoStartServer(room), 3000);
+    }, 2000);
 }
 
 function undoLastBall(room) {

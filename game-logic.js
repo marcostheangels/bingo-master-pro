@@ -818,7 +818,7 @@ function renderWinnerCardHTML(cardData) {
     return grid;
 }
 
-const CELEBRATION_DURATION = 4000;
+const CELEBRATION_DURATION = 2000;
 
 // Duração "padrão" das animações de kuadra/kina/keno/jackpot/ranking.
 // Base de 4s + 1,5s por vencedor extra (até 12s) para que TODOS os
