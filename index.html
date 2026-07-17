@@ -190,9 +190,9 @@
 
                 <!-- Premios band (Kuadra / Kina / Keno) -->
                 <div class="prizes-strip">
-                    <div class="phase-item phase-item-mini" id="phase_kuadra"><span class="phase-label">Kuadra</span> <span class="prize">💰 R$ 0,30</span></div>
-                    <div class="phase-item phase-item-mini" id="phase_kina"><span class="phase-label">Kina</span> <span class="prize">💰 R$ 0,40</span></div>
-                    <div class="phase-item phase-item-mini" id="phase_keno"><span class="phase-label">Bingo</span> <span class="prize">💰 R$ 0,80</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_kuadra"><span class="phase-label">Kuadra</span> <span class="prize">💰 R$ 0,50</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_kina"><span class="phase-label">Kina</span> <span class="prize">💰 R$ 1,00</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_keno"><span class="phase-label">Bingo</span> <span class="prize">💰 R$ 2,00</span></div>
                 </div>
 
                 <!-- Game Body -->
@@ -210,12 +210,12 @@
 
                     <div class="ball-actions">
                         <div class="buy-options" id="buySection">
-                            <span class="buy-label">Comprar cartelas (R$0,05 cada) <span style="color:#fbbf24;font-size:0.85em">— Máx: 40</span></span>
-                            <div style="display:flex;gap:6px;align-items:center;width:100%">
-                                <button class="btn btn-primary" onclick="ajustarQtd(-1)" style="flex:0 0 40px;padding:8px 0">−</button>
-                                <input type="number" id="buyQtyInput" value="1" min="1" max="40" style="flex:1;min-width:50px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;font-size:0.95em;text-align:center">
-                                <button class="btn btn-primary" onclick="ajustarQtd(1)" style="flex:0 0 40px;padding:8px 0">+</button>
-                                <button class="btn btn-primary" onclick="comprarCartelas()" style="flex:2">Comprar</button>
+                            <span class="buy-label">🎟️ Comprar cartelas <span style="color:#fde047;font-weight:800">R$ 0,10</span> cada <span style="color:#fbbf24;font-size:0.85em">— Máx: 40</span></span>
+                            <div class="buy-btn-row">
+                                <button class="btn-qty" onclick="ajustarQtd(-1)" aria-label="Diminuir quantidade">−</button>
+                                <input type="number" id="buyQtyInput" value="1" min="1" max="40" class="buy-qty-input">
+                                <button class="btn-qty" onclick="ajustarQtd(1)" aria-label="Aumentar quantidade">+</button>
+                                <button class="btn-buy" onclick="comprarCartelas()">🎯 Comprar</button>
                             </div>
                         </div>
                     </div>
@@ -544,8 +544,8 @@
     </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-<script src="game-logic.js?v=57"></script>
-<script src="network.js?v=55"></script>
+<script src="game-logic.js?v=58"></script>
+<script src="network.js?v=56"></script>
     <script>
         // Auto-login se tiver sessao valida
         (async function() {

@@ -2993,12 +2993,88 @@ body {
     padding: 12px;
 }
 #screenGame .buy-label { color: var(--gold-soft); font-weight: 700; }
-#screenGame .buy-options .btn {
+
+/* === BUY BUTTONS - NOVOS ESTILOS PREMIUM === */
+.buy-btn-row {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    width: 100%;
+}
+.btn-qty {
+    flex: 0 0 44px;
+    height: 44px;
+    padding: 0;
+    border: none;
+    border-radius: 50%;
+    background: linear-gradient(145deg, #2a1f5e, #1a1140);
+    color: #fde047;
+    font-size: 1.4em;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    user-select: none;
+}
+.btn-qty:hover {
+    background: linear-gradient(145deg, #3a2f7e, #2a1f5e);
+    box-shadow: 0 4px 20px rgba(253, 224, 71, 0.2);
+    transform: scale(1.08);
+}
+.btn-qty:active {
+    transform: scale(0.95);
+}
+.buy-qty-input {
+    flex: 1;
+    min-width: 50px;
+    height: 44px;
+    padding: 8px 10px;
+    border-radius: 12px;
+    border: 1.5px solid rgba(253, 224, 71, 0.2);
+    background: rgba(0, 0, 0, 0.35);
+    color: #fff;
+    font-size: 1.05em;
+    font-weight: 700;
+    text-align: center;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s;
+    font-family: 'Poppins', sans-serif;
+}
+.buy-qty-input:focus {
+    border-color: #fde047;
+    box-shadow: 0 0 0 3px rgba(253, 224, 71, 0.12);
+}
+.btn-buy {
+    flex: 2;
+    height: 44px;
+    padding: 0 16px;
+    border: none;
+    border-radius: 14px;
     background: linear-gradient(135deg, #fde047, #f59e0b 50%, #ea580c);
     color: #1a0b3d;
     font-weight: 800;
-    box-shadow: 0 6px 18px rgba(234, 88, 12, 0.28);
-    min-height: 44px;
+    font-size: 0.92em;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.25s;
+    box-shadow: 0 6px 20px rgba(234, 88, 12, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    font-family: 'Poppins', sans-serif;
+    text-transform: uppercase;
+}
+.btn-buy:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 30px rgba(234, 88, 12, 0.45);
+}
+.btn-buy:active {
+    transform: translateY(0);
 }
 
 /* My cards */
@@ -3095,7 +3171,10 @@ body {
 
     /* Comprar cartelas: botões ocupam toda a largura */
     #screenGame .buy-options { gap: 6px; flex-wrap: wrap; }
-    #screenGame .buy-options .btn { flex: 1 1 0; min-width: 0; padding: 11px 4px; font-size: 0.82em; }
+    .buy-btn-row { gap: 4px; }
+    .btn-qty { flex: 0 0 40px; height: 40px; font-size: 1.2em; }
+    .buy-qty-input { height: 40px; font-size: 0.92em; }
+    .btn-buy { height: 40px; font-size: 0.82em; }
 
     /* Cartelas em 1 coluna em telas muito estreitas */
     #screenGame .cards-grid { grid-template-columns: 1fr; }
