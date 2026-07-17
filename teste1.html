@@ -185,20 +185,37 @@
         .main-ball.ball-f3 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ff5d5d 38%, #b3122e 100%); color: #fff; box-shadow: 0 20px 45px rgba(255, 93, 93, .4); }
         
 .history-balls {
-            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; align-items: center;
-            width: 220px; height: auto; min-height: 180px; flex-shrink: 0;
-            padding: 8px; background: rgba(255,255,255,0.02); border-radius: 12px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 8px;
+            width: 220px;
+            height: auto;
+            min-height: 180px;
+            flex-shrink: 0;
+            padding: 8px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 12px;
+            justify-items: center;
+            align-items: center;
         }
         .sub-ball {
-            position: static !important; width: 40px; height: 40px; border-radius: 50%;
-            display: flex; align-items: center; justify-content: center; font-weight: 800; color: #0b3d1a;
+            position: static !important;
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 28px;
+            color: #0b3d1a;
             background: radial-gradient(circle at 32% 28%, #fff 0%, #34e89e 38%, #0e7a52 100%);
-            box-shadow: 0 4px 8px rgba(52, 232, 158, .3), inset 0 -2px 4px rgba(0,0,0,.2);
+            box-shadow: 0 6px 12px rgba(52, 232, 158, .3), inset 0 -3px 6px rgba(0,0,0,.2);
         }
-        .history-balls .sub-ball:nth-child(1),
-        .history-balls .sub-ball:nth-child(2),
-        .history-balls .sub-ball:nth-child(3),
-        .history-balls .sub-ball:nth-child(4) { width: 40px; height: 40px; font-size: 16px; }
+        .history-balls .sub-ball:nth-child(1) { }
+        .history-balls .sub-ball:nth-child(2) { }
+        .history-balls .sub-ball:nth-child(3) { }
+        .history-balls .sub-ball:nth-child(4) { }
 
         /* ===== 6. MAPA 90 BOLAS RE-ALINHADO ===== */
         .balls-board {
