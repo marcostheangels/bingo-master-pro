@@ -1261,7 +1261,7 @@ async function handleAction(ws, room, action, payload) {
 
     if (action === 'buyCards') {
         if (!player) return;
-        log('GAME', 'Compra cartelas', { jogador: player.name, qty: payload.qty, sala: data.roomId });
+        log('GAME', 'Compra cartelas', { jogador: player.name, qty: payload.qty, sala: room.id });
         if (room.gameActive) {
             if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: 'O sorteio já iniciou. Não é possível comprar cartelas agora.' }));
             return;
