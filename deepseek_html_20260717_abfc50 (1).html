@@ -1,9 +1,9 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preview Bingo 3D â€” Bingo VIP Club</title>
+    <title>Preview Bingo 3D — Bingo VIP Club</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <style>
@@ -306,10 +306,10 @@
             <button class="btn-action"><span class="material-icons ic-sair">exit_to_app</span>Sair</button>
         </div>
         <div class="user-info">
-            <span>OlÃ¡, MARKIM2026@</span>
+            <span>Olá, MARKIM2026@</span>
             <div class="balance-box">
                 <div class="balance-val">R$ 0,04</div>
-                <div style="font-size:10px;color:rgba(255,255,255,0.5)">Saldo â–¼</div>
+                <div style="font-size:10px;color:rgba(255,255,255,0.5)">Saldo ▼</div>
             </div>
         </div>
     </header>
@@ -331,13 +331,13 @@
         <div class="info-column">
             <div class="info-card dark-blue"><span>Sorteio</span><strong>#131937</strong></div>
             <div class="info-card"><span>Hora</span><strong id="live-clock">10:36:00</strong></div>
-            <div class="info-card"><span>DoaÃ§Ã£o</span><strong>R$ 0,15</strong></div>
+            <div class="info-card"><span>Doação</span><strong>R$ 0,15</strong></div>
             <div class="ordem-box"><span>ACUMULADO</span><div class="ordem-balls" id="ordemBalls"></div></div>
         </div>
 
         <!-- AREA CENTRAL -->
         <div class="center-content">
-            <!-- 4. PRÃŠMIOS -->
+            <!-- 4. PRÊMIOS -->
             <div class="prizes-row">
                 <div class="prize-card"><span>Kuadra</span><strong>R$20,00</strong></div>
                 <div class="prize-card"><span>Kina</span><strong>R$30,00</strong></div>
@@ -371,7 +371,7 @@
 
             <!-- PAINEL DE COMPRA DE CARTELAS -->
             <div class="buy-panel">
-                <div class="buy-title">ðŸŽŸï¸ Comprar Cartelas</div>
+                <div class="buy-title">🎟️ Comprar Cartelas</div>
                 <div class="qty-row" id="qtyRow">
                     <button class="qbtn" data-q="5">5</button>
                     <button class="qbtn" data-q="10">10</button>
@@ -384,7 +384,7 @@
                 </div>
                 <div class="buy-controls">
                     <div class="buy-stepper">
-                        <button class="stepper-btn" onclick="alterar(-1)">âˆ’</button>
+                        <button class="stepper-btn" onclick="alterar(-1)">−</button>
                         <span class="stepper-qty" id="qty">1</span>
                         <button class="stepper-btn yellow" onclick="alterar(1)">+</button>
                     </div>
@@ -393,7 +393,7 @@
                         <div class="bt-val" id="totalVal">R$ 0,15</div>
                         <div class="bt-qty"><span id="totalQty">1</span> cartela(s)</div>
                     </div>
-                    <button class="btn-comprar" onclick="comprarCartelas()">ðŸŽ¯ Comprar</button>
+                    <button class="btn-comprar" onclick="comprarCartelas()">🎯 Comprar</button>
                 </div>
             </div>
 
@@ -410,9 +410,9 @@
             <!-- CARTELAS COMPRADAS -->
             <div class="my-cards" id="myCards">
                 <div class="my-cards-title">
-                    ðŸ“‹ Minhas Cartelas Compradas
+                    📋 Minhas Cartelas Compradas
                     <span class="zoom-ctrl">
-                        <button class="btn-ctrl" onclick="zoom(-1)">âˆ’</button>
+                        <button class="btn-ctrl" onclick="zoom(-1)">−</button>
                         <button class="btn-ctrl yellow" onclick="zoom(1)">+</button>
                     </span>
                 </div>
@@ -424,7 +424,7 @@
 
     </div>
 
-    <div class="foot">Preview local â€” mesmo modelo do bingo.html em 3D. Dados fictÃ­cios.</div>
+    <div class="foot">Preview local — mesmo modelo do bingo.html em 3D. Dados fictícios.</div>
 
     <script>
         // Mapa de 90 bolas (igual bingo.html)
@@ -442,14 +442,14 @@
             gridElement.appendChild(cell);
         }
 
-        // ===== LÃ“GICA IGUAL AO PROJETO (getCardClosePhase em game-logic.js) =====
+        // ===== LÓGICA IGUAL AO PROJETO (getCardClosePhase em game-logic.js) =====
         const PHASE_SEQUENCE=['kuadra','kina','keno'];
         const COR={'kuadra':'b-kuadra','kina':'b-kina','keno':'b-keno'};
         const NOME={'kuadra':'Kuadra','kina':'Kina','keno':'Keno'};
         const drawnBalls=sorteadas.concat([bolaAtual]);
         let currentPhaseIndex=0; // fase atual do jogo (simulada)
 
-        const nomes=['VANDOSK8','ISAMARINA','Kald','Lucia Lima','Marcos','Ana','JoÃ£o','Beatriz','Carlos','Diego'];
+        const nomes=['VANDOSK8','ISAMARINA','Kald','Lucia Lima','Marcos','Ana','João','Beatriz','Carlos','Diego'];
 
         function genCard(){
             const nums=[];const used=new Set();
@@ -460,7 +460,7 @@
             }
             return nums;
         }
-        // retorna fase mais prÃ³xima + QUANTAS bolas faltam
+        // retorna fase mais próxima + QUANTAS bolas faltam
         function closePhase(card){
             if(currentPhaseIndex===0){
                 for(const row of card){
@@ -479,7 +479,7 @@
             return null;
         }
 
-        // cria jogadores com cartela + fase + bolas que faltam (mÃ¡x 5)
+        // cria jogadores com cartela + fase + bolas que faltam (máx 5)
         const players=[];
         nomes.forEach((nm,i)=>{
             const card=genCard();
@@ -512,7 +512,7 @@
         function anunciar(nome,fase){
             const d=document.createElement('div');
             d.className='vencedor-pop';
-            d.innerHTML=`ðŸ† <b>${nome}</b> venceu ${NOME[fase]}!`;
+            d.innerHTML=`🏆 <b>${nome}</b> venceu ${NOME[fase]}!`;
             document.body.appendChild(d);
             setTimeout(()=>d.remove(),3500);
         }
@@ -659,7 +659,7 @@
             });
         }
 
-        // RelÃ³gio
+        // Relógio
         setInterval(()=>{
             document.getElementById('live-clock').innerText=new Date().toTimeString().split(' ')[0];
         },1000);
