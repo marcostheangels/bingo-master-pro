@@ -2,703 +2,664 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Preview Bingo 3D â€” Bingo VIP Club</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#06030f">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>BINGO VIP CLUB</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎱%3C/text%3E%3C/svg%3E">
+    <link href="https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.0.8/index.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <style>
-        :root {
-            --bg-gradient: linear-gradient(180deg, #05052e 0%, #04042a 100%);
-            --panel-bg: rgba(4, 4, 30, 0.85);
-            --box-blue: #000088;
-            --yellow: #FFD700; --red: #FF0033; --purple-card: #4A3B8C;
-            --neon: #8b5cff; --neon-2: #22d3ee; --green: #34e89e; --pink: #ff4d9d;
-            --text: #f3f1ff; --muted: #9d96d4;
+    <link rel="stylesheet" href="style.css?v=32">
+    <script>
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(regs => {
+                regs.forEach(r => r.unregister());
+            }).then(() => {
+                window.addEventListener('load', () => {
+                    navigator.serviceWorker.register('sw.js?v=30').catch(() => {});
+                });
+            });
         }
-        * {
-            margin: 0; padding: 0; box-sizing: border-box; font-family: 'Poppins', sans-serif;
-            -webkit-user-select: none; user-select: none;
-        }
-        
-        /* ===== CORREÃ‡ÃƒO DO CORPO EM FORMATO APP ===== */
-        body {
-            background: var(--bg-gradient);
-            color: var(--text);
-            height: 100vh;
-            overflow: hidden;
-            overflow-x: hidden;
-            padding: 15px;
-            display: flex;
-            flex-direction: column;
-        }
-
-        /* ===== EFEITO 3D GLOBAL ===== */
-        .info-card, .prize-card, .ordem-box, .players-container, .my-cards, .buy-panel, .balls-board,
-        .card-show, .tgrid, .bingo-card {
-            border: 1px solid rgba(255, 255, 255, 0.18);
-            box-shadow: 0 12px 28px rgba(0, 0, 0, .55), inset 0 2px 0 rgba(255, 255, 255, .22), inset 0 -10px 22px rgba(0, 0, 0, .35);
-            backdrop-filter: blur(6px);
-        }
-        .info-card, .prize-card, .ordem-box, .buy-panel, .my-cards, .balls-board {
-            background-image: linear-gradient(160deg, rgba(255, 255, 255, .10), rgba(255, 255, 255, 0) 45%);
-        }
-        .prize-card { background-color: var(--box-blue); background-blend-mode: screen; }
-        
-        .qbtn, .btn-comprar, .btn-ctrl, .stepper-btn, .btn-kina, .btn-action {
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            box-shadow: 0 8px 18px rgba(0, 0, 0, .5), inset 0 2px 0 rgba(255, 255, 255, .30), inset 0 -6px 12px rgba(0, 0, 0, .35);
-            transition: transform .12s ease, filter .12s ease;
-        }
-        .qbtn:active, .btn-comprar:active, .btn-ctrl:active, .stepper-btn:active, .btn-kina:active {
-            transform: translateY(3px); box-shadow: 0 3px 8px rgba(0, 0, 0, .5), inset 0 2px 6px rgba(0, 0, 0, .4);
-        }
-        
-        .player-row {
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            box-shadow: 0 6px 14px rgba(0, 0, 0, .4), inset 0 1px 0 rgba(255, 255, 255, .12), inset 0 -4px 8px rgba(0, 0, 0, .3);
-            overflow: hidden; padding: 10px; position: relative;
-            background: linear-gradient(160deg, #232a5e, #161c44);
-            border-radius: 8px; margin-bottom: 8px; font-size: 15px;
-            display: flex; justify-content: space-between; align-items: center; gap: 10px;
-        }
-
-        /* Orbs flutuantes */
-        .orb { position: fixed; border-radius: 50%; filter: blur(70px); opacity: .45; z-index: 0; pointer-events: none; }
-        .orb.a { width: 360px; height: 360px; background: #8b5cff; top: -100px; right: -70px; animation: f1 10s ease-in-out infinite; }
-        .orb.b { width: 300px; height: 300px; background: #22d3ee; bottom: -110px; left: -80px; animation: f2 12s ease-in-out infinite; }
-        @keyframes f1 { 50% { transform: translateY(36px) translateX(-24px); } }
-        @keyframes f2 { 50% { transform: translateY(-36px) translateX(28px); } }
-
-        /* ===== 1. TOPO / NAVBAR ===== */
-        header {
-            position: relative; z-index: 1; display: flex; justify-content: space-between; align-items: center;
-            height: 85px; padding: 0 18px; border-radius: 14px; margin-bottom: 15px;
-            background: linear-gradient(160deg, rgba(20, 26, 62, 0.8), rgba(8, 10, 32, 0.7));
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            box-shadow: 0 14px 50px rgba(139, 92, 255, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.10);
-            flex: 0 0 auto;
-        }
-        .logo-area { display: flex; align-items: center; gap: 12px; }
-        .logo-img { height: 55px; width: auto; border-radius: 10px; filter: drop-shadow(0 4px 10px rgba(0, 0, 0, .5)); }
-        .logo-text {
-            font-weight: 800; font-size: 32px; letter-spacing: 2px;
-            background: linear-gradient(180deg, #E8C87A 0%, #B8860B 50%, #8a6304 100%);
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, .7), 0 0 14px rgba(184, 134, 11, .35);
-        }
-        .nav-actions { display: flex; align-items: center; gap: 10px; }
-        .btn-action {
-            display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
-            background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.14); border-radius: 12px;
-            padding: 8px 14px; color: #fff; cursor: pointer; font-size: 11px; font-weight: 600; min-width: 74px;
-            box-shadow: 0 8px 18px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .18);
-        }
-        .btn-action:hover { transform: translateY(-2px); filter: brightness(1.15); box-shadow: 0 0 12px rgba(255, 215, 0, .35); }
-        .btn-action .material-icons { font-size: 22px; }
-        .btn-action .ic-deposito { color: #34e89e; }
-        .btn-action .ic-sacar { color: #22d3ee; }
-        .btn-action .ic-extrato { color: #fff; }
-        .btn-action .ic-dados { color: #8b5cff; }
-        .btn-action .ic-sair { color: #ff6b81; }
-        .user-info { display: flex; align-items: center; gap: 15px; font-size: 13px; }
-        .balance-box { border-left: 1px solid rgba(255, 255, 255, 0.2); padding-left: 15px; text-align: right; }
-        .balance-val { color: var(--neon-2); font-weight: 700; font-size: 16px; text-shadow: 0 0 12px rgba(34, 211, 238, .5); }
-
-        /* ===== LAYOUT DO CONTAINER PRINCIPAL ===== */
-        .main-container {
-            position: relative; z-index: 1; display: flex; gap: 15px; align-items: stretch;
-            flex: 1; min-height: 0; margin-bottom: 5px;
-            max-width: 100%; overflow-x: hidden;
-        }
-
-        /* 2. BARRA LATERAL ESQUERDA */
-        aside { display: flex; flex-direction: column; align-items: center; gap: 22px; width: 54px; padding-top: 12px; flex: 0 0 auto; }
-        .side-icon { color: var(--yellow); cursor: pointer; transition: transform .2s; filter: drop-shadow(0 4px 8px rgba(0, 0, 0, .5)); }
-        .side-icon:hover { transform: scale(1.15); filter: drop-shadow(0 0 10px var(--yellow)); }
-
-        /* 3. COLUNA DE INFOS */
-        .info-column { display: flex; flex-direction: column; gap: 15px; width: 200px; flex: 0 0 auto; }
-        .info-card {
-            background: var(--box-blue); border: 2px solid rgba(255, 255, 255, 0.12); border-radius: 14px;
-            padding: 12px; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-        .info-card.dark-blue { background: linear-gradient(160deg, #1d2a5e, #0c1230); }
-        .info-card span { display: block; font-size: 12px; color: var(--yellow); font-weight: 600; text-transform: uppercase; margin-bottom: 4px; }
-        .info-card strong { font-size: 22px; font-weight: 700; }
-        
-.ordem-box {
-            background: var(--red); border-radius: 14px; padding: 12px; flex: 1; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; gap: 10px; font-weight: 700; border: 2px solid #ffb3c1;
-            box-shadow: 0 8px 24px rgba(255, 59, 92, .3); overflow: hidden;
-        }
-        .ordem-box > span { font-size: 13px; letter-spacing: 1px; color: #fff; text-transform: uppercase; }
-        .acumulado-count {
-            font-size: 28px; font-weight: 800; color: var(--yellow);
-            text-shadow: 0 0 8px rgba(255,215,0,.6);
-            margin: 4px 0 8px 0;
-        }
-        .ordem-balls {
-            display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
-            overflow-y: auto; width: 100%; padding: 4px 2px; flex: 1;
-        }
-        .ordem-ball {
-            width: 30px; height: 30px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 13px; font-weight: 800; color: #06203f; flex-shrink: 0;
-            background: radial-gradient(circle at 32% 28%, #fff 0%, #4aa3ff 40%, #0a4a8f 100%);
-            box-shadow: 0 4px 8px rgba(74, 163, 255, .4);
-        }
-        .ordem-ball.f2 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ffd83d 40%, #c79a00 100%); color: #4a3700; }
-        .ordem-ball.f3 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ff5d5d 40%, #b3122e 100%); color: #fff; }
-
-        /* AREA CENTRAL */
-        .center-content { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 15px; }
-
-        /* 4. PREMIOS */
-        .prizes-row { display: flex; gap: 15px; flex: 0 0 auto; }
-        .prize-card {
-            flex: 1; min-width: 0; border-radius: 16px; padding: 15px 10px; text-align: center;
-            border: 2px solid rgba(255, 255, 255, 0.12);
-        }
-        .prize-card.acumulado { background: linear-gradient(160deg, #b3132f, #5e0a1c); position: relative; }
-        .badge-acumulado {
-            position: absolute; top: -8px; right: -8px; background: #000; color: #fff;
-            border: 2px solid var(--red); border-radius: 50%; width: 26px; height: 26px; font-size: 11px;
-            display: flex; align-items: center; justify-content: center; font-weight: 700;
-        }
-        .prize-card span { display: block; font-size: 13px; color: var(--yellow); font-weight: 700; margin-bottom: 4px; }
-        .prize-card strong { font-size: 20px; font-weight: 800; white-space: nowrap; }
-
-        /* 5. AREA DO SORTEIO CENTRALIZADO */
-        .game-display {
-            flex: 1; display: flex; align-items: center; justify-content: center; gap: 20px; 
-            position: relative; padding: 20px; background: rgba(255, 255, 255, 0.02); border-radius: 16px;
-        }
-        .main-ball {
-            width: 160px; height: 160px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
-            font-size: 80px; font-weight: 800; color: #0b3d1a; position: relative;
-            background: radial-gradient(circle at 32% 28%, #fff 0%, #34e89e 38%, #0e7a52 100%);
-            box-shadow: 0 16px 35px rgba(52, 232, 158, .4), inset 0 -10px 20px rgba(0, 0, 0, .35);
-        }
-        .main-ball:after { content: ""; position: absolute; top: 12%; left: 18%; width: 34%; height: 24%; background: rgba(255, 255, 255, .7); border-radius: 50%; filter: blur(4px); }
-        .main-ball.ball-f1 { background: radial-gradient(circle at 32% 28%, #fff 0%, #4aa3ff 38%, #0a4a8f 100%); color: #06203f; box-shadow: 0 20px 45px rgba(74, 163, 255, .4); }
-        .main-ball.ball-f2 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ffd83d 38%, #c79a00 100%); color: #4a3700; box-shadow: 0 20px 45px rgba(255, 216, 61, .4); }
-        .main-ball.ball-f3 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ff5d5d 38%, #b3122e 100%); color: #fff; box-shadow: 0 20px 45px rgba(255, 93, 93, .4); }
-        
-.history-balls {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            grid-template-rows: repeat(2, auto);
-            gap: 6px;
-            width: 180px;
-            height: auto;
-            min-height: 160px;
-            flex-shrink: 0;
-            padding: 6px;
-            background: rgba(255,255,255,0.02);
-            border-radius: 10px;
-            justify-items: center;
-            align-items: center;
-            justify-content: center;
-            align-content: center;
-        }
-        .sub-ball {
-            position: static !important;
-            width: 100%;
-            height: 100%;
-            aspect-ratio: 1;
-            max-width: 70px;
-            max-height: 70px;
-            margin: 0 auto;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 800;
-            font-size: 24px;
-            color: #0b3d1a;
-            background: radial-gradient(circle at 32% 28%, #fff 0%, #34e89e 38%, #0e7a52 100%);
-            box-shadow: 0 5px 10px rgba(52, 232, 158, .3), inset 0 -2px 4px rgba(0,0,0,.2);
-        }
-        .history-balls .sub-ball:nth-child(1) { }
-        .history-balls .sub-ball:nth-child(2) { }
-        .history-balls .sub-ball:nth-child(3) { }
-        .history-balls .sub-ball:nth-child(4) { }
-
-        /* ===== 6. MAPA 90 BOLAS RE-ALINHADO ===== */
-        .balls-board {
-            background: linear-gradient(160deg, rgba(20, 28, 66, .75), rgba(8, 12, 38, .75));
-            border-radius: 16px; padding: 12px; flex: 0 0 auto; height: 150px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            overflow: hidden;
-        }
-.balls-grid {
-            display: grid; grid-template-columns: repeat(30, minmax(0, 1fr)); grid-template-rows: repeat(3, 1fr);
-            gap: 2px; height: 100%; min-width: 0;
-        }
-.grid-cell {
-            font-size: 9px; font-weight: 700; color: rgba(255,255,255,0.20);
-            display: flex; align-items: center; justify-content: center;
-            width: 100%; aspect-ratio: 1; border-radius: 50%;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.04); transition: all .2s ease;
-            min-width: 0;
-        }
-        .grid-cell.drawn { color: #06203f; background: radial-gradient(circle at 32% 28%, #fff 0%, #4aa3ff 42%, #0a4a8f 100%); box-shadow: 0 0 8px rgba(74, 163, 255, .5); }
-        .grid-cell.drawn.f2 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ffd83d 42%, #c79a00 100%); color: #4a3700; box-shadow: 0 0 8px rgba(255, 216, 61, .5); }
-        .grid-cell.drawn.f3 { background: radial-gradient(circle at 32% 28%, #fff 0%, #ff5d5d 42%, #b3122e 100%); color: #fff; box-shadow: 0 0 8px rgba(255, 93, 93, .5); }
-        .grid-cell.current { transform: scale(1.15); color: #fff; z-index: 2; background: radial-gradient(circle at 32% 28%, #fff 0%, #ff5d73 45%, #b3122e 100%); box-shadow: 0 0 14px rgba(255, 93, 115, .8); }
-
-        /* ===== 7. PAINEL DIREITO COM ROLAGEM ISOLADA ===== */
-        .right-panel {
-            width: 440px; max-width: 100%; display: flex; flex-direction: column; gap: 12px;
-            flex-shrink: 0; min-height: 0;
-        }
-        .right-panel::-webkit-scrollbar { display: none; }
-        .right-panel { -ms-overflow-style: none; scrollbar-width: none; }
-
-        .players-container { height: 320px; background: var(--panel-bg); border-radius: 10px; padding: 8px; overflow-y: auto; flex-shrink: 0; }
-        .pcode { font-size: 13px; color: var(--neon-2); font-weight: 700; min-width: 60px; }
-        .pballs { display: flex; gap: 5px; }
-        .pballmini { width: 16px; height: 16px; border-radius: 50%; background: #333866; flex-shrink: 0; }
-        .pballmini.on { background: transparent; border: 2px solid var(--neon-2); box-shadow: 0 0 6px rgba(34, 211, 238, .6); }
-        .player-name { color: var(--yellow); font-weight: 600; flex: 1; margin-left: 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        /* Painel de compra */
-        .buy-panel { background: var(--box-blue); border-radius: 12px; padding: 12px; flex-shrink: 0; }
-        .buy-title { font-size: 13px; font-weight: 700; color: var(--yellow); margin-bottom: 8px; }
-        .qty-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
-        .qbtn {
-            background: linear-gradient(160deg, #2a356f, #161c44); color: #fff; border: 1px solid rgba(255, 255, 255, 0.12);
-            padding: 6px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; cursor: pointer; flex: 1; min-width: 45px;
-        }
-        .qbtn.active { background: linear-gradient(145deg, var(--neon), var(--neon-2)); border-color: transparent; box-shadow: 0 4px 14px rgba(139, 92, 255, .5); }
-        .buy-controls { display: flex; align-items: center; gap: 10px; }
-        .buy-stepper { display: flex; align-items: center; gap: 6px; background: rgba(0, 0, 0, .3); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 10px; padding: 4px; }
-        .stepper-btn { width: 30px; height: 30px; border: none; border-radius: 8px; background: #333866; color: #fff; font-size: 18px; font-weight: 700; cursor: pointer; }
-        .stepper-btn.yellow { background: var(--yellow); color: #000; }
-        .stepper-qty { width: 40px; text-align: center; font-weight: 800; font-size: 15px; color: #fff; }
-        .buy-total { margin-left: auto; background: linear-gradient(145deg, #1a2150, #0c1130); border: 1px solid rgba(34, 211, 238, .3); border-radius: 10px; padding: 4px 10px; display: flex; align-items: center; justify-content: center; gap: 4px; white-space: nowrap; }
-        .buy-total .bt-val { font-size: 13px; font-weight: 800; color: var(--neon-2); text-shadow: 0 0 10px rgba(34, 211, 238, .5); }
-        .buy-total .bt-qty { font-size: 10px; color: var(--yellow); }
-        .btn-comprar { background: linear-gradient(145deg, var(--neon), var(--neon-2)); color: #fff; border: none; padding: 10px 16px; border-radius: 12px; font-weight: 800; font-size: 13px; cursor: pointer; }
-
-        .cards-bar { background: var(--box-blue); padding: 8px 12px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; border: 1px solid rgba(255, 255, 255, 0.12); flex-shrink: 0; }
-        .cards-bar-actions { display: flex; align-items: center; gap: 5px; }
-        .fase-tag { background: #2a2f4a; color: #7d83a8; border: none; padding: 5px 10px; border-radius: 6px; font-size: 12px; font-weight: 700; opacity: .7; }
-        .fase-tag.active { background: var(--yellow); color: #000; opacity: 1; box-shadow: 0 0 10px rgba(255, 215, 0, .5); }
-        .fase-atual { display: none; }
-
-        /* Minhas cartelas */
-        .my-cards { background: var(--panel-bg); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 12px; padding: 12px; display: flex; flex-direction: column; }
-        .my-cards-title { font-size: 13px; font-weight: 700; color: var(--yellow); margin-bottom: 10px; display: flex; align-items: center; justify-content: space-between; }
-        .zoom-ctrl { display: flex; gap: 5px; }
-        .btn-ctrl { background: #333866; color: #fff; border: none; width: 26px; height: 26px; border-radius: 6px; cursor: pointer; font-weight: 700; }
-        .btn-ctrl.yellow { background: var(--yellow); color: #000; }
-        .my-cards-scroll { overflow-y: visible; }
-        .my-cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(var(--cardw, 160px), 1fr)); gap: 10px; }
-        
-        .ticket3d { background: linear-gradient(160deg, rgba(139, 92, 255, .14), rgba(255, 255, 255, .02)); border: 1px solid rgba(255, 255, 255, 0.10); border-radius: 14px; padding: 10px; }
-        .ticket3d .th { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); margin-bottom: 6px; }
-        .ticket3d .th .cid { color: var(--neon-2); font-weight: 700; }
-        .tgrid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 4px; }
-        .tnum { aspect-ratio: 1; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; background: rgba(255, 255, 255, .05); border: 1px solid rgba(255, 255, 255, .10); color: #cbbff7; }
-        .tnum.mark { background: linear-gradient(145deg, var(--neon), var(--neon-2)); color: #fff; border-color: transparent; box-shadow: 0 0 8px rgba(139, 92, 255, .6); }
-
-        .foot { text-align: center; color: var(--muted); font-size: 11px; padding: 5px 0 0 0; flex: 0 0 auto; }
-
-        /* Popup vencedor */
-        .vencedor-pop {
-            position: fixed; top: 90px; left: 50%; transform: translateX(-50%); z-index: 200;
-            background: linear-gradient(145deg, #ffcf4d, #ff8a3d); color: #1a1030; font-weight: 800;
-            padding: 14px 28px; border-radius: 16px; font-size: 16px; box-shadow: 0 16px 50px rgba(255, 138, 61, .6);
-            animation: vp 3.5s ease forwards;
-        }
-        @keyframes vp {
-            0% { opacity: 0; transform: translateX(-50%) translateY(-20px) scale(.8); }
-            12% { opacity: 1; transform: translateX(-50%) translateY(0) scale(1); }
-            85% { opacity: 1; } 100% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-        }
-    </style>
+    </script>
 </head>
 <body>
-    <div class="orb a"></div><div class="orb b"></div>
 
-    <!-- 1. TOPO / NAVBAR -->
-    <header>
-        <div class="logo-area">
-            <img class="logo-img" src="bingo1.jpeg" alt="Bingo VIP Club">
-            <span class="logo-text">BINGO VIP CLUB</span>
+    <!-- Overlays -->
+    <div class="spinner-overlay" id="spinnerOverlay">
+        <div class="spinner"></div>
+        <div class="spinner-text" id="spinnerText">Conectando...</div>
+    </div>
+    <div class="offline-banner" id="offlineBanner">🔌 Conexão perdida. Tentando reconectar...</div>
+    <div class="manutencao-banner" id="manutencaoBanner" style="display:none">
+        <span style="font-size:18px">🔧</span>
+        <div style="flex:1">
+            <div style="font-weight:700;color:#fff;font-size:14px" id="manutTitulo">Manutenção Programada</div>
+            <div style="color:#cbd5e1;font-size:12px;margin-top:2px" id="manutDetalhe"></div>
         </div>
-        <div class="nav-actions">
-            <button class="btn-action"><span class="material-icons ic-deposito">attach_money</span>Depositar</button>
-            <button class="btn-action"><span class="material-icons ic-sacar">account_balance_wallet</span>Sacar</button>
-            <button class="btn-action"><span class="material-icons ic-extrato">description</span>Extrato</button>
-            <button class="btn-action"><span class="material-icons ic-dados">assignment_ind</span>Dados</button>
-            <button class="btn-action"><span class="material-icons ic-sair">exit_to_app</span>Sair</button>
-        </div>
-        <div class="user-info">
-            <span>OlÃ¡, MARKIM2026@</span>
-            <div class="balance-box">
-                <div class="balance-val">R$ 0,04</div>
-                <div style="font-size:10px;color:rgba(255,255,255,0.5)">Saldo â–¼</div>
-            </div>
-        </div>
-    </header>
-
-    <!-- LAYOUT PRINCIPAL -->
-    <div class="main-container">
-
-        <!-- 2. BARRA LATERAL ESQUERDA -->
-        <aside>
-            <span class="material-icons side-icon">menu</span>
-            <span class="material-icons side-icon">radio</span>
-            <span class="material-icons side-icon">calendar_month</span>
-            <span class="material-icons side-icon">payments</span>
-            <span class="material-icons side-icon">history</span>
-            <span class="material-icons side-icon">support_agent</span>
-        </aside>
-
-        <!-- 3. COLUNA DE INFOS -->
-        <div class="info-column">
-            <div class="info-card dark-blue"><span>Sorteio</span><strong>#131937</strong></div>
-            <div class="info-card"><span>Hora</span><strong id="live-clock">10:36:00</strong></div>
-            <div class="info-card"><span>DoaÃ§Ã£o</span><strong>R$ 0,15</strong></div>
-            <div class="ordem-box"><span>ACUMULADO</span><div class="acumulado-count" id="drawnCount">0</div><div class="ordem-balls" id="ordemBalls"></div></div>
-        </div>
-
-        <!-- AREA CENTRAL -->
-        <div class="center-content">
-            <!-- 4. PRÃŠMIOS -->
-            <div class="prizes-row">
-                <div class="prize-card"><span>Kuadra</span><strong>R$20,00</strong></div>
-                <div class="prize-card"><span>Kina</span><strong>R$30,00</strong></div>
-                <div class="prize-card"><span>Keno</span><strong>R$100,00</strong></div>
-                <div class="prize-card acumulado">
-                    <div class="badge-acumulado">37</div>
-                    <span>Acumulado</span><strong>R$1.000,00</strong>
-                </div>
-            </div>
-
-            <!-- 5. VEZ E ANTERIORES -->
-            <div class="game-display">
-                <div class="main-ball ball-f2" id="mainBall">36</div>
-                <div class="history-balls" id="historyBalls">
-                    <div class="sub-ball hslot show ball-f3">87</div>
-                    <div class="sub-ball hslot show ball-f3">85</div>
-                    <div class="sub-ball hslot show ball-f2">58</div>
-                    <div class="sub-ball hslot show ball-f1">38</div>
-                </div>
-            </div>
-
-            <!-- 6. MAPA DE 90 BOLAS -->
-            <div class="balls-board">
-                <div class="balls-grid" id="board-grid"></div>
+        <button onclick="document.getElementById('manutencaoBanner').style.display='none'" style="background:transparent;border:none;color:#fff;font-size:20px;cursor:pointer">✖</button>
+    </div>
+    <canvas id="confettiCanvas"></canvas>
+    <div class="toast-container" id="toastContainer"></div>
+    <div class="modal-overlay" id="modalOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;justify-content:center;align-items:center">
+        <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:28px 32px;max-width:380px;width:90%;text-align:center">
+            <div style="font-size:18px;color:#fff;font-weight:600;margin-bottom:20px" id="modalMessage">Tem certeza?</div>
+            <div style="display:flex;gap:10px;justify-content:center">
+                <button id="modalConfirmBtn" style="background:#10b981;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">Sim</button>
+                <button id="modalCancelBtn" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">Cancelar</button>
             </div>
         </div>
-
-        <!-- 7. PAINEL LATERAL DIREITO -->
-        <div class="right-panel">
-            <div class="players-container" id="players-list"></div>
-
-            <!-- PAINEL DE COMPRA DE CARTELAS -->
-            <div class="buy-panel">
-                <div class="buy-title">ðŸŽŸï¸ Comprar Cartelas</div>
-                <div class="qty-row" id="qtyRow">
-                    <button class="qbtn" data-q="5">5</button>
-                    <button class="qbtn" data-q="10">10</button>
-                    <button class="qbtn" data-q="20">20</button>
-                    <button class="qbtn" data-q="30">30</button>
-                    <button class="qbtn" data-q="40">40</button>
-                    <button class="qbtn" data-q="50">50</button>
-                    <button class="qbtn" data-q="100">100</button>
-                    <button class="qbtn" data-q="200">200</button>
-                </div>
-                <div class="buy-controls">
-                    <div class="buy-stepper">
-                        <button class="stepper-btn" onclick="alterar(-1)">âˆ’</button>
-                        <span class="stepper-qty" id="qty">1</span>
-                        <button class="stepper-btn yellow" onclick="alterar(1)">+</button>
-                    </div>
-                    <div class="buy-total">
-                        <div class="bt-val" id="totalVal">R$ 0,15</div>
-                        <div class="bt-qty"><span id="totalQty">1</span> cartela(s)</div>
-                    </div>
-                    <button class="btn-comprar" onclick="comprarCartelas()">ðŸŽ¯ Comprar</button>
-                </div>
-            </div>
-
-            <div class="cards-bar">
-                <strong style="font-size:16px">Cartelas: <span id="cartCount">0</span></strong>
-                <div class="cards-bar-actions">
-                    <button class="fase-tag" data-f="kuadra">Kuadra</button>
-                    <button class="fase-tag" data-f="kina">Kina</button>
-                    <button class="fase-tag" data-f="keno">Keno</button>
-                    <span class="fase-atual" id="faseJogo">Kuadra</span>
-                </div>
-            </div>
-
-            <!-- CARTELAS COMPRADAS -->
-            <div class="my-cards" id="myCards">
-                <div class="my-cards-title">
-                    ðŸ“‹ Minhas Cartelas Compradas
-                    <span class="zoom-ctrl">
-                        <button class="btn-ctrl" onclick="zoom(-1)">âˆ’</button>
-                        <button class="btn-ctrl yellow" onclick="zoom(1)">+</button>
-                    </span>
-                </div>
-                <div class="my-cards-scroll" id="myCardsScroll">
-                    <div class="my-cards-grid" id="myCardsGrid"></div>
-                </div>
+    </div>
+    <div class="modal-overlay" id="excluirModalOverlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;justify-content:center;align-items:center">
+        <div style="background:#1a1a2e;border:1px solid rgba(255,255,255,0.15);border-radius:12px;padding:28px 32px;max-width:420px;width:90%;text-align:center">
+            <div style="font-size:17px;color:#fff;font-weight:600;margin-bottom:12px" id="excluirModalMsg">Excluir jogador?</div>
+            <p style="color:#cbd5e1;font-size:13px;margin:0 0 16px">Esta ação é irreversível. Confirme abaixo:</p>
+            <div style="display:flex;gap:10px;justify-content:center">
+                <button id="excluirModalBtn" style="background:#ef4444;color:#fff;border:none;padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">🗑️ Excluir</button>
+                <button id="excluirModalCancelBtn" style="background:rgba(255,255,255,0.1);color:#fff;border:1px solid rgba(255,255,255,0.2);padding:10px 24px;border-radius:8px;font-weight:bold;font-size:15px;cursor:pointer">Cancelar</button>
             </div>
         </div>
+    </div>
+    <button class="fullscreen-btn" id="fullscreenBtn" onclick="toggleFullscreen()" title="Tela Cheia">📺</button>
 
+    <!-- ===== REGISTER / LOGIN SCREEN ===== -->
+    <div class="screen active" id="screenHome">
+        <div class="home-bg" aria-hidden="true">
+            <span class="orb orb-1"></span>
+            <span class="orb orb-2"></span>
+            <span class="orb orb-3"></span>
+            <span class="spark s1"></span>
+            <span class="spark s2"></span>
+            <span class="spark s3"></span>
+        </div>
+
+        <div class="box login-card">
+            <div class="brand">
+                <img class="brand-logo" src="bingo1.jpeg" alt="Bingo VIP Club">
+                <h1 class="brand-title">BINGO VIP CLUB</h1>
+                <p class="subtitle">Kuadra • Kina • Keno</p>
+                <span class="vip-pill">★ Clube VIP</span>
+            </div>
+
+            <!-- TABS -->
+            <div class="auth-tabs">
+                <button type="button" class="auth-tab active" id="tabLogin" onclick="mostrarAba('login')">Entrar</button>
+                <button type="button" class="auth-tab" id="tabRegister" onclick="mostrarAba('register')">Criar conta</button>
+            </div>
+
+            <!-- LOGIN (padrão) -->
+            <div id="authLogin">
+                <div class="auth-field">
+                    <label>CPF:</label>
+                    <input type="text" id="loginCpf" class="input-field" placeholder="000.000.000-00" maxlength="14" oninput="mascaraCPF(this)">
+                </div>
+                <div class="auth-field">
+                    <label>Senha:</label>
+                    <input type="password" id="loginSenha" class="input-field" placeholder="Sua senha">
+                </div>
+                <p class="auth-error" id="loginError"></p>
+                <button class="btn-login" onclick="fazerLogin()">🔑 Entrar na conta</button>
+                <p class="switch-link">Não tem conta? <a href="#" onclick="mostrarAba('register');return false">Cadastre-se grátis</a></p>
+            </div>
+
+            <!-- CADASTRO -->
+            <div id="authRegister" style="display:none">
+                <div class="auth-field">
+                    <label>Nome Completo:</label>
+                    <input type="text" id="regNome" class="input-field" placeholder="Seu nome completo" autocomplete="off">
+                </div>
+                <div class="auth-field">
+                    <label>CPF:</label>
+                    <input type="text" id="regCpf" class="input-field" placeholder="000.000.000-00" maxlength="14" oninput="mascaraCPF(this)">
+                </div>
+                <div class="auth-field">
+                    <label>E-mail:</label>
+                    <input type="email" id="regEmail" class="input-field" placeholder="seu@email.com" autocomplete="off">
+                </div>
+                <div class="auth-field">
+                    <label>Senha:</label>
+                    <input type="password" id="regSenha" class="input-field" placeholder="Mínimo 4 caracteres">
+                </div>
+                <div class="auth-field">
+                    <label>Confirmar Senha:</label>
+                    <input type="password" id="regConfirma" class="input-field" placeholder="Repita a senha">
+                </div>
+                <div class="auth-field">
+                    <label>Chave PIX (para saque):</label>
+                    <input type="text" id="regChavePix" class="input-field" placeholder="CPF, e-mail, telefone ou chave aleatória">
+                </div>
+                <p class="auth-error" id="regError"></p>
+                <button class="btn-login" onclick="registrar()">✅ Criar minha conta</button>
+                <p class="switch-link">Já tem conta? <a href="#" onclick="mostrarAba('login');return false">Faça login</a></p>
+            </div>
+
+            <div class="spectator-entry">
+                <button class="btn-spectador" onclick="conectarComoEspectador()">👁️ Assistir ao Vivo sem login</button>
+            </div>
+
+            <div class="trust-row">
+                <span>🔒 Ambiente Seguro</span>
+                <span>🎯 Exclusive 18+</span>
+                <span>⚡ Sorteios ao Vivo</span>
+            </div>
+
+            <div id="connectionStatusMsg" class="connection-status">
+                <p id="statusTxt"></p>
+            </div>
+        </div>
     </div>
 
+    <!-- ===== GAME SCREEN ===== -->
+    <div class="screen" id="screenGame">
+        <div class="game-wrapper game-wrapper-mobile">
+
+            <!-- Botão Admin -->
+            <button class="btn-admin-open" id="btnAdminOpen" style="display:none" onclick="abrirAdminScreen()">⚙️ Admin</button>
+            <div id="hostOnlyMsg" style="display:none;text-align:center;padding:8px;background:rgba(255,255,255,0.05);border-radius:8px;margin:4px 12px;font-size:13px;color:#cbd5e1">🎯 Você é o anfitrião — controle o jogo pelos botões abaixo</div>
+
+            <!-- 1. TOPO / NAVBAR -->
+            <header>
+                <div class="logo-area">
+                    <img class="logo-img" src="bingo1.jpeg" alt="Bingo VIP Club">
+                    <span class="logo-text">BINGO VIP CLUB</span>
+                </div>
+                <div class="nav-actions">
+                    <button class="btn-action" id="btnDeposit" onclick="abrirModalDeposito()"><span class="material-icons ic-deposito">attach_money</span>Depositar</button>
+                    <button class="btn-action" id="btnSacar" onclick="abrirModalSaque()" style="display:none"><span class="material-icons ic-sacar">account_balance_wallet</span>Sacar</button>
+                    <button class="btn-action" onclick="abrirExtratoModal()"><span class="material-icons ic-extrato">description</span>Extrato</button>
+                    <button class="btn-action" onclick="abrirDadosModal()"><span class="material-icons ic-dados">assignment_ind</span>Dados</button>
+                    <button class="btn-action" onclick="sairDaConta()"><span class="material-icons ic-sair">exit_to_app</span>Sair</button>
+                    <button class="btn-sound" id="btnSoundToggle" onclick="alternarSom()" title="Ligar/desligar som">🔊</button>
+                    <button class="btn-sound" id="btnNotify" onclick="habilitarNotificacoes()" title="Ativar notificações">🔔</button>
+                </div>
+                <div class="user-info">
+                    <div class="connection-info" id="connectionInfo" style="display:flex;align-items:center;gap:6px;font-size:11px;color:#9d96d4">
+                        <span class="conn-dot" id="connDot"></span>
+                        <span id="connStatus">Conectado</span>
+                    </div>
+                    <div class="user-avatar" id="avatarIcon" style="display:none">B</div>
+                    <span id="labelMyName">Jogador</span>
+                    <div class="balance-box">
+                        <div class="balance-val" id="labelMyChips">💰 0 🏆 0</div>
+                        <div style="font-size:10px;color:rgba(255,255,255,0.5)">Saldo ▼</div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- LAYOUT PRINCIPAL -->
+            <div class="main-container">
+
+                <!-- 2. BARRA LATERAL ESQUERDA -->
+                <aside>
+                    <span class="material-icons side-icon">menu</span>
+                    <span class="material-icons side-icon">radio</span>
+                    <span class="material-icons side-icon">calendar_month</span>
+                    <span class="material-icons side-icon">payments</span>
+                    <span class="material-icons side-icon">history</span>
+                </aside>
+
+                <!-- 2b. PAINEL DE JOGADORES (ESQUERDA) -->
+                <div class="players-left">
+                    <div class="players-container" id="playersPanel">
+                        <h3>👥 Jogadores</h3>
+                        <div class="players-panel-body">
+                            <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
+                            <ul class="player-list" id="playerListUI"></ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. COLUNA DE INFOS -->
+                <div class="info-column">
+                    <div class="info-card dark-blue"><span>Sorteio</span><strong id="currentRoundNumber">#---</strong></div>
+                    <div class="info-card"><span>Hora</span><strong id="liveClock">--:--:--</strong></div>
+                    <div class="info-card"><span>Doação</span><strong id="doacaoVal">R$ 0,00</strong></div>
+                    <div class="ordem-box">
+                        <span>ACUMULADO</span>
+                        <div class="jackpot-value" id="jackpotDisplay">R$ 1.000,00</div>
+                    </div>
+                </div>
+
+                <!-- AREA CENTRAL -->
+                <div class="center-content">
+
+                    <!-- 4. PREMIOS -->
+                    <div class="prizes-row">
+                        <div class="prize-card phase-item-mini" id="phase_kuadra"><span>Kuadra</span><strong class="prize">R$ 0,50</strong></div>
+                        <div class="prize-card phase-item-mini" id="phase_kina"><span>Kina</span><strong class="prize">R$ 1,00</strong></div>
+                        <div class="prize-card phase-item-mini" id="phase_keno"><span>Bingo</span><strong class="prize">R$ 2,00</strong></div>
+                        <div class="prize-card acumulado">
+                            <div class="badge-acumulado" id="jackpotBadge">37</div>
+                            <span>Acumulado</span><strong id="jackpotTotal">R$ 1.000,00</strong>
+                        </div>
+                    </div>
+
+                    <!-- 5. AREA DO SORTEIO -->
+                    <div class="game-display">
+                        <div class="main-ball" id="mainBall">-</div>
+                        <div class="history-balls" id="historyBalls"></div>
+                        <div class="balls-board" id="drawnGrid"></div>
+                    </div>
+
+                    <!-- CONTROLES DO JOGO -->
+                    <div class="game-controls" style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+                        <button id="btnStartGame" style="display:none;padding:6px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#10b981,#059669);color:#fff;font-weight:700;font-size:13px;cursor:pointer">▶️ Iniciar</button>
+                        <button id="btnNextBall" style="display:none;padding:6px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#3b82f6,#2563eb);color:#fff;font-weight:700;font-size:13px;cursor:pointer">🎱 Próxima Bola</button>
+                        <button id="btnResetGame" style="padding:6px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;font-weight:700;font-size:13px;cursor:pointer">🔄 Reiniciar</button>
+                        <button id="btnUndo" disabled style="padding:6px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;font-weight:700;font-size:13px;cursor:pointer">↩️ Desfazer</button>
+                        <button id="btnReady" style="display:none;padding:6px 16px;border-radius:8px;border:none;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;font-weight:700;font-size:13px;cursor:pointer">✅ Estou Pronto</button>
+                    </div>
+
+                    <!-- LISTA DE BOLAS SORTEADAS -->
+                    <div id="drawnList" style="display:none"></div>
+
+                    <!-- VELOCIDADE -->
+                    <div class="speed-control" style="display:flex;align-items:center;gap:8px;margin-top:6px;justify-content:center;font-size:12px;color:#9d96d4">
+                        <span>🐢</span>
+                        <input type="range" id="speedRange" min="500" max="8000" step="100" value="3000" style="width:120px;accent-color:#10b981">
+                        <span>🐇</span>
+                        <span id="speedLabel" style="min-width:60px;text-align:center">3.0s</span>
+                    </div>
+
+                </div>
+
+                <!-- 7. PAINEL LATERAL DIREITO -->
+                <div class="right-panel">
+
+                    <!-- PAINEL DE COMPRA DE CARTELAS -->
+                    <div class="buy-panel" id="buySection">
+                        <div class="buy-title">🎟️ Comprar Cartelas</div>
+                        <div class="buy-stepper">
+                            <button class="stepper-btn" onclick="ajustarQtd(-1)" aria-label="Diminuir">−</button>
+                            <input type="number" id="buyQtyInput" value="1" min="1" max="9999" class="stepper-qty" oninput="atualizarTotalCompra()">
+                            <button class="stepper-btn yellow" onclick="ajustarQtd(1)" aria-label="Aumentar">+</button>
+                        </div>
+                        <div class="buy-total" id="buyTotalDisplay">Total: <strong>R$ 0,15</strong></div>
+                        <button class="btn-comprar" onclick="comprarCartelas()">🎯 Comprar</button>
+                        <span class="buy-label">R$ <span id="cardCostDisplay">0,15</span> cada — Sem limite</span>
+                    </div>
+
+                    <!-- Cartelas compradas -->
+                    <div class="cards-bar">
+                        <strong style="font-size:16px">Cartelas: <span id="cartCount">0</span></strong>
+                        <div class="cards-bar-actions">
+                            <button class="fase-tag" data-f="kuadra">Kuadra</button>
+                            <button class="fase-tag" data-f="kina">Kina</button>
+                            <button class="fase-tag" data-f="keno">Keno</button>
+                        </div>
+                    </div>
+
+                    <div class="my-cards">
+                        <div class="my-cards-title">
+                            📋 Minhas Cartelas
+                            <span class="zoom-ctrl">
+                                <button class="btn-ctrl" onclick="zoomCards(-1)">−</button>
+                                <button class="btn-ctrl yellow" onclick="zoomCards(1)">+</button>
+                            </span>
+                        </div>
+                        <div class="my-cards-scroll">
+                            <div class="my-cards-grid" id="myCardsGrid"></div>
+                        </div>
+                    </div>
+
+                    <!-- Game Log -->
+                    <div class="game-log" id="gameLog"></div>
+
+                    <!-- PAINEL DE BOLAS NÃO SORTEADAS -->
+                    <div class="ordem-panel" style="margin-top:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px">
+                        <div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:6px">📊 Bolas Restantes</div>
+                        <div class="ordem-balls" id="ordemBalls" style="display:flex;flex-wrap:wrap;gap:3px"></div>
+                    </div>
+
+                    <!-- JACKPOT PANEL -->
+                    <div class="jackpot-panel" style="margin-top:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px">
+                        <div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:4px">💰 JACKPOT</div>
+                        <div id="jackpotSubtitle" style="font-size:11px;color:#fbbf24;line-height:1.4"></div>
+                        <div id="jackpotBallsPanel" style="margin-top:6px">
+                            <div style="font-size:11px;color:#9d96d4;margin-bottom:4px">Números necessários:</div>
+                            <div id="jackpotBallsGrid" style="display:flex;flex-wrap:wrap;gap:3px"></div>
+                        </div>
+                    </div>
+
+                    <!-- CARTELAS PRÓXIMAS -->
+                    <div class="close-cards-panel" style="margin-top:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px">
+                        <div style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:6px">🎯 Cartelas Próximas</div>
+                        <div id="closeCardsList" style="font-size:11px;color:#cbd5e1"></div>
+                    </div>
+
+                    <!-- FALTANDO 1 BOLA -->
+                    <div class="missing-panel" style="margin-top:8px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:10px">
+                        <div id="missingTitle" style="font-weight:700;font-size:13px;color:#e2e8f0;margin-bottom:6px">Cartelas faltando 1 bola</div>
+                        <div id="missingNumbersList" style="font-size:11px;color:#cbd5e1"></div>
+                    </div>
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== ADMIN SCREEN ===== -->
+    <div class="screen" id="screenAdmin">
+        <div class="admin-screen-wrapper">
+            <div class="admin-panel-content" style="width:100%;max-width:900px;margin:0 auto">
+
+                <div class="admin-header">
+                    <h3>⚙️ Painel do Dono</h3>
+                    <button class="admin-close" onclick="fecharAdminScreen()">✖</button>
+                </div>
+
+                <!-- Grid de Seções -->
+                <div class="admin-grid">
+
+                    <!-- Card: Gerenciar Créditos -->
+                    <div class="admin-card-section">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">💰</span>
+                            <span class="admin-card-title">Créditos (sacável)</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <label class="admin-label">Jogador:</label>
+                            <div class="admin-input-row">
+                                <select id="adminPlayerSelect" class="input-field"></select>
+                                <button class="btn btn-sm btn-refresh" onclick="carregarAdminUsuariosComSaldo()" title="Recarregar">🔄</button>
+                            </div>
+                            <label class="admin-label">Valor (fichas):</label>
+                            <input type="number" id="adminChipAmount" class="input-field" value="5000">
+                            <div class="admin-btn-row">
+                                <button class="btn btn-sm btn-add" onclick="executeAdminAction('add')">💰 Crédito +</button>
+                                <button class="btn btn-sm btn-remove" onclick="executeAdminAction('remove')">💰 Crédito −</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Saldo do Jogador -->
+                    <div class="admin-card-section card-blue">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">💳</span>
+                            <span class="admin-card-title">Saldo do Jogador</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <div id="adminPlayerBalance" class="admin-saldo-display">
+                                Selecione um jogador acima.
+                            </div>
+                            <button class="btn btn-sm btn-refresh" onclick="atualizarSaldoJogadorSelecionado()" style="margin-top:6px">🔄 Atualizar</button>
+                        </div>
+                    </div>
+
+                    <!-- Card: Bônus -->
+                    <div class="admin-card-section card-yellow">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">🎁</span>
+                            <span class="admin-card-title">Bônus (NÃO sacável)</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <p class="admin-info-text">Bônus NÃO pode ser sacado. Serve apenas para o jogador comprar cartelas.</p>
+                            <div class="admin-btn-row">
+                                <button class="btn btn-sm btn-add" onclick="addBonusSelecionado()" style="background:#10b981">🎁 Bônus +</button>
+                                <button class="btn btn-sm btn-remove" onclick="removerBonusSelecionado()">🎁 Bônus −</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card: Excluir Jogador -->
+                    <div class="admin-card-section card-red">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">🗑️</span>
+                            <span class="admin-card-title">Excluir Jogador</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <p class="admin-warning-text">⚠️ Ação irreversível!</p>
+                            <div class="admin-input-row">
+                                <select id="deletePlayerSelect" class="input-field"></select>
+                                <button class="btn btn-sm btn-remove" onclick="carregarUsuariosParaExclusao()" title="Recarregar">🔄</button>
+                            </div>
+                            <button class="btn btn-sm btn-remove" onclick="confirmarExclusaoJogador()" id="btnExcluirSelecionado" style="width:100%;margin-top:4px">🗑️ Excluir Selecionado</button>
+                        </div>
+                    </div>
+
+                    <!-- Card: Manutenção Programada -->
+                    <div class="admin-card-section card-blue">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">🔧</span>
+                            <span class="admin-card-title">Manutenção Programada</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <p class="admin-info-text">Avise os jogadores sobre uma manutenção. Eles verão um aviso ao entrar no site.</p>
+                            <label class="admin-label">Data (até):</label>
+                            <input type="date" id="manutData" class="input-field" />
+                            <label class="admin-label">Horário (até):</label>
+                            <input type="time" id="manutHorario" class="input-field" />
+                            <label class="admin-label">Mensagem (opcional):</label>
+                            <input type="text" id="manutMensagem" class="input-field" placeholder="Ex: Melhorias no sistema" maxlength="120" />
+                            <div class="admin-btn-row" style="margin-top:8px">
+                                <button class="btn btn-sm" style="background:#10b981;color:#fff" onclick="salvarManutencao(true)">🔔 Ativar Aviso</button>
+                                <button class="btn btn-sm btn-remove" onclick="salvarManutencao(false)">⏹️ Desativar</button>
+                            </div>
+                            <p id="manutStatus" class="admin-info-text" style="margin-top:8px"></p>
+                        </div>
+                    </div>
+
+                    <!-- Card: Modo Teste -->
+                    <div class="admin-card-section card-yellow">
+                        <div class="admin-card-head">
+                            <span class="admin-card-icon">🧪</span>
+                            <span class="admin-card-title">Modo Teste</span>
+                        </div>
+                        <div class="admin-card-body">
+                            <p class="admin-info-text">Quando LIGADO, todo saldo do jogador fica sacável (inclusive depósitos/bônus). Use apenas para testes.</p>
+                            <button id="btnModoTeste" class="btn btn-sm" style="background:linear-gradient(135deg,#f59e0b,#d97706);color:#fff;width:100%" onclick="alternarModoTeste()">🧪 Modo Teste: DESLIGADO</button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Abas de Navegação -->
+                <div class="admin-tabs">
+                    <button class="admin-tab active" data-tab="tabSaques" onclick="adminAbrirAba('tabSaques')">💵 Saques Pendentes</button>
+                    <button class="admin-tab" data-tab="tabUsuarios" onclick="adminAbrirAba('tabUsuarios')">📋 Usuários</button>
+                    <button class="admin-tab" data-tab="tabHistorico" onclick="adminAbrirAba('tabHistorico')">📜 Histórico</button>
+                    <button class="admin-tab" data-tab="tabTransacoes" onclick="adminAbrirAba('tabTransacoes')">💳 Transações</button>
+                    <button class="admin-tab" data-tab="tabAntifraude" onclick="adminAbrirAba('tabAntifraude')">🛡️ Anti-fraude</button>
+                </div>
+
+                <!-- Conteúdo das Abas -->
+                <div class="admin-tab-content" id="tabSaques">
+                    <div class="admin-tab-header">
+                        <h4>💵 Saques Pendentes</h4>
+                        <div class="admin-tab-actions">
+                            <button class="btn btn-sm btn-refresh" onclick="carregarSaquesAdmin()">🔄</button>
+                                <button class="btn btn-sm btn-primary" onclick="testarEmailAdmin()">✉️ Email</button>
+                                <button class="btn btn-sm btn-primary" onclick="testarAsaasAdmin()" style="background:#0d9488">💳 Asaas</button>
+                                <button class="btn btn-sm btn-primary" onclick="mostrarWebhookUrl()" style="background:#6366f1">🔗 Webhook</button>
+                        </div>
+                    </div>
+                    <div id="adminSaquesList"><p class="admin-empty">Nenhum saque pendente.</p></div>
+                </div>
+
+                <div class="admin-tab-content" id="tabUsuarios" style="display:none">
+                    <div class="admin-tab-header">
+                        <h4>📋 Usuários</h4>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarCadastrosAdmin()">🔄</button>
+                    </div>
+                    <div id="adminCadastrosList"><p class="admin-empty">Carregando...</p></div>
+                </div>
+
+                <div class="admin-tab-content" id="tabHistorico" style="display:none">
+                    <div class="admin-tab-header">
+                        <h4>📜 Histórico de Sorteios</h4>
+                    </div>
+                    <div class="admin-filtros">
+                        <label>De:</label>
+                        <input type="date" id="filtroHistDe" class="input-field input-field-sm">
+                        <label>Até:</label>
+                        <input type="date" id="filtroHistAte" class="input-field input-field-sm">
+                        <button class="btn btn-sm btn-refresh" onclick="carregarHistoricoAdmin()">🔍</button>
+                        <button class="btn btn-sm btn-download" onclick="baixarHistoricoCSV()">CSV</button>
+                        <button class="btn btn-sm btn-download" onclick="baixarHistoricoJSON()">JSON</button>
+                    </div>
+                    <div id="adminHistoricoList"><p class="admin-empty">Nenhum sorteio encontrado.</p></div>
+                </div>
+
+                <div class="admin-tab-content" id="tabTransacoes" style="display:none">
+                    <div class="admin-tab-header">
+                        <h4>💳 Transações</h4>
+                    </div>
+                    <div class="admin-filtros">
+                        <label>De:</label>
+                        <input type="date" id="filtroTransDe" class="input-field input-field-sm">
+                        <label>Até:</label>
+                        <input type="date" id="filtroTransAte" class="input-field input-field-sm">
+                        <button class="btn btn-sm btn-refresh" onclick="carregarTransacoesAdmin()">🔍</button>
+                        <button class="btn btn-sm btn-download" onclick="baixarTransacoesCSV()">CSV</button>
+                        <button class="btn btn-sm btn-download" onclick="baixarTransacoesJSON()">JSON</button>
+                    </div>
+                    <div id="adminTransacoesList"><p class="admin-empty">Nenhuma transação encontrada.</p></div>
+                </div>
+
+                <div class="admin-tab-content" id="tabAntifraude" style="display:none">
+                    <div class="admin-tab-header">
+                        <h4>🛡️ Contas Suspeitas (mesma impressão digital)</h4>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarAntiFraude()">🔄</button>
+                    </div>
+                    <p class="admin-info-text">Grupos de contas que compartilham o mesmo dispositivo (possível multi-conta para abuso de bônus/jackpot).</p>
+                    <div id="adminAntiFraudeList"><p class="admin-empty">Carregando...</p></div>
+                </div>
+
+                <!-- Barra de todos os jogadores reais -->
+                <div class="admin-players-bar" id="adminPlayersBarWrap" style="margin-top:18px;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:12px">
+                    <div class="admin-tab-header">
+                        <h4>👥 Todos os Jogadores (Bônus / Créditos / Depositado)</h4>
+                        <button class="btn btn-sm btn-refresh" onclick="carregarBarraJogadores()">🔄</button>
+                    </div>
+                    <div id="adminPlayersBar" style="overflow-x:auto;font-size:0.8em">Carregando...</div>
+                </div>
+
+                <!-- Botão Voltar -->
+                <div style="text-align:center;margin-top:20px">
+                    <button class="btn btn-primary" onclick="fecharAdminScreen()">⬅️ Voltar ao Jogo</button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== COUNTDOWN OVERLAY ===== -->
+    <div class="countdown-overlay" id="countdownOverlay">
+        <div class="countdown-content">
+            <div class="countdown-label">🔄 PRÓXIMO SORTEIO EM</div>
+            <div class="countdown-timer" id="countdownTimer">2:30</div>
+            <div class="auto-start-timer" id="autoStartTimer">--:--</div>
+            <div class="countdown-hint">Compre suas cartelas enquanto aguarda!</div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL PIX ===== -->
+    <div class="modal-overlay" id="modalPix" style="display:none">
+        <div class="modal-content">
+            <button class="modal-close" onclick="fecharModal('modalPix')">✖</button>
+            <h2>💰 Depósito via PIX</h2>
+            <div class="regra-deposito">
+                ⚠️ <strong>Valor mínimo de depósito: R$ 10,00.</strong><br>
+                Depósitos e Bônus <strong>NÃO podem ser sacados</strong> (só servem para comprar cartelas).<br>
+                Podem ser sacados: <strong>Créditos concedidos pelo admin</strong> + <strong>Prêmios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).
+                Saque mínimo: R$ 10,00.
+            </div>
+            <div class="pix-form">
+                <label>Valor (R$):</label>
+                <input type="number" id="pixValor" class="input-field" value="10" min="10" step="1">
+                <button class="btn btn-primary" onclick="gerarPix()">Gerar QR Code PIX</button>
+            </div>
+            <div id="pixQrArea" style="display:none">
+                <div class="pix-qr-container">
+                    <img id="pixQrCode" src="" alt="QR Code PIX" style="width:200px;height:200px;background:#fff;">
+                </div>
+                <p class="pix-instruction">Escaneie o QR Code ou copie o código abaixo para pagar</p>
+                <div class="pix-copy-area">
+                    <input type="text" id="pixCopyText" readonly>
+                    <button class="btn btn-primary" onclick="copiarPix()">📋 Copiar</button>
+                </div>
+                <p class="pix-status" id="pixStatus">Aguardando pagamento...</p>
+                <div class="pix-loader" id="pixLoader"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ===== MODAL SAQUE ===== -->
+    <div class="modal-overlay" id="modalSaque" style="display:none">
+        <div class="modal-content">
+            <button class="modal-close" onclick="fecharModal('modalSaque')">✖</button>
+            <h2>💵 Solicitar Saque</h2>
+            <button class="btn-hall" style="margin-left:auto" onclick="abrirMinhasEstatisticas()">📊 Minhas Estatísticas</button>
+            <div class="regra-deposito">
+                ⚠️ <strong>Saque mínimo: R$ 10,00.</strong><br>
+                <span id="saqueRegra">Podem ser sacados: <strong>Créditos (admin)</strong> + <strong>Prêmios ganhos</strong> (Kuadra, Kina, Keno, Jackpot).</span><br>
+                Depósitos e Bônus <span style="color:#ef4444;font-weight:700;font-size:1.05em">NÃO PODEM SER SACADOS</span>.<br>
+                Saldo sacável: <strong id="saqueSaldo">R$ 0,00</strong>
+            </div>
+            <div class="saque-form">
+                <label>Valor do Saque (R$):</label>
+                <input type="number" id="saqueValor" class="input-field" value="10" min="10" step="1">
+                <label>Tipo de Chave PIX:</label>
+                <select id="saqueTipoChave" class="input-field">
+                    <option value="cpf">CPF</option>
+                    <option value="email">E-mail</option>
+                    <option value="telefone">Telefone</option>
+                    <option value="aleatoria">Chave Aleatória</option>
+                </select>
+                <label>Chave PIX:</label>
+                <input type="text" id="saqueChave" class="input-field" placeholder="Digite sua chave PIX">
+                <button class="btn btn-success" onclick="solicitarSaque()">📤 Solicitar Saque</button>
+            </div>
+            <div id="saqueMsg" class="saque-msg"></div>
+            <div class="meus-saques-box">
+                <div class="meus-saques-title">📋 Meus saques</div>
+                <div id="meusSaquesList" class="meus-saques-list">Carregando…</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hall da Fama -->
+    <div class="modal-overlay" id="modalHall" style="display:none">
+        <div class="modal-content">
+            <button class="modal-close" onclick="fecharModal('modalHall')">✖</button>
+            <h2>🏆 Hall da Fama</h2>
+            <p style="color:#a0a0b0;font-size:0.82em;margin-bottom:10px">Últimos ganhadores de Kuadra, Kina e Keno.</p>
+            <div id="hallList" class="hall-list">Carregando…</div>
+        </div>
+    </div>
+
+    <!-- Minhas Estatísticas -->
+    <div class="modal-overlay" id="modalEstatisticas" style="display:none">
+        <div class="modal-content">
+            <button class="modal-close" onclick="fecharModal('modalEstatisticas')">✖</button>
+            <h2>📊 Minhas Estatísticas</h2>
+            <div id="estatisticasContent" class="estatisticas-content">Carregando…</div>
+        </div>
+    </div>
+
+    <!-- Floating WhatsApp Support -->
+    <a href="https://wa.me/5538998558528" target="_blank" class="whatsapp-float" aria-label="Suporte ao Jogador">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="white" width="24" height="24">
+            <path d="M16 0C7.2 0 0 7.2 0 16c0 3.2 1 6.2 2.6 8.8L1.2 31.2l6.8-1.8C10.4 31 13 32 16 32c8.8 0 16-7.2 16-16S24.8 0 16 0zm8.4 22.4c-.4 1.2-2 2.2-3.4 2.4-.8.2-2 .4-5.8-1.2-4.8-2-7.8-6.8-8-7.2-.4-.4-1.8-2.4-1.8-4.6s1.2-3.2 1.6-3.6c.4-.4.8-.4 1.2-.4h.8c.4 0 .8-.2 1.2.8.4 1 1.4 3.4 1.6 3.6.2.4.2.8-.2 1.2-.2.4-.4.8-.8 1.2-.4.4-.4.8-.2 1.2.4.6 1.6 2.6 3.4 4.2 2.4 2 4.2 2.6 5 2.8.6.2 1.2 0 1.6-.4.4-.4 1.8-2 2.2-2.8.4-.6.8-.6 1.4-.4.6.2 3.4 1.6 4 1.8.6.2 1 .4 1.2.6.2.4.2 1.4-.2 2.6z"/>
+        </svg>
+        <span>Suporte ao Jogador</span>
+    </a>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+<script src="game-logic.js?v=93"></script>
+<script src="network.js?v=91"></script>
     <script>
-        function faixaGrid(n){ return n<=30 ? 'f1' : (n<=60 ? 'f2' : 'f3'); }
-        const sorteadas=[12,20,25,27,36,38,52,58,85,87];
-        const bolaAtual=36;
-        const gridElement=document.getElementById('board-grid');
-        for(let i=1;i<=90;i++){
-            const cell=document.createElement('div');
-            cell.classList.add('grid-cell');
-            cell.dataset.num=i;
-            cell.innerText=String(i).padStart(2,'0');
-            if(i===bolaAtual) cell.classList.add('current');
-            else if(sorteadas.includes(i)) cell.classList.add('drawn', faixaGrid(i));
-            gridElement.appendChild(cell);
-        }
-
-        const PHASE_SEQUENCE=['kuadra','kina','keno'];
-        const COR={'kuadra':'b-kuadra','kina':'b-kina','keno':'b-keno'};
-        const NOME={'kuadra':'Kuadra','kina':'Kina','keno':'Keno'};
-        const drawnBalls=sorteadas.concat([bolaAtual]);
-        let currentPhaseIndex=0;
-
-        // Atualiza contador de bolas sorteadas
-        function atualizarContadorSorteadas(){
-            const el = document.getElementById('drawnCount');
-            if(el) el.textContent = drawnBalls.length;
-        }
-        atualizarContadorSorteadas();
-
-        const nomes=['VANDOSK8','ISAMARINA','Kald','Lucia Lima','Marcos','Ana','JoÃ£o','Beatriz','Carlos','Diego'];
-
-        function genCard(){
-            const nums=[];const used=new Set();
-            for(let r=0;r<3;r++){
-                const row=[];
-                for(let c=0;c<5;c++){let n;do{n=1+Math.floor(Math.random()*90);}while(used.has(n));used.add(n);row.push(n);}
-                nums.push(row);
-            }
-            return nums;
-        }
-        function closePhase(card){
-            if(currentPhaseIndex===0){
-                for(const row of card){
-                    const m=row.filter(v=>drawnBalls.includes(v)).length;
-                    if(m>=3) return {phase:'kuadra',falta:4-m};
+        // Auto-login se tiver sessao valida
+        (async function() {
+            if (typeof validarSessaoExistente === 'function') {
+                const valido = await validarSessaoExistente();
+                if (valido && typeof conectarAposAuth === 'function') {
+                    conectarAposAuth();
                 }
-            } else if(currentPhaseIndex===1){
-                for(const row of card){
-                    const m=row.filter(v=>drawnBalls.includes(v)).length;
-                    if(m>=4) return {phase:'kina',falta:5-m};
-                }
-            } else {
-                const m=card.flat().filter(v=>drawnBalls.includes(v)).length;
-                if(m>=14) return {phase:'keno',falta:15-m};
             }
-            return null;
-        }
-
-        const players=[];
-        nomes.forEach((nm,i)=>{
-            const card=genCard();
-            const cp=closePhase(card);
-            players.push({id:288000+i,name:nm,card, phase:cp?cp.phase:'kuadra',falta:cp?cp.falta:99});
-        });
-
-        const playersContainer=document.getElementById('players-list');
-        function renderPlayers(){
-            playersContainer.innerHTML='';
-            players.forEach(p=>{
-                const faltam=Math.max(0,Math.min(5,p.falta));
-                let balls='';
-                for(let i=0;i<5;i++){
-                    balls+=`<div class="pballmini ${i<faltam?'on':''}"></div>`;
-                }
-                const row=document.createElement('div');
-                row.className='player-row';
-                row.innerHTML=`
-                    <span class="pcode">${p.id}</span>
-                    <span class="player-name">${p.name}</span>
-                    <div class="pballs">${balls}</div>`;
-                playersContainer.appendChild(row);
-            });
-        }
-        renderPlayers();
-
-        function anunciar(nome,fase){
-            const d=document.createElement('div');
-            d.className='vencedor-pop';
-            d.innerHTML=`ðŸ† <b>${nome}</b> venceu ${NOME[fase]}!`;
-            document.body.appendChild(d);
-            setTimeout(()=>d.remove(),3500);
-        }
-
-        const elMainBall=document.getElementById('mainBall');
-        const hSlots=document.querySelectorAll('#historyBalls .hslot');
-        function faixa(n){ return n<=30 ? 'ball-f1' : (n<=60 ? 'ball-f2' : 'ball-f3'); }
-        let ultimas=drawnBalls.slice(-5);
-        function atualizarHistorico(){
-            hSlots.forEach((slot,i)=>{
-                const val=ultimas[ultimas.length-1-i];
-                if(val!=null){
-                    slot.textContent=val;
-                    slot.className='sub-ball hslot show '+faixa(val);
-                }
-            });
-        }
-        function atualizarCentral(n){
-            elMainBall.textContent=n;
-            elMainBall.className='main-ball '+faixa(n);
-        }
-        atualizarHistorico();
-        setInterval(()=>{
-            const next=1+Math.floor(Math.random()*90);
-            if(!drawnBalls.includes(next)) drawnBalls.push(next);
-            if(drawnBalls.length%8===0) currentPhaseIndex=Math.min(2,currentPhaseIndex+1);
-            renderOrdem();
-
-            atualizarCentral(next);
-
-            const prev=gridElement.querySelector('.grid-cell.current');
-            if(prev){ prev.classList.remove('current'); prev.classList.add('drawn', faixaGrid(+prev.dataset.num)); }
-            const cur=gridElement.querySelector('.grid-cell[data-num="'+next+'"]');
-            if(cur) cur.classList.add('current');
-
-            ultimas.push(next);
-            if(ultimas.length>5) ultimas.shift();
-            atualizarHistorico();
-
-            drawnBalls.push(next);
-            atualizarContadorSorteadas();
-
-            const elOrdem=document.getElementById('ordemBalls');
-            function renderOrdem(){
-                const faltam=[];
-                for(let i=1;i<=90;i++) if(!drawnBalls.includes(i)) faltam.push(i);
-                faltam.sort((a,b)=>b-a);
-                elOrdem.innerHTML=faltam.map(n=>`<div class="ordem-ball ${faixaGrid(n)}">${n}</div>`).join('');
-            }
-            renderOrdem();
-
-            players.forEach(p=>{
-                const cp=closePhase(p.card);
-                p.phase=cp?cp.phase:'kuadra';
-                p.falta=cp?cp.falta:99;
-                if(cp && cp.falta<=0){
-                    anunciar(p.name,p.phase);
-                    p.falta=99; p.phase='kuadra';
-                }
-            });
-            renderPlayers();
-        },1500);
-
-        const CARD_COST=0.15;
-        let qtd=1;
-        const elQty=document.getElementById('qty');
-        const elTotalVal=document.getElementById('totalVal');
-        const elTotalQty=document.getElementById('totalQty');
-        const qtyRow=document.getElementById('qtyRow');
-        function atualizarCompra(){
-            elQty.textContent=qtd;
-            elTotalVal.textContent='R$ '+(qtd*CARD_COST).toFixed(2).replace('.',',');
-            elTotalQty.textContent=qtd;
-            qtyRow.querySelectorAll('.qbtn').forEach(b=>{
-                b.classList.toggle('active', +b.dataset.q===qtd);
-            });
-        }
-        function alterar(v){
-            qtd=Math.max(1,Math.min(200,qtd+v));
-            atualizarCompra();
-        }
-        qtyRow.querySelectorAll('.qbtn').forEach(b=>{
-            b.addEventListener('click',()=>{ qtd=+b.dataset.q; atualizarCompra(); });
-        });
-        atualizarCompra();
-
-        const elFase=document.getElementById('faseJogo');
-        const elCartCount=document.getElementById('cartCount');
-        const faseTags=document.querySelectorAll('.fase-tag');
-        function atualizarFases(){
-            elFase.textContent=NOME[PHASE_SEQUENCE[currentPhaseIndex]];
-            faseTags.forEach(t=>{
-                t.classList.toggle('active', t.dataset.f===PHASE_SEQUENCE[currentPhaseIndex]);
-            });
-        }
-        atualizarFases();
-        setInterval(atualizarFases,500);
-
-        let cardW=160;
-        const cardsGrid=document.getElementById('myCardsGrid');
-        function zoom(delta){
-            cardW=Math.max(110,Math.min(220,cardW+delta*20));
-            cardsGrid.style.setProperty('--cardw',cardW+'px');
-        }
-
-        const myCardsGrid=document.getElementById('myCardsGrid');
-        let myCards=[];
-        let cardSeq=5000;
-        // Adiciona 3 cartelas de exemplo para demonstraÃ§Ã£o
-        for(let i=0;i<3;i++){
-            const nums=[]; const used=new Set();
-            while(nums.length<15){
-                const n=1+Math.floor(Math.random()*90);
-                if(!used.has(n)){ used.add(n); nums.push(n); }
-            }
-            nums.sort((a,b)=>a-b);
-            const marcados=new Set(nums.filter(v=>drawnBalls.includes(v)));
-            myCards.push({id:++cardSeq,nums,marcados});
-        }
-        renderMyCards();
-        function genTicket(){
-            const set=new Set();
-            while(set.size<15){set.add(1+Math.floor(Math.random()*90));}
-            return [...set].sort((a,b)=>a-b);
-        }
-        function comprarCartelas(){
-            const n=qtd;
-            for(let i=0;i<n;i++){
-                const nums=genTicket();
-                const marcados=new Set(nums.filter(v=>drawnBalls.includes(v)));
-                myCards.push({id:++cardSeq,nums,marcados});
-            }
-            elCartCount.textContent=myCards.length;
-            renderMyCards();
-        }
-        function renderMyCards(){
-            myCards.forEach(c=>{
-                c.nums.forEach(x=>{ if(drawnBalls.includes(x)) c.marcados.add(x); });
-            });
-            const ordenado=[...myCards].sort((a,b)=>{
-                const fa=15-a.marcados.size, fb=15-b.marcados.size;
-                return fa-fb;
-            });
-            myCardsGrid.innerHTML='';
-            ordenado.forEach(c=>{
-                const marks=c.marcados.size;
-                const div=document.createElement('div');
-                div.className='ticket3d';
-                div.innerHTML=`<div class="th"><span class="cid">#${c.id}</span><span>${marks}/15</span></div>
-                    <div class="tgrid">${c.nums.map(x=>`<div class="tnum ${c.marcados.has(x)?'mark':''}">${x}</div>`).join('')}</div>`;
-                myCardsGrid.appendChild(div);
-            });
-        }
-
-        setInterval(()=>{
-            document.getElementById('live-clock').innerText=new Date().toTimeString().split(' ')[0];
-        },1000);
+        })();
     </script>
 </body>
 </html>
