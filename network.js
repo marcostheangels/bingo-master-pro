@@ -115,7 +115,7 @@ let wasForcedDisconnect = false;
 let heartbeatInterval = null;
 let backgroundPingInterval = null;
 const MAX_RECONNECT_ATTEMPTS = 999;
-const RECONNECT_BASE_DELAY = 100; // reconexão rápida (antes 500ms)
+const RECONNECT_BASE_DELAY = 500;
 const HEARTBEAT_INTERVAL = 3000;
 
 function loadChips(name) {
@@ -299,6 +299,7 @@ function scheduleReconnect() {
         if (typeof loggedOut !== 'undefined' && loggedOut) return;
         const logado = (typeof minhaSessaoToken !== 'undefined' && minhaSessaoToken) || (typeof meuCpf !== 'undefined' && meuCpf);
         if (pendingConnect || logado) {
+            showOfflineBanner(true);
             connectSocket();
         }
     }, delay);
@@ -335,13 +336,12 @@ document.addEventListener('visibilitychange', () => {
         }
         cancelReconnect();
         if (typeof clearStaleCelebrations === 'function') clearStaleCelebrations();
-        if (typeof requestWakeLock === 'function') requestWakeLock();
-        if (typeof setupNoSleepFallback === 'function') setupNoSleepFallback();
         if (!loggedOut && pendingConnect && (!socket || socket.readyState !== WebSocket.OPEN)) {
             connectSocket();
         }
         if (!loggedOut && socket && socket.readyState === WebSocket.OPEN) {
             socket.send(JSON.stringify({ type: 'ping' }));
+            if (typeof requestWakeLock === 'function') requestWakeLock();
         }
     }
 });
@@ -639,7 +639,7 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
                 const wasEnded = gameEnded;
                 gameEnded = data.gameEnded;
                 if (gameEnded && !wasEnded && typeof showKenoRanking === 'function') {
-                    showKenoRanking();
+                    setTimeout(showKenoRanking, 4500);
                 }
             }
             if (data.currentRound !== undefined) {
@@ -650,12 +650,6 @@ function handleRelayMessage(data, senderRole, senderId, senderName) {
             if (data.jackpot !== undefined) {
                 JACKPOT_REWARD = data.jackpot;
                 try { localStorage.setItem('bingo_jackpot_reward', JACKPOT_REWARD); } catch (e) {}
-            }
-            if (data.cardTier) {
-                CARD_COST = data.cardTier.cost;
-            }
-            if (data.dynamicPrizes) {
-                currentDynamicPrizes = data.dynamicPrizes;
             }
             
             const me = allPlayers.find(p => p.id === myId || p.name.toLowerCase() === myName.toLowerCase());
@@ -906,39 +900,20 @@ function executeAdminAction(action) {
     if (!select || !amountInput) return;
 
     const selectedId = select.value;
-    const selectedCpf = select.selectedOptions && select.selectedOptions[0] ? (select.selectedOptions[0].dataset.cpf || '') : '';
     const amount = parseInt(amountInput.value, 10);
-    dbgWarn('[DEBUG executeAdminAction]', { selectedId, selectedCpf, amount, action, socketReady });
+    dbgWarn('[DEBUG executeAdminAction]', { selectedId, amount, action, socketReady });
     if (!selectedId || isNaN(amount) || amount <= 0) {
         showToast('Escolha um jogador e insira um valor válido.', 'warning', 3000);
         return;
     }
 
-    showSpinner(action === 'remove' ? 'Removendo crédito...' : 'Concedendo crédito...');
-    adminFetch(API_BASE + '/api/admin/usuario/credito', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf: selectedCpf, nome: selectedId, credito: amount, mode: action })
-    })
-    .then(r => r.json())
-    .then(r => {
-        hideSpinner();
-        if (r.success) {
-            const msg = r.emailEnviado
-                ? `✅ Crédito de ${amount.toLocaleString('pt-BR')} ${action === 'remove' ? 'removido' : 'concedido'} para "${selectedId}"! E-mail enviado para ${r.emailUsuario}`
-                : `✅ Crédito de ${amount.toLocaleString('pt-BR')} ${action === 'remove' ? 'removido' : 'concedido'} para "${selectedId}"!`;
-            showToast(msg, 'success', 8000);
-            if (typeof addLog === 'function') addLog(`Administrador ${action === 'remove' ? 'retirou' : 'adicionou'} ${amount.toLocaleString('pt-BR')} fichas.`);
-            carregarAdminUsuariosComSaldo();
-            setTimeout(atualizarSaldoJogadorSelecionado, 500);
-        } else {
-            showToast('Erro: ' + (r.error || 'Erro desconhecido'), 'error', 6000);
-        }
-    })
-    .catch(err => {
-        hideSpinner();
-        showToast('Erro de conexão: ' + err.message, 'error', 6000);
-    });
+    if (typeof sendAction === 'function') {
+        sendAction('adminChips', { targetId: selectedId, amount, mode: action });
+    }
+    if (typeof addLog === 'function') addLog(`Administrador ${action === 'remove' ? 'retirou' : 'adicionou'} ${amount.toLocaleString('pt-BR')} fichas.`);
+    
+    // Atualiza o painel de saldo do jogador selecionado
+    setTimeout(atualizarSaldoJogadorSelecionado, 500);
 }
 
 function atualizarSaldoJogadorSelecionado() {
@@ -977,7 +952,7 @@ function mostrarSaldoJogador(data) {
     const adminCreditsReais = (adminCredRaw / 1000).toFixed(2).replace('.', ',');
     const bonusGivenReais = ((data.bonusGiven || 0) / 1000).toFixed(2).replace('.', ',');
     const depositosReais = ((data.depositos || 0) / 1000).toFixed(2).replace('.', ',');
-    const sacavel = typeof modoTesteSaque !== 'undefined' && modoTesteSaque ? data.chips : adminCredRaw + (data.winnings || 0);
+    const sacavel = adminCredRaw + (data.winnings || 0);
     const sacavelReais = (sacavel / 1000).toFixed(2).replace('.', ',');
 
     const balanceDiv = document.getElementById('adminPlayerBalance');
@@ -1176,65 +1151,15 @@ function updatePlayerListUI() {
 
     sortedPlayers.forEach((p, index) => {
         const li = document.createElement('li');
-        li.className = 'player-row';
         const hostIcon = p.isHost ? '👑 ' : '';
         const cardCount = p.cards ? p.cards.length : 0;
-        const falta = calcularBolasFaltando(p);
-        let balls = '';
-        for (let i = 0; i < 5; i++) {
-            balls += `<div class="pballmini ${i < falta ? 'on' : ''}"></div>`;
-        }
-        li.innerHTML =
-            `<span class="player-name">${hostIcon}${escapeHtml(p.name)}</span>` +
-            `<div class="pballs">${balls}</div>` +
-            `<span class="player-cards">${cardCount} cartela${cardCount === 1 ? '' : 's'}</span>`;
+        li.innerHTML = `<span>${hostIcon}${escapeHtml(p.name)}</span><span class="player-cards">${cardCount} cartela${cardCount === 1 ? '' : 's'}</span>`;
         list.appendChild(li);
     });
 
     if (typeof renderCloseCardsPanel === 'function') {
         renderCloseCardsPanel();
     }
-}
-
-/* Quantas bolas faltam para o jogador fechar (estratégia "falta 1 bola"),
-   igual ao preview. Kuadra: 4 - marcadosNaLinha; Kina: 5 - marcadosNaLinha;
-   Keno: 15 - marcadosTotais. Mostra no máximo 5 bolinhas acesas. */
-function calcularBolasFaltando(p) {
-    if (!p || !p.cards || !p.cards.length || typeof drawnBalls === 'undefined') return 5;
-    const card = p.cards[0];
-    const nums = (card.numbers && card.numbers.length) ? card.numbers : (card.numeros || []);
-    const getNums = () => {
-        if (Array.isArray(nums)) {
-            if (nums.length && Array.isArray(nums[0])) return nums.flat().filter(v => v !== '' && v != null).map(Number);
-            return nums.filter(v => v !== '' && v != null).map(Number);
-        }
-        return [];
-    };
-    const lista = getNums();
-    if (!lista.length) return 5;
-    const drawn = (drawnBalls || []).map(Number);
-    const idx = (typeof currentPhaseIndex !== 'undefined') ? currentPhaseIndex : 0;
-    if (idx === 0) {
-        for (const row of chunk(lista, 5)) {
-            const m = row.filter(v => drawn.includes(v)).length;
-            if (m >= 3) return Math.min(5, Math.max(0, 4 - m));
-        }
-    } else if (idx === 1) {
-        for (const row of chunk(lista, 5)) {
-            const m = row.filter(v => drawn.includes(v)).length;
-            if (m >= 4) return Math.min(5, Math.max(0, 5 - m));
-        }
-    } else {
-        const m = lista.filter(v => drawn.includes(v)).length;
-        if (m >= 14) return Math.min(5, Math.max(0, 15 - m));
-    }
-    return 5;
-}
-
-function chunk(arr, n) {
-    const out = [];
-    for (let i = 0; i < arr.length; i += n) out.push(arr.slice(i, i + n));
-    return out;
 }
 
 function carregarCadastrosAdmin() {
@@ -1301,55 +1226,10 @@ function carregarCadastrosAdmin() {
         } else if (btn.classList.contains('btn-editar')) {
             editarUsuarioAdmin(cpf, nome, email, senha, pix);
         } else if (btn.classList.contains('btn-remove')) {
-            excluirUsuarioAdminDireto(cpf, nome);
+            excluirUsuarioAdmin(cpf, nome);
         }
     });
 })();
-
-// Exclusão direta via window.confirm() nativo (mesma lógica que funciona no select)
-function excluirUsuarioAdminDireto(cpf, nome) {
-    console.log('[EXCLUIR] excluirUsuarioAdminDireto cpf=', cpf, 'nome=', nome);
-    const cpfLimpo = String(cpf).replace(/\D/g, '');
-    if (!cpfLimpo) {
-        showToast('CPF inválido para exclusão.', 'error', 4000);
-        return;
-    }
-    if (!window.confirm('Tem certeza que deseja EXCLUIR COMPLETAMENTE o jogador "' + (nome || '') + '"?\n\nIsso apaga cadastro, saldo, saques, transações e histórico.')) {
-        return;
-    }
-
-    showToast('Excluindo ' + (nome || cpfLimpo) + '...', 'info', 4000);
-
-    let controller = null, signal = null;
-    try { if (typeof AbortController !== 'undefined') { controller = new AbortController(); signal = controller.signal; } } catch (e) {}
-    const fetchTimeout = setTimeout(() => { if (controller) controller.abort(); }, 12000);
-
-    adminFetch(API_BASE + '/api/admin/usuario/excluir', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf: cpfLimpo }),
-        signal: signal
-    })
-    .then(async (r) => {
-        clearTimeout(fetchTimeout);
-        let j = null;
-        try { j = await r.json(); } catch (e) { j = null; }
-        console.log('[EXCLUIR] resposta:', r.status, JSON.stringify(j));
-        if (r.ok && j && j.success) {
-            showToast('✅ Usuário "' + nome + '" excluído com sucesso!', 'success', 6000);
-            try { carregarCadastrosAdmin(); } catch (e) {}
-            try { carregarAdminUsuariosComSaldo(); } catch (e) {}
-            try { carregarUsuariosParaExclusao(); } catch (e) {}
-        } else {
-            showToast('Erro: ' + ((j && (j.error || j.erro)) || 'Falha ao excluir (HTTP ' + (r.ok ? 'desconhecido' : 'sem resposta') + ')'), 'error', 6000);
-        }
-    })
-    .catch((err) => {
-        clearTimeout(fetchTimeout);
-        console.log('[EXCLUIR] erro fetch:', err && err.message);
-        showToast(err && err.name === 'AbortError' ? 'A operação demorou muito (timeout).' : 'Erro de conexão: ' + (err && err.message ? err.message : err), 'error', 6000);
-    });
-}
 
 function excluirUsuarioAdmin(cpf, nome) {
     console.log('[EXCLUIR] excluirUsuarioAdmin chamado cpf=', cpf, 'nome=', nome);
@@ -1678,7 +1558,6 @@ function carregarAdminUsuariosComSaldo() {
             usuarios.filter(u => u.isBot !== true).forEach(u => {
                 const option = document.createElement('option');
                 option.value = u.nomeCompleto;
-                option.dataset.cpf = u.cpf || '';
                 const saldo = (u.chips / 1000).toFixed(2).replace('.', ',');
                 const ganhos = (u.winnings / 1000).toFixed(2).replace('.', ',');
                 const credAdmin = (u.adminCreditos / 1000).toFixed(2).replace('.', ',');
@@ -1736,7 +1615,7 @@ function carregarUsuariosParaExclusao() {
         });
 }
 
-// Admin - Excluir jogador selecionado (usa window.confirm nativo - funciona sem travamento)
+// Admin - Excluir jogador selecionado (versão com select + confirmação usando função existente)
 function confirmarExclusaoJogador() {
     console.log('[EXCLUIR] confirmarExclusaoJogador chamado');
     const select = document.getElementById('deletePlayerSelect');
@@ -1744,55 +1623,16 @@ function confirmarExclusaoJogador() {
         showToast('Selecione um jogador para excluir.', 'warning', 3500);
         return;
     }
-    const cpf = String(select.value).replace(/\D/g, '');
-    const selectedOption = Array.from(select.options).find(o => o.value && String(o.value).replace(/\D/g, '') === cpf);
+    const cpf = String(select.value).trim();
+    const selectedOption = Array.from(select.options).find(o => o.value === cpf);
     if (!selectedOption) {
         showToast('Selecione um jogador válido para excluir.', 'warning', 3500);
         return;
     }
     const nome = selectedOption.dataset.nome || selectedOption.textContent || '';
-    console.log('[EXCLUIR] jogador selecionado:', cpf, nome);
 
-    if (!window.confirm('Tem certeza que deseja EXCLUIR COMPLETAMENTE o jogador "' + nome + '"?\n\nIsso apaga cadastro, saldo, saques, transações e histórico.')) {
-        return;
-    }
-
-    const btn = document.getElementById('btnExcluirSelecionado');
-    if (btn) { btn.disabled = true; btn.textContent = 'Excluindo...'; }
-    showToast('Excluindo ' + nome + '...', 'info', 4000);
-
-    let controller = null, signal = null;
-    try { if (typeof AbortController !== 'undefined') { controller = new AbortController(); signal = controller.signal; } } catch (e) {}
-    const fetchTimeout = setTimeout(() => { if (controller) controller.abort(); }, 12000);
-
-    adminFetch(API_BASE + '/api/admin/usuario/excluir', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cpf: cpf }),
-        signal: signal
-    })
-    .then(async (r) => {
-        clearTimeout(fetchTimeout);
-        let j = null;
-        try { j = await r.json(); } catch (e) { j = null; }
-        console.log('[EXCLUIR] resposta:', r.status, JSON.stringify(j));
-        if (r.ok && j && j.success) {
-            try { selectedOption.remove(); } catch (e) {}
-            showToast('✅ Usuário "' + nome + '" excluído com sucesso!', 'success', 6000);
-            try { carregarCadastrosAdmin(); } catch (e) {}
-            try { carregarAdminUsuariosComSaldo(); } catch (e) {}
-        } else {
-            showToast('Erro: ' + ((j && (j.error || j.erro)) || 'Falha ao excluir (HTTP ' + (r.ok ? 'desconhecido' : 'sem resposta') + ')'), 'error', 6000);
-        }
-    })
-    .catch((err) => {
-        clearTimeout(fetchTimeout);
-        console.log('[EXCLUIR] erro fetch:', err && err.message);
-        showToast(err && err.name === 'AbortError' ? 'A operação demorou muito (timeout).' : 'Erro de conexão: ' + (err && err.message ? err.message : err), 'error', 6000);
-    })
-    .finally(() => {
-        if (btn) { btn.disabled = false; btn.textContent = '🗑️ Excluir Selecionado'; }
-    });
+    // Reusa a função existente com fluxo completo de confirmação
+    excluirUsuarioAdmin(cpf, nome);
 }
 
 function adminAbrirAba(tabId) {

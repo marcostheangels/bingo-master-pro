@@ -8,7 +8,6 @@ const https = require('https');
 const WebSocket = require('ws');
 const engine = require('./engine');
 const db = require('./db');
-const { log } = require('./logger');
 let nodemailer = null;
 try { nodemailer = require('nodemailer'); } catch (e) { console.log('[EMAIL] nodemailer não disponível.'); }
 
@@ -35,19 +34,6 @@ function validarValorSaque(v) {
 const app = express();
 app.use(cors({ origin: true, credentials: true }));
 app.use(express.json());
-
-// Request logging middleware
-app.use((req, res, next) => {
-    const start = Date.now();
-    res.on('finish', () => {
-        const dur = Date.now() - start;
-        if (req.path.startsWith('/api/')) {
-            log('REQ', req.method + ' ' + req.path, { status: res.statusCode, dur: dur + 'ms', ip: req.ip });
-        }
-    });
-    next();
-});
-
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
 const PORT = process.env.PORT || 3000;
@@ -96,17 +82,6 @@ if (SMTP_PASS && nodemailer) {
     })();
 }
 
-async function fetchWithTimeout(url, opts, ms = 10000) {
-    const controller = new AbortController();
-    const id = setTimeout(() => controller.abort(), ms);
-    try {
-        const res = await fetch(url, { ...opts, signal: controller.signal });
-        return res;
-    } finally {
-        clearTimeout(id);
-    }
-}
-
 async function enviarEmailSendGrid(to, subject, html, unsubscribeUrl) {
     if (!SENDGRID_API_KEY) return false;
     try {
@@ -125,7 +100,7 @@ async function enviarEmailSendGrid(to, subject, html, unsubscribeUrl) {
             extraHeaders.push({ key: 'List-Unsubscribe', value: '<' + unsubscribeUrl + '>' });
             extraHeaders.push({ key: 'List-Unsubscribe-Post', value: 'List-Unsubscribe=One-Click' });
         }
-        const res = await fetchWithTimeout('https://api.sendgrid.com/v3/mail/send', {
+        const res = await fetch('https://api.sendgrid.com/v3/mail/send', {
             method: 'POST',
             headers,
             body: JSON.stringify({
@@ -137,7 +112,7 @@ async function enviarEmailSendGrid(to, subject, html, unsubscribeUrl) {
                 headers: extraHeaders.reduce((o, h) => { o[h.key] = h.value; return o; }, {}),
                 asm: { group_id: 1 }
             })
-        }, 8000);
+        });
         if (!res.ok) {
             const errText = await res.text();
             throw new Error('SendGrid: ' + res.status + ' ' + errText.slice(0, 200));
@@ -190,11 +165,25 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
     const assunto = 'Seu bônus de R$ ' + valorFmt + ' chegou, ' + nomeUsuario + '!';
 
     let enviado = false;
-
-    // 1) Resend em primeiro lugar (canal comprovado funcionando em produção)
+    if (transporter) {
+        try {
+            const info = await transporter.sendMail({
+                from: '"BingoVipClub" <' + SMTP_USER + '>',
+                to: emailLimpo,
+                subject: assunto,
+                html: htmlJogador,
+                headers: { 'List-Unsubscribe': '<' + unsubscribeUrl + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
+            });
+            enviado = true;
+            console.log('[EMAIL] Enviado via SMTP (Gmail)! ID:', info.messageId);
+        } catch (e) { console.error('[EMAIL] SMTP falhou, tentando alternativas:', e.message); }
+    }
+    if (!enviado && SENDGRID_API_KEY) {
+        enviado = await enviarEmailSendGrid(emailLimpo, assunto, htmlJogador, unsubscribeUrl);
+    }
     if (!enviado && RESEND_API_KEY) {
         try {
-            const res = await fetchWithTimeout('https://api.resend.com/emails', {
+            const res = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({
@@ -208,31 +197,8 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
             if (res.ok) {
                 enviado = true;
                 console.log('[EMAIL] Enviado via Resend para', emailLimpo);
-            } else {
-                const txt = await res.text();
-                console.error('[EMAIL] Resend retornou', res.status, txt.slice(0, 200));
             }
         } catch (e) { console.error('[EMAIL] Resend falhou:', e.message); }
-    }
-
-    // 2) SendGrid como alternativa
-    if (!enviado && SENDGRID_API_KEY) {
-        enviado = await enviarEmailSendGrid(emailLimpo, assunto, htmlJogador, unsubscribeUrl);
-    }
-
-    // 3) SMTP (Gmail) como último recurso
-    if (!enviado && transporter) {
-        try {
-            const info = await transporter.sendMail({
-                from: '"BingoVipClub" <' + SMTP_USER + '>',
-                to: emailLimpo,
-                subject: assunto,
-                html: htmlJogador,
-                headers: { 'List-Unsubscribe': '<' + unsubscribeUrl + '>', 'List-Unsubscribe-Post': 'List-Unsubscribe=One-Click' }
-            });
-            enviado = true;
-            console.log('[EMAIL] Enviado via SMTP (Gmail)! ID:', info.messageId);
-        } catch (e) { console.error('[EMAIL] SMTP falhou:', e.message); }
     }
     console.log('[EMAIL-DIAG] Resultado final enviado=', enviado, 'para', emailLimpo);
 
@@ -246,46 +212,7 @@ async function enviarEmailBonus(nomeUsuario, emailUsuario, valorReais) {
         }
     }
 
-// Envia um email transacional para o PRÃ“PRIO JOGADOR (usado em crÃ©dito, depÃ³sito, PIX, etc.)
-// Prioriza Resend (canal comprovado em produÃ§Ã£o).
-async function notificarJogador(nomeUsuario, emailUsuario, assunto, htmlCorpo) {
-    const emailLimpo = (emailUsuario || '').toString().trim().toLowerCase();
-    const emailValido = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailLimpo);
-    if (!emailValido) {
-        console.log('[EMAIL] notificarJogador: email invÃ¡lido para', nomeUsuario, '(', emailLimpo, ') - pulando');
-        return false;
-    }
-    let enviado = false;
-    if (RESEND_API_KEY) {
-        try {
-            const res = await fetchWithTimeout('https://api.resend.com/emails', {
-                method: 'POST',
-                headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    from: 'BingoVipClub <contato@bingovipclub.shop>',
-                    to: [emailLimpo],
-                    subject: assunto,
-                    html: htmlCorpo,
-                    headers: { 'List-Unsubscribe': '<' + SITE_URL + '/unsubscribe?email=' + encodeURIComponent(emailLimpo) + '>' }
-                })
-            });
-            if (res.ok) { enviado = true; console.log('[EMAIL] notificarJogador: enviado via Resend para', emailLimpo); }
-            else { const t = await res.text(); console.error('[EMAIL] notificarJogador Resend', res.status, t.slice(0, 200)); }
-        } catch (e) { console.error('[EMAIL] notificarJogador Resend falhou:', e.message); }
-    }
-    if (!enviado && SENDGRID_API_KEY) {
-        enviado = await enviarEmailSendGrid(emailLimpo, assunto, htmlCorpo, SITE_URL + '/unsubscribe?email=' + encodeURIComponent(emailLimpo));
-    }
-    if (!enviado && transporter) {
-        try {
-            await transporter.sendMail({ from: '"BingoVipClub" <' + SMTP_USER + '>', to: emailLimpo, subject: assunto, html: htmlCorpo });
-            enviado = true;
-        } catch (e) { console.error('[EMAIL] notificarJogador SMTP falhou:', e.message); }
-    }
-    return enviado;
-}
-
-function montarEmailAdmin(assunto, corpoHtml, badge) {
+async function montarEmailAdmin(assunto, corpoHtml, badge) {
     const badgeHtml = badge ? '<div style="display:inline-block;background:#10b981;color:#fff;font-size:12px;font-weight:bold;padding:4px 12px;border-radius:20px;letter-spacing:1px;margin-bottom:14px">' + badge + '</div>' : '';
     return `
         <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
@@ -307,31 +234,20 @@ function montarEmailAdmin(assunto, corpoHtml, badge) {
 async function enviarEmailAdmin(assunto, corpoHtml, badge) {
     const html = montarEmailAdmin(assunto, corpoHtml, badge);
     let enviado = false;
-    // 1) Resend primeiro (funciona comprovadamente para emails de jogador)
+    if (SENDGRID_API_KEY) {
+        enviado = await enviarEmailSendGrid(ADMIN_EMAIL, assunto, html);
+    }
     if (!enviado && RESEND_API_KEY) {
         try {
-            const res = await fetchWithTimeout('https://api.resend.com/emails', {
+            const res = await fetch('https://api.resend.com/emails', {
                 method: 'POST',
                 headers: { 'Authorization': 'Bearer ' + RESEND_API_KEY, 'Content-Type': 'application/json' },
                 body: JSON.stringify({ from: 'BingoVipClub <contato@bingovipclub.shop>', to: [ADMIN_EMAIL], subject: assunto, html })
-            }, 8000);
-            if (res.ok) { enviado = true; log('EMAIL', 'Admin via Resend', { assunto }); }
-            else { const t = await res.text(); console.error('[EMAIL] Resend admin erro:', res.status, t.slice(0, 200)); }
+            });
+            if (res.ok) enviado = true;
         } catch (e) { console.error('[EMAIL] Resend admin falhou:', e.message); }
     }
-    // 2) SendGrid como fallback
-    if (!enviado && SENDGRID_API_KEY) {
-        enviado = await enviarEmailSendGrid(ADMIN_EMAIL, assunto, html);
-    }
-    // 3) SMTP como ultimo fallback
-    if (!enviado && transporter) {
-        try {
-            await transporter.sendMail({ from: '"BingoVipClub" <' + SMTP_USER + '>', to: ADMIN_EMAIL, subject: assunto, html });
-            enviado = true;
-            log('EMAIL', 'Admin via SMTP', { assunto });
-        } catch (e) { console.error('[EMAIL] SMTP admin falhou:', e.message); }
-    }
-    log('EMAIL', 'Notificacao admin', { assunto, enviado });
+    console.log('[EMAIL] Notificação admin:', enviado ? 'enviada' : 'FALHOU', '-', assunto);
     return enviado;
 }
 
@@ -458,7 +374,6 @@ function getRoom(roomId) {
             gameEnded: false,
             currentRound: 0,
             jackpot: engine.JACKPOT_INITIAL,
-            botCardFactor: 1.0,
             jackpotAwarded: false,
             autoStartSeconds: 0,
             autoStartTimer: null,
@@ -530,8 +445,6 @@ function sendGameState(room, ws) {
         jackpot: room.jackpot,
         autoStartSeconds: room.autoStartSeconds,
         totalCardsAtStart: room.totalCardsAtStart || 0,
-        cardTier: room.cardTier || null,
-        dynamicPrizes: room.dynamicPrizes || null,
         manutencao: db.getManutencao()
     };
     broadcast(room, msg);
@@ -552,7 +465,7 @@ function iniciarAutoStartServer(room) {
     pararAutoStartServer(room);
     if (room.gameActive || room.gameEnded) return;
     broadcast(room, { type: 'preparingNewRound', seconds: 50 });
-    addLog(room, '⏳ Novo sorteio em 50 segundos. Compre suas cartelas!');
+    addLog(room, 'â³ Novo sorteio em 50 segundos. Compre suas cartelas!');
     room.autoStartSeconds = 60;
     console.log(`[AUTOSTART] Iniciando contagem de ${room.autoStartSeconds}s para sala ${room.id}`);
     room.autoStartTimer = setInterval(() => {
@@ -574,12 +487,6 @@ function pararAutoStartServer(room) {
 
 function iniciarNovaRodada(room) {
     if (room.gameActive) return;
-    log('GAME', 'Rodada iniciada', { sala: room.id, round: room.currentRound + 1 });
-    
-    // Tier fixo: R$0,15 — igual ao site de referencia
-    const tier = engine.CARD_TIERS[0];
-    room.cardTier = tier;
-    
     liquidarComprasSala(room.id);
     room.currentRound++;
     room.drawnBalls = [];
@@ -590,50 +497,28 @@ function iniciarNovaRodada(room) {
     // Give bots cards, reset awards
     room.players.forEach(p => {
         if (p.isBot) {
-            const factor = room.botCardFactor || 1.0;
-            const maxCards = Math.round(engine.BOT_MAX_CARDS * factor);
-            const minCards = Math.max(5, Math.round(10 * factor));
-            const qtd = Math.floor(Math.random() * (maxCards - minCards + 1)) + minCards;
+            const maxCards = engine.BOT_MAX_CARDS; // 15
+            const qtd = Math.floor(Math.random() * maxCards) + 1; // 1 a 15
             p.cards = [];
             for (let i = 0; i < qtd; i++) {
                 p.cards.push(engine.generateBingoCardData());
             }
-            p.chips = Math.max(0, p.chips - p.cards.length * tier.cost);
+            p.chips = Math.max(0, p.chips - p.cards.length * engine.CARD_COST);
         }
         (p.cards || []).forEach(card => {
             card.awards = { kuadra: false, kina: false, keno: false };
         });
     });
     
-    // Calcula prêmios baseados SÓ em cartelas HUMANAS (bots têm dinheiro fictício)
-    const humanCards = Array.from(room.players.values()).filter(p => !p.isBot).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
-    const maxHumanCards = Array.from(room.players.values()).filter(p => !p.isBot).reduce((max, p) => Math.max(max, p.cards ? p.cards.length : 0), 0);
-    room.totalCardsAtStart = humanCards;
-    const rewards = engine.calculatePhaseRewards(humanCards, tier);
-
-    // Keno mínimo garantido: sempre maior que o MAIOR gasto individual
-    const kenoMinimum = Math.max(rewards.kenoMinimum, Math.floor(maxHumanCards * tier.cost * engine.KENO_MIN_MULTIPLIER));
-    const kenoGap = Math.max(0, kenoMinimum - rewards.kenoBase);
-
-    let kenoFinal = rewards.kenoBase;
-    let casaLucro = rewards.casaLucro;
-    if (kenoGap > 0) {
-        let gap = kenoGap;
-        // Suplementa do lucro da casa desta rodada (jackpot é fixo, só exibição)
-        const fromCasa = Math.min(gap, casaLucro);
-        casaLucro -= fromCasa;
-        gap -= fromCasa;
-        kenoFinal = rewards.kenoBase + (kenoGap - gap);
-    }
-    room.dynamicPrizes = { kuadra: rewards.kuadra, kina: rewards.kina, keno: kenoFinal };
-
-    // Jackpot: valor fixo de exibição (nunca é pago nem alterado)
-    room.jackpot = engine.JACKPOT_INITIAL;
-
+    const initialCards = Array.from(room.players.values()).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
+    room.totalCardsAtStart = initialCards;
+    // Jackpot é progressivo: mantém o acumulado; só semeia o valor inicial se estiver zerado
+    if (!room.jackpot) room.jackpot = engine.JACKPOT_INITIAL;
+    
     saveRoomSnapshot(room);
     sendGameState(room);
-    addLog(room, `🎯 Rodada #${room.currentRound} iniciada! (${tier.emoji} ${tier.name} - R$ ${(tier.cost / 1000).toFixed(2).replace('.', ',')})`);
-    broadcast(room, { type: 'notice', text: `🎯 Rodada ${tier.emoji} ${tier.name} iniciada! Cartela: R$ ${(tier.cost / 1000).toFixed(2).replace('.', ',')}`, kind: 'success' });
+    addLog(room, `ðŸŽ¯ Rodada #${room.currentRound} iniciada!`);
+    broadcast(room, { type: 'notice', text: 'ðŸŽ¯ Nova rodada iniciada!', kind: 'success' });
     const playersArr2 = Array.from(room.players.values());
     const closeInfo = engine.computeCloseCardsForAllPlayers(playersArr2, room.currentPhaseIndex, room.drawnBalls);
     broadcast(room, { type: 'closeCards', data: closeInfo });
@@ -721,10 +606,8 @@ async function sortearProximaBola(room) {
         
         if (winners.length > 0) {
             const phaseKey = engine.PHASE_SEQUENCE[room.currentPhaseIndex];
-            log('GAME', 'Vencedores', { qtd: winners.length, fase: phaseKey, vencedores: winners.map(w => ({ nome: w.player.name, premio: w.phaseLabel })) });
             const humanCards = playersArr.filter(p => !p.isBot).reduce((sum, p) => sum + (p.cards ? p.cards.length : 0), 0);
-            const dynamicReward = room.dynamicPrizes ? room.dynamicPrizes[phaseKey] : null;
-            const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, humanCards, room.jackpot, dynamicReward);
+            const { results, isJackpot } = engine.processPhaseWinners(winners, phaseKey, room.drawnBalls, humanCards, room.jackpot);
 
             // Update persistent chips/winnings (cache instantâneo, sync em background)
             // Bots ganham no jogo (fichas/banner) para dar vida à sala, mas NÃƒO vão para o
@@ -807,14 +690,6 @@ async function sortearProximaBola(room) {
             broadcast(room, { type: 'jackpotUpdate', value: room.jackpot });
         }
         
-        // Ajusta dificuldade adaptativa: humano ganhou → bots mais fortes; bot ganhou → bots mais fracos
-        const hasHumanWinner = results.some(r => !r.player.isBot);
-        if (hasHumanWinner) {
-            room.botCardFactor = Math.min(2.0, (room.botCardFactor || 1.0) + 0.1);
-        } else {
-            room.botCardFactor = Math.max(0.2, (room.botCardFactor || 1.0) - 0.05);
-        }
-
         // Advance phase or end round
         if (room.currentPhaseIndex < engine.PHASE_SEQUENCE.length - 1) {
             avancarParaProximaFase(room);
@@ -841,7 +716,7 @@ function avancarParaProximaFase(room) {
     room.phasePauseTimer = setTimeout(() => {
         room.phasePauseTimer = null;
         agendarProximoDraw(room);
-    }, 10000);
+    }, 8000);
 }
 
 async function salvarHistoricoSorteio(room) {
@@ -868,7 +743,7 @@ async function salvarHistoricoSorteio(room) {
     const historico = db.getHistorico();
     historico.push(dados);
     await db.setHistorico(historico);
-    addLog(room, `📋 Sorteio #${room.currentRound} salvo no histórico.`);
+    addLog(room, `ðŸ“‹ Sorteio #${room.currentRound} salvo no histórico.`);
 }
 
 async function finalizarRodada(room) {
@@ -880,30 +755,32 @@ async function finalizarRodada(room) {
     
     await salvarHistoricoSorteio(room);
     sendGameState(room);
-    addLog(room, '🏁 Rodada encerrada!');
-    broadcast(room, { type: 'notice', text: '🏁 Rodada encerrada! Cartelas serão limpas...', kind: 'info' });
+    addLog(room, 'ðŸ Rodada encerrada!');
+    broadcast(room, { type: 'notice', text: 'ðŸ Rodada encerrada! Cartelas serão limpas...', kind: 'info' });
     
-    // Limpa cartelas imediatamente
-    if (room.gameActive) return;
-    for (const p of room.players.values()) {
-        const qtd = p.cards ? p.cards.length : 0;
-        if (!p.isBot && qtd > 0) {
-            const refundCost = (room.cardTier && room.cardTier.cost) ? room.cardTier.cost : engine.CARD_COST;
-            p.chips += qtd * refundCost;
-            await setChips(p.name, p.chips, p.winnings);
+    // After 10s, clear cards and restart auto-start
+    setTimeout(async () => {
+        if (room.gameActive) return;
+        // Clear all cards, refund humans
+        for (const p of room.players.values()) {
+            const qtd = p.cards ? p.cards.length : 0;
+            if (!p.isBot && qtd > 0) {
+                p.chips += qtd * engine.CARD_COST;
+                await setChips(p.name, p.chips, p.winnings);
+            }
+            p.cards = [];
         }
-        p.cards = [];
-    }
-    room.drawnBalls = [];
-    room.currentPhaseIndex = 0;
-    room.gameEnded = false;
-    cleanUpBots(room);
-    broadcast(room, { type: 'resetGame', players: sanitizePlayers(room), drawnBalls: [], currentPhaseIndex: 0, gameActive: false, gameEnded: false, totalCardsAtStart: 0 });
-    addLog(room, '🔄 Cartelas limpas. Novo sorteio em breve!');
-    broadcast(room, { type: 'notice', text: '🔄 Compre suas cartelas! Novo sorteio em 1 minuto.', kind: 'info' });
-    saveRoomSnapshot(room);
-    // Aguarda 4s (ranking na tela), depois inicia contagem regressiva
-    setTimeout(() => iniciarAutoStartServer(room), 4000);
+        room.drawnBalls = [];
+        room.currentPhaseIndex = 0;
+        room.gameEnded = false;
+        cleanUpBots(room);
+        broadcast(room, { type: 'resetGame', players: sanitizePlayers(room), drawnBalls: [], currentPhaseIndex: 0, gameActive: false, gameEnded: false, totalCardsAtStart: 0 });
+        addLog(room, 'ðŸ”„ Cartelas limpas. Novo sorteio em breve!');
+        broadcast(room, { type: 'notice', text: 'ðŸ”„ Compre suas cartelas! Novo sorteio em 2 minutos.', kind: 'info' });
+        saveRoomSnapshot(room);
+        // Auto-start after 30 seconds
+        setTimeout(() => iniciarAutoStartServer(room), 30000);
+    }, 10000);
 }
 
 function undoLastBall(room) {
@@ -941,7 +818,6 @@ function saveRoomSnapshot(room) {
             gameEnded: room.gameEnded,
             currentRound: room.currentRound,
             jackpot: room.jackpot,
-            botCardFactor: room.botCardFactor || 1.0,
             players: Array.from(room.players.values()).map(p => ({
                 id: p.id, name: p.name, chips: p.chips, winnings: p.winnings, cards: p.cards, isBot: !!p.isBot
             }))
@@ -960,7 +836,6 @@ function loadRoomSnapshot(room) {
         room.gameEnded = snap.gameEnded === true;
         room.currentRound = snap.currentRound || 0;
         room.jackpot = snap.jackpot || engine.JACKPOT_INITIAL;
-        room.botCardFactor = typeof snap.botCardFactor === 'number' ? snap.botCardFactor : 1.0;
         if (Array.isArray(snap.players)) {
             snap.players.forEach(p => {
                 room.players.set(p.id, {
@@ -969,25 +844,6 @@ function loadRoomSnapshot(room) {
                     adminCredits: p.adminCredits || 0
                 });
             });
-        }
-        // Se jogo estava ativo (ex: deploy no meio da rodada), reseta para pré-round
-        if (room.gameActive && !room.gameEnded) {
-            console.log('[SNAPSHOT] Jogo ativo no restart — resetando para pré-round');
-            room.gameActive = false;
-            room.gameEnded = false;
-            room.drawnBalls = [];
-            room.currentPhaseIndex = 0;
-            // Estorna cartelas dos humanos e limpa tudo
-            for (const p of room.players.values()) {
-                const qtd = p.cards ? p.cards.length : 0;
-                if (!p.isBot && qtd > 0) {
-                    const tier = room.cardTier || engine.CARD_TIERS[0];
-                    p.chips += qtd * (tier ? tier.cost : engine.CARD_COST);
-                }
-                p.cards = [];
-            }
-            saveRoomSnapshot(room);
-            iniciarAutoStartServer(room);
         }
     } catch (e) {}
 }
@@ -1009,12 +865,11 @@ function generateBotName() {
 }
 
 function botRandomChips() {
-    return Math.floor(Math.random() * 40001) + 10000; // R$10,00 a R$50,00 em centavos
+    return Math.floor(Math.random() * 40001) + 5000; // R$5,00 a R$45,00 em centavos
 }
 
 function ensureBots(room, rotate) {
-    const humanCount = Array.from(room.players.values()).filter(p => !p.isBot && !p.isSpectator).length;
-    const TARGET = Math.min(30, Math.max(6, 12 + humanCount * 2));
+    const TARGET = 15;
     const ativos = Array.from(room.players.values()).filter(p => p.isBot);
     // Remove excess if rotate requested
     if (rotate) {
@@ -1218,50 +1073,6 @@ async function handleAction(ws, room, action, payload) {
             const adminCreditosFinais = isInRoom ? target.adminCredits : adminCreditsStore[key];
             await setAdminCreditos(targetName, adminCreditosFinais);
             await setChips(targetName, isInRoom ? target.chips : fichas.chips, isInRoom ? target.winnings : (fichasStore[key]?.winnings || 0));
-
-            // Notifica o admin (Marcos) sobre o crédito/admin concedido/removido
-            try {
-                const valorReaisCred = amount / 1000;
-                const operacao = payload.mode === 'remove' ? 'removido' : 'concedido';
-                await enviarEmailAdmin(
-                    'Crédito admin ' + operacao,
-                    '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + targetName + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor ' + operacao + '</p><p style="font-size:20px;color:#3b82f6;font-weight:bold;margin:0">R$ ' + valorReaisCred.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Operação</p><p style="font-size:14px;color:#222;margin:0">' + (payload.mode === 'remove' ? 'Remoção de crédito' : 'Adição de crédito') + '</p></div>',
-                    'CRÃ‰DITO ADMIN'
-                );
-            } catch (e) { console.error('[EMAIL] Falha ao notificar crédito admin:', e.message); }
-
-            // Notifica o PRÃ“PRIO JOGADOR sobre o crÃ©dito recebido/removido
-            try {
-                const usuariosCred = carregarUsuarios();
-                const listaCred = Array.isArray(usuariosCred) ? usuariosCred : Object.values(usuariosCred);
-                const cpfAlvo = (payload.targetCpf ? String(payload.targetCpf).replace(/\D/g, '').padStart(11, '0') : '') ||
-                                (target && target.cpf ? String(target.cpf).replace(/\D/g, '').padStart(11, '0') : '') ||
-                                (payload.targetId && /^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/.test(payload.targetId) ? payload.targetId.replace(/\D/g, '').padStart(11, '0') : '');
-                const nomeAlvoNorm = (targetName || payload.targetId || '').toLowerCase().trim();
-                const uCred = listaCred.find(u =>
-                    (cpfAlvo && String(u.cpf).replace(/\D/g, '').padStart(11, '0') === cpfAlvo) ||
-                    (u.nomeCompleto || '').toLowerCase().trim() === nomeAlvoNorm ||
-                    (nomeAlvoNorm && (u.nomeCompleto || '').toLowerCase().includes(nomeAlvoNorm))
-                );
-                console.log('[CREDITO EMAIL] targetName=', targetName, 'cpfAlvo=', cpfAlvo, 'achouUsuario=', !!uCred, 'email=', uCred ? uCred.email : null);
-                if (uCred && uCred.email) {
-                    const valorReaisCred = amount / 1000;
-                    const operacao = payload.mode === 'remove' ? 'removido' : 'creditado';
-                    const htmlCred = `
-                        <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
-                            <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                                <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
-                                <div style="padding:28px 24px">
-                                    <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${targetName},</div>
-                                    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Um crédito de <strong style="color:#3b82f6">R$ ${valorReaisCred.toFixed(2).replace('.', ',')}</strong> em fichas foi ${operacao} na sua conta pela administração.</p>
-                                    <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">Acesse sua conta para conferir o saldo atualizado.</p>
-                                    <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acessar minha conta</a></div>
-                                </div>
-                            </div>
-                        </div>`;
-                    await notificarJogador(targetName, uCred.email, 'Crédito de R$ ' + valorReaisCred.toFixed(2).replace('.', ',') + ' na sua conta', htmlCred);
-                }
-            } catch (e) { console.error('[EMAIL] Falha ao notificar jogador (crédito):', e.message); }
         }
         
         broadcast(room, {
@@ -1274,7 +1085,6 @@ async function handleAction(ws, room, action, payload) {
 
     if (action === 'buyCards') {
         if (!player) return;
-        log('GAME', 'Compra cartelas', { jogador: player.name, qty: payload.qty, sala: room.id });
         if (room.gameActive) {
             if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: 'O sorteio já iniciou. Não é possível comprar cartelas agora.' }));
             return;
@@ -1286,8 +1096,7 @@ async function handleAction(ws, room, action, payload) {
             if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: `Limite máximo de ${limit} cartelas por jogador.` }));
             return;
         }
-        const cardCost = (room.cardTier && room.cardTier.cost) ? room.cardTier.cost : engine.CARD_COST;
-        const cost = qty * cardCost;
+        const cost = qty * engine.CARD_COST;
         if (player.chips < cost) {
             if (ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify({ type: 'buyError', message: 'Saldo insuficiente para comprar cartelas.' }));
             return;
@@ -1297,8 +1106,7 @@ async function handleAction(ws, room, action, payload) {
         // Bots NÃƒO contribuem (suas fichas são de brincadeira). Teto de segurança JACKPOT_MAX.
         if (!player.isBot) {
             const base = (typeof room.jackpot === 'number' && room.jackpot > 0) ? room.jackpot : engine.JACKPOT_INITIAL;
-            const perCardContrib = Math.max(1, Math.floor(cardCost * engine.PRIZE_PERCENTS.jackpot));
-            room.jackpot = Math.min(base + qty * perCardContrib, engine.JACKPOT_MAX);
+            room.jackpot = Math.min(base + qty * engine.JACKPOT_CONTRIBUTION_PER_CARD, engine.JACKPOT_MAX);
         }
         for (let i = 0; i < qty; i++) player.cards.push(engine.generateBingoCardData());
         await setChips(player.name, player.chips, player.winnings);
@@ -1337,11 +1145,10 @@ async function handleAction(ws, room, action, payload) {
 
     if (action === 'resetGame') {
         if (room.gameActive) return;
-        log('GAME', 'ResetGame', { sala: roomId, jogador: player ? player.name : '?' });
         pararAutoStartServer(room);
         for (const p of room.players.values()) {
             const qtd = p.cards ? p.cards.length : 0;
-            if (!p.isBot && qtd > 0) { const rc = (room.cardTier && room.cardTier.cost) ? room.cardTier.cost : engine.CARD_COST; p.chips += qtd * rc; await setChips(p.name, p.chips, p.winnings); }
+            if (!p.isBot && qtd > 0) { p.chips += qtd * engine.CARD_COST; await setChips(p.name, p.chips, p.winnings); }
             p.cards = [];
         }
         liquidarComprasSala(room.id);
@@ -1358,13 +1165,11 @@ async function handleAction(ws, room, action, payload) {
     }
 
     if (action === 'undo') {
-        log('GAME', 'Undo ultima bola', { sala: roomId, jogador: player ? player.name : '?' });
         undoLastBall(room);
         return;
     }
 
     if (action === 'startNow') {
-        log('GAME', 'StartNow', { jogador: player ? player.name : '?', sala: roomId });
         if (!room.gameActive) {
             pararAutoStartServer(room);
             iniciarNovaRodada(room);
@@ -1414,7 +1219,7 @@ wss.on('connection', (ws) => {
             }
             sessoesAtivas.set(ws.cpf, { ws, sessionToken, nome: user.nomeCompleto });
             ws.send(JSON.stringify({ type: 'auth_ok', nome: user.nomeCompleto, cpf: ws.cpf }));
-            log('AUTH', 'Conectado', { nome: user.nomeCompleto, sessoes: sessoesAtivas.size });
+            console.log(`[AUTH] ${user.nomeCompleto} conectado. Sessoes ativas: ${sessoesAtivas.size}`);
             return;
         }
 
@@ -1513,7 +1318,7 @@ wss.on('connection', (ws) => {
             const existing = sessoesAtivas.get(cpf);
             if (existing && existing.ws === ws) {
                 sessoesAtivas.delete(cpf);
-                log('AUTH', 'Desconectado', { sessoes: sessoesAtivas.size });
+                console.log(`[AUTH] ${cpf} desconectado. Sessoes ativas: ${sessoesAtivas.size}`);
             }
         }
         if (!roomId || !gameRooms.has(roomId)) return;
@@ -1529,7 +1334,6 @@ wss.on('connection', (ws) => {
 app.post('/api/register', async (req, res) => {
     try {
         let { nomeCompleto, cpf, email, senha, chavePix, fingerprint } = req.body;
-        log('REGISTER', 'Tentativa cadastro', { nome: nomeCompleto, cpf: cpf ? cpf.replace(/.(?=.{4})/g, '*') : null, email });
         if (!nomeCompleto || !cpf || !email || !senha || !chavePix) {
             return res.status(400).json({ error: 'Preencha todos os campos.' });
         }
@@ -1567,15 +1371,6 @@ app.post('/api/register', async (req, res) => {
         usuarios.push(novoUsuario);
         await salvarUsuarios(usuarios);
 
-        // 1ï¸âƒ£ BÃ”NUS DE R$5 (5000 FICHAS) NO CADASTRO - não sacável, apenas para jogar
-        const c = getChips(nomeCompleto);
-        await setChips(nomeCompleto, c.chips + 5000, c.winnings);
-        // Marca como bonusGiven para não ser sacável
-        const bonusGivenStore = db.getBonusGivenStore();
-        const keyBonus = nomeCompleto.toLowerCase().trim().normalize('NFC');
-        bonusGivenStore[keyBonus] = (bonusGivenStore[keyBonus] || 0) + 5000;
-        await db.setBonusGivenStore(bonusGivenStore);
-
         // 1ï¸âƒ£ RESPONDE O JOGADOR IMEDIATAMENTE (Entra na tela sem travar!)
         res.json({ success: true, sessionToken: novoUsuario.sessionToken, cpf, nome: nomeCompleto });
         console.log(`[REGISTER] ${nomeCompleto} (${novoUsuario.cpfFormatado}) - Conta criada`);
@@ -1584,27 +1379,11 @@ app.post('/api/register', async (req, res) => {
         setImmediate(() => {
             enviarEmailAdmin(
                 'Novo jogador cadastrado',
-                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Nome</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + (nomeCompleto || '') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">CPF</p><p style="font-size:15px;color:#222;margin:0">' + (novoUsuario.cpfFormatado || cpf) + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">E-mail</p><p style="font-size:15px;color:#222;margin:0">' + (email || 'não informado') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Chave PIX</p><p style="font-size:15px;color:#222;margin:0">' + (chavePix || 'não informado') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Senha</p><p style="font-size:15px;color:#222;margin:0">' + senha + '</p></div>',
+                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Nome</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + (nomeCompleto || '') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">E-mail</p><p style="font-size:15px;color:#222;margin:0">' + (email || 'não informado') + '</p></div>',
                 'NOVO CADASTRO'
             ).catch(err => {
                 console.error('Erro na fila de execução do e-mail:', err.message);
             });
-
-            // E-mail de boas-vindas para o PRÃ“PRIO JOGADOR
-            try {
-                const htmlBoasVindas = `
-                    <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
-                        <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                            <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
-                            <div style="padding:28px 24px">
-                                <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Bem-vindo(a), ${nomeCompleto}!</div>
-                                <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Sua conta foi criada com sucesso. Você já pode entrar nas salas de bingo, comprar cartelas e concorrer a prêmios.</p>
-                                <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Entrar no Bingo</a></div>
-                            </div>
-                        </div>
-                    </div>`;
-                notificarJogador(nomeCompleto, email, 'Bem-vindo ao BingoVipClub! Sua conta foi criada', htmlBoasVindas).catch(() => {});
-            } catch (e) { console.error('[EMAIL] Falha ao notificar jogador (cadastro):', e.message); }
         });
 
     } catch (err) {
@@ -1614,8 +1393,8 @@ app.post('/api/register', async (req, res) => {
 
 app.post('/api/login', async (req, res) => {
     try {
+        console.log('-> Dados recebidos no login:', req.body);
         let { cpf, senha } = req.body;
-        log('LOGIN', 'Tentativa login', { cpf: cpf ? cpf.replace(/.(?=.{4})/g, '*') : null });
         if (!cpf || !senha) {
             return res.status(400).json({ error: 'CPF e senha são obrigatórios.' });
         }
@@ -1624,17 +1403,17 @@ app.post('/api/login', async (req, res) => {
             return res.status(400).json({ error: 'CPF inválido' });
         }
         cpf = cpfNormalizado;
+        console.log('-> CPF limpo para busca:', cpf);
         senha = String(senha);
         const usuarios = carregarUsuarios();
         const user = usuarios.find(u => String(u.cpf).padStart(11, '0') === cpf && u.senha === senha);
         if (!user) {
-            log('LOGIN', 'Falha - CPF/senha incorretos', { cpf: cpf.replace(/.(?=.{4})/g, '*') });
             return res.status(400).json({ error: 'CPF ou senha incorretos.' });
         }
         const sessionToken = crypto.randomBytes(24).toString('hex');
         user.sessionToken = sessionToken;
         await salvarUsuarios(usuarios);
-        log('LOGIN', 'Sucesso', { nome: user.nomeCompleto, cpf: cpf.replace(/.(?=.{4})/g, '*') });
+        console.log(`[LOGIN] ${user.nomeCompleto} (${user.cpfFormatado})`);
         res.json({ success: true, sessionToken, nome: user.nomeCompleto, cpf });
     } catch (err) {
         res.status(500).json({ error: 'Erro interno no servidor.' });
@@ -1829,116 +1608,14 @@ app.post('/api/admin/usuario/bonus', async (req, res) => {
 
         console.log(`[BONUS] ${bonus} fichas concedidas para ${usuario.nomeCompleto} via painel admin`);
 
-        const valorReaisBonus = parseInt(bonus) / 1000;
         if (usuario.email) {
-            enviarEmailBonus(usuario.nomeCompleto, usuario.email, valorReaisBonus);
+            const valorReais = parseInt(bonus) / 1000;
+            enviarEmailBonus(usuario.nomeCompleto, usuario.email, valorReais);
         }
-
-        // Notifica o admin (Marcos) sobre o bônus concedido
-        try {
-            await enviarEmailAdmin(
-                'Bônus concedido',
-                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + (usuario.nomeCompleto || '') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Bônus creditado</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + valorReaisBonus.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Email do jogador</p><p style="font-size:14px;color:#222;margin:0">' + (usuario.email || 'não informado') + '</p></div>',
-                'BÃ”NUS CONCEDIDO'
-            );
-        } catch (e) { console.error('[EMAIL] Falha ao notificar bônus:', e.message); }
 
         res.json({ success: true, bonusConcedido: parseInt(bonus), novoSaldo: fichasStore[key].chips, emailEnviado: !!usuario.email, emailUsuario: usuario.email || null });
     } catch (err) {
         console.error('[API] Erro ao conceder bônus:', err);
-        res.status(500).json({ error: 'Erro interno.' });
-    }
-});
-
-// Admin - Dar crédito admin (sacável) para usuário - MESMA LÓGICA DO BÔNUS (acha por CPF/nome no banco)
-app.post('/api/admin/usuario/credito', async (req, res) => {
-    try {
-        const { cpf, nome, credito, mode } = req.body;
-        const valor = parseInt(credito || req.body.valor || 0, 10);
-        if ((!cpf && !nome) || !valor || valor <= 0) {
-            return res.status(400).json({ error: 'Identificador (CPF ou nome) e crédito válido são obrigatórios.' });
-        }
-        const usuarios = carregarUsuarios();
-        const usuariosArray = Array.isArray(usuarios) ? usuarios : Object.values(usuarios);
-        let usuario = null;
-        if (cpf) {
-            const cpfLimpo = String(cpf).replace(/\D/g, '').padStart(11, '0');
-            usuario = usuariosArray.find(u => String(u.cpf).replace(/\D/g, '').padStart(11, '0') === cpfLimpo);
-        } else {
-            const key = String(nome).toLowerCase().trim();
-            usuario = usuariosArray.find(u => (u.nomeCompleto || '').toLowerCase().trim() === key);
-        }
-        if (!usuario) {
-            return res.status(404).json({ error: 'Usuário não encontrado.' });
-        }
-
-        const key = usuario.nomeCompleto.toLowerCase().trim();
-        const fichasStore = db.getFichasStore();
-        if (!fichasStore[key]) {
-            fichasStore[key] = { chips: engine.INITIAL_CHIPS, winnings: 0 };
-        }
-        const operacao = mode === 'remove' ? 'remover' : 'add';
-        if (operacao === 'remover') {
-            fichasStore[key].chips = Math.max(0, fichasStore[key].chips - valor);
-        } else {
-            fichasStore[key].chips += valor;
-        }
-        await db.setFichasStore(fichasStore);
-
-        const adminCreditsStore = db.getAdminCreditsStore();
-        const atual = adminCreditsStore[key] || 0;
-        adminCreditsStore[key] = operacao === 'remover' ? Math.max(0, atual - valor) : atual + valor;
-        await db.setAdminCreditsStore(adminCreditsStore);
-
-        // Sincroniza jogador conectado na sala
-        gameRooms.forEach(room => {
-            const player = Array.from(room.players.values()).find(p =>
-                !p.isBot && (p.name || '').toLowerCase().trim() === key
-            );
-            if (player) {
-                player.chips = fichasStore[key].chips;
-                player.adminCredits = adminCreditsStore[key];
-                broadcast(room, {
-                    type: 'gameState', players: sanitizePlayers(room), drawnBalls: room.drawnBalls,
-                    currentPhaseIndex: room.currentPhaseIndex, gameActive: room.gameActive, gameEnded: room.gameEnded,
-                    currentRound: room.currentRound, jackpot: room.jackpot, autoStartSeconds: room.autoStartSeconds
-                });
-            }
-        });
-
-        console.log(`[CREDITO] ${valor} fichas (admin) ${operacao === 'remover' ? 'removidas' : 'concedidas'} para ${usuario.nomeCompleto} via painel admin`);
-
-        // Notifica o PRÓPRIO JOGADOR (email direcionado ao cadastro dele)
-        const valorReais = valor / 1000;
-        if (usuario.email) {
-            const operacaoTxt = operacao === 'remover' ? 'removido' : 'creditado';
-            const htmlCred = `
-                <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
-                    <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                        <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
-                        <div style="padding:28px 24px">
-                            <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${usuario.nomeCompleto},</div>
-                            <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Um crédito de <strong style="color:#3b82f6">R$ ${valorReais.toFixed(2).replace('.', ',')}</strong> em fichas foi ${operacaoTxt} na sua conta pela administração.</p>
-                            <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">Acesse sua conta para conferir o saldo atualizado.</p>
-                            <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#3b82f6;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acessar minha conta</a></div>
-                        </div>
-                    </div>
-                </div>`;
-            await notificarJogador(usuario.nomeCompleto, usuario.email, 'Crédito de R$ ' + valorReais.toFixed(2).replace('.', ',') + ' na sua conta', htmlCred);
-        }
-
-        // Notifica o admin (Marcos)
-        try {
-            await enviarEmailAdmin(
-                'Crédito admin ' + (operacao === 'remover' ? 'removido' : 'concedido'),
-                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + (usuario.nomeCompleto || '') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Crédito ' + (operacao === 'remover' ? 'removido' : 'concedido') + '</p><p style="font-size:20px;color:#3b82f6;font-weight:bold;margin:0">R$ ' + valorReais.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Email do jogador</p><p style="font-size:14px;color:#222;margin:0">' + (usuario.email || 'não informado') + '</p></div>',
-                'CRÃ‰DITO ADMIN'
-            );
-        } catch (e) { console.error('[EMAIL] Falha ao notificar crédito admin:', e.message); }
-
-        res.json({ success: true, creditoConcedido: valor, modo: operacao, novoSaldo: fichasStore[key].chips, emailEnviado: !!usuario.email, emailUsuario: usuario.email || null });
-    } catch (err) {
-        console.error('[API] Erro ao conceder crédito:', err);
         res.status(500).json({ error: 'Erro interno.' });
     }
 });
@@ -2078,8 +1755,8 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
         const nomeUsuario = usuariosArray[usuarioIdx].nomeCompleto || usuariosArray[usuarioIdx].nome || '';
         const keyNome = (nomeUsuario || '').toLowerCase().trim();
         const keyBot = 'bot-' + keyNome.replace(/\s+/g, '-');
-        log('ADMIN', 'Usuario excluido', { nome: nomeUsuario, cpf: cpfLimpo });
-        await db.deleteUsuario(cpfLimpo);
+        usuariosArray.splice(usuarioIdx, 1);
+        await salvarUsuarios(usuariosArray);
 
         // Desconectar jogador deletado (essencial, feito antes de responder)
         try {
@@ -2163,7 +1840,6 @@ app.delete('/api/admin/usuario/excluir', async (req, res) => {
 app.post('/api/admin/enviar-pix', async (req, res) => {
     try {
         const { para, chavePix, valor, tipoChave, saqueId } = req.body;
-        log('ADMIN', 'EnviarPIX', { para, valor, tipoChave, saqueId });
         const saques = db.getSaques();
         
         let saqueExistente = saqueId
@@ -2214,32 +1890,6 @@ app.post('/api/admin/enviar-pix', async (req, res) => {
         }
         
         await db.setSaques(saques);
-        log('SAQUE', 'PIX enviado', { para, valor, asaasTransferId, saqueId: saqueExistente.id });
-
-        // Notifica o jogador por email
-        try {
-            const usuariosPix = carregarUsuarios();
-            const userPix = Array.isArray(usuariosPix) ? usuariosPix.find(u => u.nomeCompleto === para) : null;
-            if (userPix && userPix.email) {
-                const htmlPix = `
-                    <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
-                        <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                            <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
-                            <div style="padding:28px 24px">
-                                <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${para},</div>
-                                <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Seu saque de <strong style="color:#10b981">R$ ${(valor || 0).toFixed(2).replace('.', ',')}</strong> foi pago! O PIX foi enviado para sua chave.</p>
-                                <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">O valor já deve estar disponível em sua conta bancária.</p>
-                                <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Ir para o site</a></div>
-                            </div>
-                        </div>
-                    </div>`;
-                notificarJogador(para, userPix.email, 'Saque de R$ ' + (valor || 0).toFixed(2).replace('.', ',') + ' pago!', htmlPix);
-            }
-        } catch (e) { console.error('[PIX EMAIL] Erro notificar jogador:', e.message); }
-
-        // Notifica admin
-        await enviarEmailAdmin('Saque pago', '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + para + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor pago</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + (valor || 0).toFixed(2).replace('.', ',') + '</p></div>', 'SAQUE PAGO');
-
         res.json({ success: true, saque: saqueExistente, asaasTransferId });
     } catch (err) {
         console.error('[ASAAS] Erro enviar-pix:', err.message);
@@ -2251,12 +1901,10 @@ app.post('/api/admin/enviar-pix', async (req, res) => {
 app.post('/api/admin/saque-pago', async (req, res) => {
     try {
         const { saqueId } = req.body;
-        log('ADMIN', 'SaquePago', { saqueId });
         const saques = db.getSaques();
         
         const saqueIndex = saques.findIndex(s => String(s.id) === String(saqueId));
         if (saqueIndex === -1) {
-            log('ADMIN', 'SaquePago erro', { saqueId, motivo: 'nao encontrado' });
             return res.status(404).json({ error: 'Saque não encontrado.' });
         }
         
@@ -2264,10 +1912,8 @@ app.post('/api/admin/saque-pago', async (req, res) => {
         saques[saqueIndex].dataPagamento = new Date().toISOString();
         
         await db.setSaques(saques);
-        log('ADMIN', 'SaquePago OK', { saqueId, nome: saques[saqueIndex].nome });
         res.json({ success: true, saque: saques[saqueIndex] });
     } catch (err) {
-        log('ADMIN', 'SaquePago erro', { saqueId, err: err.message });
         res.status(500).json({ error: 'Erro ao marcar saque como pago.' });
     }
 });
@@ -2280,8 +1926,8 @@ const asyncHandler = (fn) => (req, res, next) => Promise.resolve(fn(req, res, ne
 
 app.post('/api/solicitar-saque', async (req, res) => {
  try {
-    let { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
-    log('SAQUE', 'Solicitado', { nome, valor, hasToken: !!sessionToken });
+    const { nome, valor, chavePix, tipoChave, sessionToken } = req.body;
+    console.log('[SAQUE DEBUG] Recebido:', { nome, valor, chavePix, tipoChave, hasToken: !!sessionToken });
     if (!nome || !valor || !chavePix) {
         return res.status(400).json({ error: 'Parâmetros incompletos.' });
     }
@@ -2309,8 +1955,8 @@ app.post('/api/solicitar-saque', async (req, res) => {
         // REGRA DE SAQUE:
         // SACAVEL = Creditos concedidos pelo admin + Premios ganhos (Kuadra/Kina/Keno/Jackpot)
         // NAO SACAVEL = Depositos e Bonus
-        const saldoSacavel = modoTesteSaque ? c.chips : adminCred + c.winnings;
-        console.log('[SAQUE DEBUG] Balances:', { chips: c.chips, winnings: c.winnings, adminCred, saldoSacavel, fichasNecessarias, modoTesteSaque });
+        const saldoSacavel = adminCred + c.winnings;
+        console.log('[SAQUE DEBUG] Balances:', { chips: c.chips, winnings: c.winnings, adminCred, saldoSacavel, fichasNecessarias });
 
         if (saldoSacavel < fichasNecessarias) {
             return res.status(400).json({ error: 'Saldo sacavel insuficiente. Podem ser sacados apenas: Creditos (admin) e Premios ganhos (Kuadra/Kina/Keno/Jackpot). Depositos e Bonus NAO podem ser sacados.' });
@@ -2350,35 +1996,13 @@ app.post('/api/solicitar-saque', async (req, res) => {
         await setChips(nome, novoChips, novoWinnings);
         await setAdminCreditos(nome, novoAdminCred);
 
-        // Notifica admin e jogador em segundo plano (nao bloqueia resposta)
-        setImmediate(() => {
-            const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
-            enviarEmailAdmin(
-                'Novo saque solicitado',
-                '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + nome + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + valor.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Chave PIX</p><p style="font-size:14px;color:#222;margin:0">' + chavePix + ' (' + (tipoChave || 'cpf') + ')</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Data</p><p style="font-size:14px;color:#222;margin:0">' + hora + '</p></div>',
-                'SAQUE'
-            ).catch(() => {});
-
-            try {
-                const usuariosSaque = carregarUsuarios();
-                const userSaque = Array.isArray(usuariosSaque) ? usuariosSaque.find(u => u.nomeCompleto === nome) : null;
-                if (userSaque && userSaque.email) {
-                    const htmlSaqueConfirmacao = `
-                        <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
-                            <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                                <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
-                                <div style="padding:28px 24px">
-                                    <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${nome},</div>
-                                    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Seu saque de <strong style="color:#10b981">R$ ${valor.toFixed(2).replace('.', ',')}</strong> foi solicitado com sucesso.</p>
-                                    <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 20px 0">O pagamento será processado em breve pelo administrador. Você receberá outro e-mail quando for aprovado.</p>
-                                    <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acompanhar</a></div>
-                                </div>
-                            </div>
-                        </div>`;
-                    notificarJogador(nome, userSaque.email, 'Saque de R$ ' + valor.toFixed(2).replace('.', ',') + ' solicitado', htmlSaqueConfirmacao);
-                }
-            } catch (e) { console.error('[SAQUE EMAIL] Erro notificar jogador:', e.message); }
-        });
+        // Notifica admin por email
+        const hora = new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' });
+        await enviarEmailAdmin(
+            'Novo saque solicitado',
+            '<div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Jogador</p><p style="font-size:16px;color:#222;font-weight:bold;margin:0">' + nome + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Valor</p><p style="font-size:20px;color:#10b981;font-weight:bold;margin:0">R$ ' + valor.toFixed(2).replace('.', ',') + '</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px;margin-bottom:8px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Chave PIX</p><p style="font-size:14px;color:#222;margin:0">' + chavePix + ' (' + (tipoChave || 'cpf') + ')</p></div><div style="background:#f7f8fc;border-radius:8px;padding:16px 18px"><p style="font-size:13px;color:#888;margin:0 0 4px 0">Data</p><p style="font-size:14px;color:#222;margin:0">' + hora + '</p></div>',
+            'SAQUE'
+        );
 
         // Sincroniza com o jogador na sala (se estiver conectado) + broadcast
         gameRooms.forEach(room => {
@@ -2401,7 +2025,7 @@ app.post('/api/solicitar-saque', async (req, res) => {
                 if (ws.readyState === WebSocket.OPEN) ws.send(notif);
             });
         });
-        log('SAQUE', 'Aprovado', { nome, valor: valor.toFixed(2), id: novoSaque.id });
+        console.log(`[SAQUE] ${nome} solicitou saque de R$ ${valor.toFixed(2)} via ${tipoChave || 'cpf'}: ${chavePix}`);
 
         res.json({ success: true, saqueId: novoSaque.id });
     } catch (err) {
@@ -2414,7 +2038,7 @@ app.post('/api/solicitar-saque', async (req, res) => {
 app.post('/api/admin/testar-email', async (req, res) => {
     try {
         await enviarEmailNotificacao(
-            '🔧 Teste de Email - Bingo Master Pro',
+            'ðŸ”§ Teste de Email - Bingo Master Pro',
             `Este é um email de teste.\n\nSe você está recebendo esta mensagem, a configuração de email está funcionando corretamente!\n\nData: ${new Date().toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo' })}`
         );
         res.json({ success: true, message: 'Email de teste enviado para ' + ADMIN_EMAIL });
@@ -2588,7 +2212,6 @@ app.post('/api/criar-pix', async (req, res) => {
         if (!valor || valor < 0.50) {
             return res.status(400).json({ error: 'Valor mínimo: R$0,50' });
         }
-        log('PIX', 'Solicitado', { nome, cpf: cpf ? cpf.replace(/.(?=.{4})/g, '*') : null, valor });
         if (!ASAAS_API_KEY) {
             const paymentId = 'sim_' + Date.now();
             registrarRecargaPendente(nome, cpf, valor, paymentId);
@@ -2643,25 +2266,6 @@ app.post('/api/criar-pix', async (req, res) => {
                 console.error('[EMAIL] Falha ao notificar PIX gerado:', e.message);
             }
 
-            // Notifica o PRÃ“PRIO JOGADOR de que o PIX foi gerado
-            try {
-                if (email) {
-                    const htmlPix = `
-                        <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
-                            <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                                <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
-                                <div style="padding:28px 24px">
-                                    <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${nome},</div>
-                                    <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Seu PIX de <strong style="color:#10b981">R$ ${valor.toFixed(2).replace('.', ',')}</strong> para recarga foi gerado com sucesso.</p>
-                                    <p style="font-size:14px;color:#666;line-height:1.6;margin:0 0 8px 0">Pague o código ou escaneie o QR Code no seu app do banco. Assim que o pagamento for confirmado, suas fichas caem na conta automaticamente.</p>
-                                    <div style="text-align:center;margin:18px 0 4px"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acessar minha conta</a></div>
-                                </div>
-                            </div>
-                        </div>`;
-                    await notificarJogador(nome, email, 'Seu PIX de R$ ' + valor.toFixed(2).replace('.', ',') + ' foi gerado', htmlPix);
-                }
-            } catch (e) { console.error('[EMAIL] Falha ao notificar jogador (PIX gerado):', e.message); }
-
             res.json({
                 copyPaste: copyPaste,
                 qrCode: qrCode,
@@ -2711,7 +2315,6 @@ app.get('/api/status-pix/:paymentId', async (req, res) => {
 // Confirmar recarga (após PIX aprovado)
 // Lógica compartilhada de confirmação de recarga (usada pelo frontend e pelo webhook Asaas)
 async function processarConfirmacaoRecarga(nome, valor, paymentId) {
-    log('DEPOSITO', 'Confirmado', { nome, valor, paymentId });
     const fichas = Math.round(valor * 1000);
 
     // Idempotência: evita creditar 2x (webhook + polling do frontend)
@@ -2773,29 +2376,6 @@ async function processarConfirmacaoRecarga(nome, valor, paymentId) {
         );
     } catch (e) { console.error('[EMAIL] Falha ao notificar depósito:', e.message); }
 
-    // Notifica o PRÃ“PRIO JOGADOR de que o depÃ³sito foi confirmado
-    try {
-        const usuariosDep = carregarUsuarios();
-        const listaDep = Array.isArray(usuariosDep) ? usuariosDep : Object.values(usuariosDep);
-        const uDep = listaDep.find(u => (u.nomeCompleto || '').toLowerCase().trim() === keyNome);
-        if (uDep && uDep.email) {
-            const valorFmt = valor.toFixed(2).replace('.', ',');
-            const bonusFmt = (bonus / 1000).toFixed(2).replace('.', ',');
-            const htmlDep = `
-                <div style="background:#f4f5fb;font-family:Arial,Helvetica,sans-serif;padding:24px">
-                    <div style="background:#fff;max-width:520px;margin:0 auto;border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)">
-                        <div style="background:#0a0a2e;text-align:center;padding:22px 16px"><div style="color:#ffd700;font-size:22px;font-weight:bold;letter-spacing:2px">BingoVipClub</div></div>
-                        <div style="padding:28px 24px">
-                            <div style="font-size:18px;color:#1a1a3c;margin:0 0 12px 0">Olá ${nome},</div>
-                            <p style="font-size:15px;color:#444;line-height:1.6;margin:0 0 16px 0">Seu depósito de <strong style="color:#10b981">R$ ${valorFmt}</strong> foi confirmado e suas fichas já estão na sua conta${bonus > 0 ? ' (incluindo bônus de primeiro depósito de <strong style="color:#10b981">R$ ' + bonusFmt + '</strong>)' : ''}.</p>
-                            <div style="text-align:center"><a href="${SITE_URL}" style="display:inline-block;background:#10b981;color:#fff;text-decoration:none;padding:13px 34px;border-radius:8px;font-weight:bold;font-size:15px">Acessar minha conta</a></div>
-                        </div>
-                    </div>
-                </div>`;
-            await notificarJogador(nome, uDep.email, 'Depósito de R$ ' + valorFmt + ' confirmado!', htmlDep);
-        }
-    } catch (e) { console.error('[EMAIL] Falha ao notificar jogador (depósito):', e.message); }
-
     // Marca a recarga como sincronizada (impede duplo crédito)
     if (paymentId) {
         const recargas = db.getRecargas();
@@ -2838,7 +2418,6 @@ app.post('/api/registrar-premio', async (req, res) => {
     try {
         const { nome, valor, fase } = req.body;
         if (!nome || !valor) return res.json({ success: true });
-        log('GAME', 'Premio registrado', { nome, valor, fase });
         const transacoes = db.getTransacoes();
         transacoes.push({
             id: Date.now() + Math.floor(Math.random() * 1000),

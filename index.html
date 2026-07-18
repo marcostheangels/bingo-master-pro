@@ -10,15 +10,14 @@
     <link rel="manifest" href="manifest.json">
     <link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E🎱%3C/text%3E%3C/svg%3E">
     <link href="https://cdn.jsdelivr.net/npm/@fontsource/poppins@5.0.8/index.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-    <link rel="stylesheet" href="style.css?v=32">
+    <link rel="stylesheet" href="style.css?v=26">
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(regs => {
                 regs.forEach(r => r.unregister());
             }).then(() => {
                 window.addEventListener('load', () => {
-                    navigator.serviceWorker.register('sw.js?v=30').catch(() => {});
+                    navigator.serviceWorker.register('sw.js').catch(() => {});
                 });
             });
         }
@@ -157,135 +156,94 @@
             <!-- Botão Admin -->
             <button class="btn-admin-open" id="btnAdminOpen" style="display:none" onclick="abrirAdminScreen()">⚙️ Admin</button>
 
-            <!-- 1. TOPO / NAVBAR -->
-            <header>
-                <div class="logo-area">
-                    <img class="logo-img" src="bingo1.jpeg" alt="Bingo VIP Club">
-                    <span class="logo-text">BINGO VIP CLUB</span>
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <img class="room-logo" src="bingo1.jpeg" alt="Bingo VIP Club">
+                <div class="connection-info" id="connectionInfo">
+                    <span class="conn-dot" id="connDot"></span>
+                    <span id="connStatus">Conectado</span>
                 </div>
-                <div class="nav-actions">
-                    <button class="btn-action" onclick="abrirModalDeposito()"><span class="material-icons ic-deposito">attach_money</span>Depositar</button>
-                    <button class="btn-action" id="btnSacar" onclick="abrirModalSaque()" style="display:none"><span class="material-icons ic-sacar">account_balance_wallet</span>Sacar</button>
-                    <button class="btn-action" onclick="abrirExtratoModal()"><span class="material-icons ic-extrato">description</span>Extrato</button>
-                    <button class="btn-action" onclick="abrirDadosModal()"><span class="material-icons ic-dados">assignment_ind</span>Dados</button>
-                    <button class="btn-action" onclick="sairDaConta()"><span class="material-icons ic-sair">exit_to_app</span>Sair</button>
+                <div class="user-info">
+                    <div class="user-avatar" id="avatarIcon">B</div>
+                    <span class="user-name" id="labelMyName">Jogador</span>
+                    <span class="user-chips" id="labelMyChips">💰 0 🏆 0</span>
+                    <button class="btn-deposit" onclick="abrirModalDeposito()">💰 Depositar</button>
+                    <button class="btn-withdraw" id="btnSacar" onclick="abrirModalSaque()" style="display:none">💵 Sacar</button>
+                    <button class="btn-logout" onclick="sairDaConta()">🚪 Sair</button>
                     <button class="btn-sound" id="btnSoundToggle" onclick="alternarSom()" title="Ligar/desligar som">🔊</button>
                     <button class="btn-sound" id="btnNotify" onclick="habilitarNotificacoes()" title="Ativar notificações">🔔</button>
                 </div>
-                <div class="user-info">
-                    <div class="connection-info" id="connectionInfo" style="display:flex;align-items:center;gap:6px;font-size:11px;color:#9d96d4">
-                        <span class="conn-dot" id="connDot"></span>
-                        <span id="connStatus">Conectado</span>
-                    </div>
-                    <div class="user-avatar" id="avatarIcon" style="display:none">B</div>
-                    <span id="labelMyName">Jogador</span>
-                    <div class="balance-box">
-                        <div class="balance-val" id="labelMyChips">💰 0 🏆 0</div>
-                        <div style="font-size:10px;color:rgba(255,255,255,0.5)">Saldo ▼</div>
-                    </div>
-                </div>
-            </header>
+            </div>
 
-            <!-- LAYOUT PRINCIPAL -->
-            <div class="main-container">
-
-                <!-- 2. BARRA LATERAL ESQUERDA -->
-                <aside>
-                    <span class="material-icons side-icon">menu</span>
-                    <span class="material-icons side-icon">radio</span>
-                    <span class="material-icons side-icon">calendar_month</span>
-                    <span class="material-icons side-icon">payments</span>
-                    <span class="material-icons side-icon">history</span>
-                </aside>
-
-                <!-- 2b. PAINEL DE JOGADORES (ESQUERDA) -->
-                <div class="players-left">
-                    <div class="players-container" id="playersPanel">
-                        <h3>👥 Jogadores</h3>
-                        <div class="players-panel-body">
-                            <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
-                            <ul class="player-list" id="playerListUI"></ul>
-                        </div>
-                    </div>
+            <!-- Jackpot -->
+            <div class="jackpot-panel">
+                <div class="jackpot-label">🎰 Jackpot Acumulado</div>
+                <div class="jackpot-value" id="jackpotDisplay">R$ 20,00</div>
+                <div class="jackpot-subtitle" id="jackpotSubtitle">FECHE A CARTELA EM ATÉ 55 BOLAS E LEVE O JACKPOT DE R$ 20,00!</div>
+                <div class="round-number" id="currentRoundNumber">Nenhum sorteio ainda</div>
+                <button class="btn-hall" onclick="abrirHallDaFama()">🏆 Hall da Fama</button>
+            </div>
+                <div class="jackpot-balls-panel" id="jackpotBallsPanel" style="display:none;">
+                    <div class="jackpot-balls-label">Bolas para o Jackpot:</div>
+                    <div class="jackpot-balls-grid" id="jackpotBallsGrid"></div>
                 </div>
 
-                <!-- 3. COLUNA DE INFOS -->
-                <div class="info-column">
-                    <div class="info-card dark-blue"><span>Sorteio</span><strong id="currentRoundNumber">#---</strong></div>
-                    <div class="info-card"><span>Hora</span><strong id="liveClock">--:--:--</strong></div>
-                    <div class="info-card"><span>Doação</span><strong id="doacaoVal">R$ 0,00</strong></div>
-                    <div class="ordem-box">
-                        <span>ACUMULADO</span>
-                        <div class="jackpot-value" id="jackpotDisplay">R$ 1.000,00</div>
+                <!-- Premios band (Kuadra / Kina / Keno) -->
+                <div class="prizes-strip">
+                    <div class="phase-item phase-item-mini" id="phase_kuadra"><span class="phase-label">Kuadra</span> <span class="prize">💰 R$ 0,30</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_kina"><span class="phase-label">Kina</span> <span class="prize">💰 R$ 0,40</span></div>
+                    <div class="phase-item phase-item-mini" id="phase_keno"><span class="phase-label">Bingo</span> <span class="prize">💰 R$ 0,80</span></div>
+                </div>
+
+                <!-- Game Body -->
+            <div class="game-body">
+
+                <!-- Ball Section -->
+                <div class="ball-section">
+                    <div class="ball-area">
+                        <div class="current-ball">
+                            <p class="label">Última Bola</p>
+                            <div class="ball-display" id="mainBall">-</div>
+                        </div>
+                        <div class="drawn-grid" id="drawnGrid"></div>
+                    </div>
+
+                    <div class="ball-actions">
+                        <div class="buy-options" id="buySection">
+                            <span class="buy-label">Comprar cartelas (R$0,05 cada) <span style="color:#fbbf24;font-size:0.85em">— Máx: 40</span></span>
+                            <div style="display:flex;gap:6px;align-items:center;width:100%">
+                                <button class="btn btn-primary" onclick="ajustarQtd(-1)" style="flex:0 0 40px;padding:8px 0">−</button>
+                                <input type="number" id="buyQtyInput" value="1" min="1" max="40" style="flex:1;min-width:50px;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,0.15);background:rgba(255,255,255,0.06);color:#fff;font-size:0.95em;text-align:center">
+                                <button class="btn btn-primary" onclick="ajustarQtd(1)" style="flex:0 0 40px;padding:8px 0">+</button>
+                                <button class="btn btn-primary" onclick="comprarCartelas()" style="flex:2">Comprar</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                <!-- AREA CENTRAL -->
-                <div class="center-content">
-
-                    <!-- 4. PREMIOS -->
-                    <div class="prizes-row">
-                        <div class="prize-card phase-item-mini" id="phase_kuadra"><span>Kuadra</span><strong class="prize">R$ 0,50</strong></div>
-                        <div class="prize-card phase-item-mini" id="phase_kina"><span>Kina</span><strong class="prize">R$ 1,00</strong></div>
-                        <div class="prize-card phase-item-mini" id="phase_keno"><span>Bingo</span><strong class="prize">R$ 2,00</strong></div>
-                        <div class="prize-card acumulado">
-                            <div class="badge-acumulado" id="jackpotBadge">37</div>
-                            <span>Acumulado</span><strong id="jackpotTotal">R$ 1.000,00</strong>
-                        </div>
-                    </div>
-
-                    <!-- 5. AREA DO SORTEIO -->
-                    <div class="game-display">
-                        <div class="main-ball" id="mainBall">-</div>
-                        <div class="history-balls" id="historyBalls"></div>
-                        <div class="balls-board" id="drawnGrid"></div>
-                    </div>
-
+                <!-- My Cards -->
+                <div class="my-cards-section">
+                    <h3>📋 Minhas Cartelas <button type="button" class="cards-compact-btn" onclick="toggleCardsCompact()" title="Modo compacto">⤢</button></h3>
+                    <div class="cards-grid" id="myCardsGrid"></div>
                 </div>
 
-                <!-- 7. PAINEL LATERAL DIREITO -->
-                <div class="right-panel">
-
-                    <!-- PAINEL DE COMPRA DE CARTELAS -->
-                    <div class="buy-panel" id="buySection">
-                        <div class="buy-title">🎟️ Comprar Cartelas</div>
-                        <div class="buy-stepper">
-                            <button class="stepper-btn" onclick="ajustarQtd(-1)" aria-label="Diminuir">−</button>
-                            <input type="number" id="buyQtyInput" value="1" min="1" max="9999" class="stepper-qty" oninput="atualizarTotalCompra()">
-                            <button class="stepper-btn yellow" onclick="ajustarQtd(1)" aria-label="Aumentar">+</button>
-                        </div>
-                        <div class="buy-total" id="buyTotalDisplay">Total: <strong>R$ 0,15</strong></div>
-                        <button class="btn-comprar" onclick="comprarCartelas()">🎯 Comprar</button>
-                        <span class="buy-label">R$ <span id="cardCostDisplay">0,15</span> cada — Sem limite</span>
-                    </div>
-
-                    <!-- Cartelas compradas -->
-                    <div class="cards-bar">
-                        <strong style="font-size:16px">Cartelas: <span id="cartCount">0</span></strong>
-                        <div class="cards-bar-actions">
-                            <button class="fase-tag" data-f="kuadra">Kuadra</button>
-                            <button class="fase-tag" data-f="kina">Kina</button>
-                            <button class="fase-tag" data-f="keno">Keno</button>
+                <!-- Players Panel -->
+                <div class="players-panel" id="playersPanel">
+                    <h3 onclick="this.closest('.players-panel').classList.toggle('collapsed')">👥 Jogadores <span class="toggle-icon">▼</span></h3>
+                    <div class="players-panel-body">
+                        <div class="spectator-count" id="spectatorCount" style="display:none;font-size:0.82em;color:#8b86b3;margin-bottom:6px;padding:4px 12px;background:rgba(255,255,255,0.03);border-radius:8px;text-align:center">👁️ <span id="spectatorCountNum">0</span> espectadores</div>
+                        <ul class="player-list" id="playerListUI"></ul>
+                        <div class="players-missing" id="missingNumbersPanel">
+                            <h4 class="players-missing-title">📊 <span id="missingTitle">Cartelas próximas</span></h4>
+                            <div class="missing-numbers-list" id="missingNumbersList">
+                                <p style="color:#6b6599;font-size:0.82em">Nenhum jogo ativo no momento.</p>
+                            </div>
                         </div>
                     </div>
-
-                    <div class="my-cards">
-                        <div class="my-cards-title">
-                            📋 Minhas Cartelas
-                            <span class="zoom-ctrl">
-                                <button class="btn-ctrl" onclick="zoomCards(-1)">−</button>
-                                <button class="btn-ctrl yellow" onclick="zoomCards(1)">+</button>
-                            </span>
-                        </div>
-                        <div class="my-cards-scroll">
-                            <div class="my-cards-grid" id="myCardsGrid"></div>
-                        </div>
-                    </div>
-
-                    <!-- Game Log -->
-                    <div class="game-log" id="gameLog"></div>
-
                 </div>
+
+                <!-- Game Log -->
+                <div class="game-log" id="gameLog"></div>
 
             </div>
         </div>
@@ -586,8 +544,8 @@
     </a>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-<script src="game-logic.js?v=93"></script>
-<script src="network.js?v=91"></script>
+<script src="game-logic.js?v=32"></script>
+<script src="network.js?v=30"></script>
     <script>
         // Auto-login se tiver sessao valida
         (async function() {
