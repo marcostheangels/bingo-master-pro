@@ -3,10 +3,6 @@ const fs = require('fs');
 const test = fs.readFileSync('teste1.html', 'utf8');
 const app = fs.readFileSync('orig-app.html', 'utf8');
 
-// Extract test's inline CSS (visual 3D effects)
-const testCss = /<style>([\s\S]*?)<\/style>/.exec(test)[1];
-
-// Overlay CSS (not in style.css)
 const overlayCss = `
 .spinner-overlay { position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);display:none;flex-direction:column;align-items:center;justify-content:center;z-index:99999; }
 .spinner-overlay.visible { display:flex; }
@@ -27,29 +23,53 @@ const overlayCss = `
 .countdown-hint { font-size:13px;color:#9d96d4;margin-top:14px; }
 `;
 
-// Start with app as base (has all functional HTML, overlays, modals, scripts)
 let result = app;
 
 // Remove old style.css link
 result = result.replace('<link rel="stylesheet" href="style.css?v=32">', '');
 
-// Add combined CSS: test's 3D visual CSS + overlay CSS + link to style.css for login/admin
+// Add link to style.css + overlay CSS only (NOT test's full CSS)
 result = result.replace('</head>',
   '    <link rel="stylesheet" href="style.css">\n' +
-  '    <style>\n' + testCss + overlayCss + '    </style>\n' +
+  '    <style>\n' + overlayCss + '    </style>\n' +
   '</head>'
 );
 
-// Fix: add ID to liveClock in app
-// App header already has id="liveClock" so we just need the CSS to handle it correctly
+// Fix auto-login script: add hideSpinner when no session
+const oldScript = `        // Auto-login se tiver sessao valida
+        (async function() {
+            if (typeof validarSessaoExistente === 'function') {
+                const valido = await validarSessaoExistente();
+                if (valido && typeof conectarAposAuth === 'function') {
+                    conectarAposAuth();
+                }
+            }
+        })();`;
+
+const newScript = `        // Auto-login se tiver sessao valida
+        (async function() {
+            if (typeof validarSessaoExistente === 'function') {
+                const valido = await validarSessaoExistente();
+                if (valido && typeof conectarAposAuth === 'function') {
+                    conectarAposAuth();
+                } else {
+                    if (typeof hideSpinner === 'function') hideSpinner();
+                }
+            } else {
+                if (typeof hideSpinner === 'function') hideSpinner();
+            }
+        })();`;
+
+result = result.replace(oldScript, newScript);
 
 // Write
 fs.writeFileSync('index.html', result, 'utf8');
 
 // Verify
 const verify = fs.readFileSync('index.html', 'utf8');
-const checks = ['screenHome', 'screenGame', 'screenAdmin', 'spinner-overlay', 
-  'countdownOverlay', 'currentRoundNumber', 'liveClock', 'playerListUI',
-  'myCardsGrid', 'buyQtyInput', 'pixValor', 'adminPlayerSelect'];
-checks.forEach(c => console.log(c + ':', verify.includes(c) ? 'OK' : 'MISSING'));
+const words = ['Conexão', 'Não', 'Manutenção', 'ação', 'Créditos', 'Bônus', 'Números', 'Próximas'];
+words.forEach(w => console.log(w + ':', verify.includes(w) ? 'OK' : 'MOJIBAKE'));
+['🎯','💰','🔑','⚙️','🔄','🎟️'].forEach(e => console.log(e + ':', verify.includes(e) ? 'OK' : 'MISSING'));
+const ids = ['screenHome', 'screenGame', 'screenAdmin', 'spinner-overlay', 'countdownOverlay', 'currentRoundNumber', 'liveClock', 'playerListUI', 'myCardsGrid', 'buyQtyInput', 'pixValor', 'adminPlayerSelect'];
+ids.forEach(c => console.log(c + ':', verify.includes(c) ? 'OK' : 'MISSING'));
 console.log('Size:', fs.statSync('index.html').size, 'bytes');
