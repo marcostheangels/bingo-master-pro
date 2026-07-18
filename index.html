@@ -29,6 +29,11 @@
         body {
             background: var(--bg-gradient);
             color: var(--text);
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        #screenGame.active {
             height: 100vh;
             overflow: hidden;
             overflow-x: hidden;
@@ -326,7 +331,7 @@
 
 /* === SCREEN BASE === */
 .screen { display: none; position: relative; width: 100%; min-height: 100vh; overflow-y: auto; }
-.screen.active { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; }
+.screen.active { display: flex; flex-direction: column; }
 .box { position: relative; z-index: 1; }
 
 /* === INPUT FIELD (base) === */
@@ -474,6 +479,7 @@
 
 /* === LOGIN SCREEN === */
 #screenHome { position: relative; overflow: hidden; background: radial-gradient(circle at 18% 18%,#241046 0%,transparent 42%),radial-gradient(circle at 82% 82%,#2a1148 0%,transparent 45%),linear-gradient(160deg,#0c0726 0%,#070418 60%,#040210 100%); }
+#screenHome.active { align-items: center; justify-content: flex-start; }
 .home-bg { position: absolute; inset: 0; overflow: hidden; z-index: 0; pointer-events: none; }
 #screenHome .orb { position: absolute; border-radius: 50%; filter: blur(70px); opacity: 0.55; }
 .orb-1 { width: 340px; height: 340px; top: -110px; left: -90px; background: radial-gradient(circle at 30% 30%,#7c3aed,transparent 70%); animation: orbFloat1 13s ease-in-out infinite; }
@@ -571,8 +577,13 @@
 
 /* ===== SCREEN GAME PRESERVATION (mantem layout 3D) ===== */
 #screenGame { display: none; }
-#screenGame.active { display: block; }
-#screenGame .game-log { margin-top: 8px; }
+#screenGame.active {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+    padding: 15px;
+}
     </style>
         <script>
         if ('serviceWorker' in navigator) {
@@ -759,6 +770,6 @@
 
 <a href="https://wa.me/5538998558528" target="_blank" class="whatsapp-float" aria-label="Suporte ao Jogador">        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="white" width="24" height="24">            <path d="M16 0C7.2 0 0 7.2 0 16c0 3.2 1 6.2 2.6 8.8L1.2 31.2l6.8-1.8C10.4 31 13 32 16 32c8.8 0 16-7.2 16-16S24.8 0 16 0zm8.4 22.4c-.4 1.2-2 2.2-3.4 2.4-.8.2-2 .4-5.8-1.2-4.8-2-7.8-6.8-8-7.2-.4-.4-1.8-2.4-1.8-4.6s1.2-3.2 1.6-3.6c.4-.4.8-.4 1.2-.4h.8c.4 0 .8-.2 1.2.8.4 1 1.4 3.4 1.6 3.6.2.4.2.8-.2 1.2-.2.4-.4.8-.8 1.2-.4.4-.4.8-.2 1.2.4.6 1.6 2.6 3.4 4.2 2.4 2 4.2 2.6 5 2.8.6.2 1.2 0 1.6-.4.4-.4 1.8-2 2.2-2.8.4-.6.8-.6 1.4-.4.6.2 3.4 1.6 4 1.8.6.2 1 .4 1.2.6.2.4.2 1.4-.2 2.6z"/>        </svg>        <span>Suporte ao Jogador</span>    </a>    
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script><script src="game-logic.js?v=35"></script><script src="network.js?v=33"></script>    <script>        // Auto-login se tiver sessao valida        (async function() {            if (typeof validarSessaoExistente === 'function') {                const valido = await validarSessaoExistente();                if (valido && typeof conectarAposAuth === 'function') {                    conectarAposAuth();                }            }        })();    </script></body></html>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script><script src="game-logic.js?v=36"></script><script src="network.js?v=34"></script>    <script>        // Auto-login se tiver sessao valida        (async function() {            if (typeof validarSessaoExistente === 'function') {                const valido = await validarSessaoExistente();                if (valido && typeof conectarAposAuth === 'function') {                    conectarAposAuth();                }            }        })();    </script></body></html>
 </body>
 </html>
