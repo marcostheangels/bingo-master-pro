@@ -331,8 +331,9 @@
 /* ===== OVERLAYS, LOGIN, ADMIN, MODAIS ===== */
 .spinner-overlay {
     position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.85);
-    display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;
+    display:none;flex-direction:column;align-items:center;justify-content:center;z-index:99999;
 }
+.spinner-overlay.visible { display:flex; }
 .spinner { width:50px;height:50px;border:4px solid rgba(255,255,255,.1);border-top-color:#8b5cff;border-radius:50%;animation:spin .8s linear infinite; }
 @keyframes spin { to{transform:rotate(360deg)} }
 .spinner-text { color:#cbd5e1;font-size:14px;margin-top:16px;font-weight:600; }
