@@ -2367,6 +2367,7 @@ body.admin-mode .admin-screen-wrapper * {
 
 /* Brand */
 .brand-logo { width: 110px; height: auto; margin: 0 auto 10px; display: block; border-radius: 14px; }
+.room-logo { height: 40px; width: auto; border-radius: 8px; }
 .brand { margin-bottom: 24px; }
 .brand-badge {
     width: 86px; height: 86px;
