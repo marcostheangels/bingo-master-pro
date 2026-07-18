@@ -1152,24 +1152,17 @@ function updatePlayerListUI() {
     sortedPlayers.forEach((p, index) => {
         const div = document.createElement('div');
         div.className = 'player-row';
-        const hostIcon = p.isHost ? '👑 ' : '';
-        const shortCode = p.id ? String(p.id).slice(-6) : '------';
-        const playerId = p.userId || p.id || '000000';
-        const cardCount = p.cards ? p.cards.length : 0;
+        const cardIds = p.cards && p.cards.length > 0 ? p.cards.map(c => c.id || c.tempId || '').filter(Boolean).join(', ') : '-';
         const closePhase = typeof getCardClosePhase === 'function' && p.cards && p.cards.length > 0 ? getCardClosePhase(p.cards[0]) : null;
         let ballsCount = 0;
-        if (closePhase && !closePhase.won) {
-            if (closePhase.phase === 'kuadra' || closePhase.phase === 'kina') ballsCount = 1;
-            else if (closePhase.phase === 'keno') ballsCount = 1;
-        }
+        if (closePhase && !closePhase.won) ballsCount = 1;
         if (closePhase && closePhase.won) ballsCount = 5;
         let ballsHtml = '';
         for (let i = 0; i < 5; i++) {
             ballsHtml += `<div class="pballmini ${i < ballsCount ? 'on' : ''}"></div>`;
         }
         div.innerHTML = `
-            <span class="pcode">#${playerId}</span>
-            <span class="player-name">${hostIcon}${escapeHtml(p.name)}</span>
+            <span class="pcode">${cardIds}</span>
             <div class="pballs">${ballsHtml}</div>`;
         list.appendChild(div);
     });
