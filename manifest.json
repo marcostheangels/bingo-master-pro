@@ -4,8 +4,8 @@
     "description": "Bingo multiplayer com Kuadra, Kina e Keno",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#06030f",
-    "theme_color": "#06030f",
+    "background_color": "#ffffff",
+    "theme_color": "#000000",
     "orientation": "portrait-primary",
     "icons": [
         {
