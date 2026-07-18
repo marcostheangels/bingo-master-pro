@@ -998,7 +998,11 @@
                 const valido = await validarSessaoExistente();
                 if (valido && typeof conectarAposAuth === 'function') {
                     conectarAposAuth();
+                } else {
+                    if (typeof hideSpinner === 'function') hideSpinner();
                 }
+            } else {
+                if (typeof hideSpinner === 'function') hideSpinner();
             }
         })();
     </script>
