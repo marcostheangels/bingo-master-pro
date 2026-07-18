@@ -360,8 +360,10 @@ aside { display:flex;flex-direction:column;align-items:center;gap:10px;width:40p
     entao recriamos com a mesma cara: azul escuro, dourado, 3D)
    ========================================================= */
 
-#screenHome.active, #screenAdmin.active { align-items:center;justify-content:center; }
-#screenHome, #screenAdmin { background:var(--bg-gradient); }
+#screenHome { display:none; flex-direction:column; background:var(--bg-gradient); }
+#screenHome.active { display:flex; align-items:center; justify-content:center; }
+#screenAdmin { display:none; flex-direction:column; background:var(--bg-gradient); }
+#screenAdmin.active { display:flex; align-items:flex-start; justify-content:center; }
 
 /* HOME / LOGIN */
 .box.login-card { width:100%;max-width:420px;background:var(--panel-bg);border:1px solid rgba(255,255,255,0.14);
